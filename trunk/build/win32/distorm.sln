@@ -1,0 +1,37 @@
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cdistorm", "cdistorm.vcproj", "{15051CE1-AB10-4239-973D-01B84F2AD0A9}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pydistorm", "pydistorm.vcproj", "{E96298DA-D2F7-4619-BA93-26CCDBD13DDA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		clib|Win32 = clib|Win32
+		py23|Win32 = py23|Win32
+		py24|Win32 = py24|Win32
+		py25|Win32 = py25|Win32
+		py26|Win32 = py26|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{15051CE1-AB10-4239-973D-01B84F2AD0A9}.clib|Win32.ActiveCfg = clib|Win32
+		{15051CE1-AB10-4239-973D-01B84F2AD0A9}.clib|Win32.Build.0 = clib|Win32
+		{15051CE1-AB10-4239-973D-01B84F2AD0A9}.py23|Win32.ActiveCfg = clib|Win32
+		{15051CE1-AB10-4239-973D-01B84F2AD0A9}.py24|Win32.ActiveCfg = clib|Win32
+		{15051CE1-AB10-4239-973D-01B84F2AD0A9}.py25|Win32.ActiveCfg = clib|Win32
+		{15051CE1-AB10-4239-973D-01B84F2AD0A9}.py25|Win32.Build.0 = clib|Win32
+		{15051CE1-AB10-4239-973D-01B84F2AD0A9}.py26|Win32.ActiveCfg = clib|Win32
+		{15051CE1-AB10-4239-973D-01B84F2AD0A9}.py26|Win32.Build.0 = clib|Win32
+		{E96298DA-D2F7-4619-BA93-26CCDBD13DDA}.clib|Win32.ActiveCfg = py23|Win32
+		{E96298DA-D2F7-4619-BA93-26CCDBD13DDA}.py23|Win32.ActiveCfg = py23|Win32
+		{E96298DA-D2F7-4619-BA93-26CCDBD13DDA}.py23|Win32.Build.0 = py23|Win32
+		{E96298DA-D2F7-4619-BA93-26CCDBD13DDA}.py24|Win32.ActiveCfg = py24|Win32
+		{E96298DA-D2F7-4619-BA93-26CCDBD13DDA}.py24|Win32.Build.0 = py24|Win32
+		{E96298DA-D2F7-4619-BA93-26CCDBD13DDA}.py25|Win32.ActiveCfg = py25|Win32
+		{E96298DA-D2F7-4619-BA93-26CCDBD13DDA}.py25|Win32.Build.0 = py25|Win32
+		{E96298DA-D2F7-4619-BA93-26CCDBD13DDA}.py26|Win32.ActiveCfg = py26|Win32
+		{E96298DA-D2F7-4619-BA93-26CCDBD13DDA}.py26|Win32.Build.0 = py26|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
