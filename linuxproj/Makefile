@@ -4,7 +4,7 @@
 
 TARGET	= disasm
 CC	= gcc
-CFLAGS	= -Wall -O2 -I. -pg -o
+CFLAGS	= -Wall -O2 -o
 
 all:	disasm
 
