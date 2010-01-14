@@ -2,9 +2,23 @@
 distorm.c
 
 diStorm3 C Library Interface
-The ultimate disassembler library (80x86, AMD64)
-Copyright (C) 2003-2009 Gil Dabah, http://ragestorm.net/distorm/
-This file is licensed under the GPL license. See the file COPYING.
+diStorm3 - Powerful disassembler for X86/AMD64
+http://ragestorm.net/distorm/
+distorm at gmail dot com
+Copyright (C) 2010  Gil Dabah
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
 
@@ -19,9 +33,9 @@ This file is licensed under the GPL license. See the file COPYING.
 
 /* C LIBRARY EXPORTS */
 #ifdef SUPPORT_64BIT_OFFSET
-	_DecodeResult distorm_decompose64(const _CodeInfo* ci, _DecompedInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount)
+	_DecodeResult distorm_decompose64(const _CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount)
 #else
-	_DecodeResult distorm_decompose32(const _CodeInfo* ci, _DecompedInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount)
+	_DecodeResult distorm_decompose32(const _CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount)
 #endif
 {
 	if (usedInstructionsCount == NULL) {
@@ -50,7 +64,7 @@ This file is licensed under the GPL license. See the file COPYING.
 }
 
 /* Helper function to concat an explicit size when it's unknown from the operands. */
-static void distorm_format_size(_WString* str, const _DecompedInst* di, int opNum)
+static void distorm_format_size(_WString* str, const _DInst* di, int opNum)
 {
 	/*
 	 * We only have to output the size explicitly if it's not clear from the operands.
@@ -81,7 +95,7 @@ static distorm_format_address(_WString* str, _OffsetType addr)
 	wrap around addresses for 32 bits and check addresses in general, for 16/32/64 bits.
 }*/
 
-static void distorm_format_signed_disp(_WString* str, const _DecompedInst* di, uint64_t addrMask)
+static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t addrMask)
 {
 	int64_t tmpDisp64;
 
@@ -95,9 +109,9 @@ static void distorm_format_signed_disp(_WString* str, const _DecompedInst* di, u
 }
 
 #ifdef SUPPORT_64BIT_OFFSET
-	_DLLEXPORT_ void distorm_format64(const _CodeInfo* ci, const _DecompedInst* di, _DecodedInst* result)
+	_DLLEXPORT_ void distorm_format64(const _CodeInfo* ci, const _DInst* di, _DecodedInst* result)
 #else
-	_DLLEXPORT_ void distorm_format32(const _CodeInfo* ci, const _DecompedInst* di, _DecodedInst* result)
+	_DLLEXPORT_ void distorm_format32(const _CodeInfo* ci, const _DInst* di, _DecodedInst* result)
 #endif
 {
 	_WString* str;
@@ -296,7 +310,7 @@ static void distorm_format_signed_disp(_WString* str, const _DecompedInst* di, u
 #endif
 {
 	_DecodeResult res;
-	_DecompedInst di;
+	_DInst di;
 	_CodeInfo ci;
 	unsigned int instsCount = 0, i;
 
@@ -321,8 +335,8 @@ static void distorm_format_signed_disp(_WString* str, const _DecompedInst* di, u
 	}
 
 	/*
-	 * We have to format the result into text. But the interal decoder works with the new structure of _DecompedInst.
-	 * Therefore, we will pass the result array(!) from the caller and the interal decoder will fill it in with _DecompedInst's.
+	 * We have to format the result into text. But the interal decoder works with the new structure of _DInst.
+	 * Therefore, we will pass the result array(!) from the caller and the interal decoder will fill it in with _DInst's.
 	 * Then we will copy each result to a temporary structure, and use it to reformat that specific result.
 	 *
 	 * This is all done to save memory allocation and to work on the same result array in-place!!!
@@ -335,12 +349,12 @@ static void distorm_format_signed_disp(_WString* str, const _DecompedInst* di, u
 	ci.dt = dt;
 	ci.features = DF_NONE;
 
-	res = decode_internal(&ci, TRUE, (_DecompedInst*)result, maxInstructions, &instsCount);
+	res = decode_internal(&ci, TRUE, (_DInst*)result, maxInstructions, &instsCount);
 	for (i = 0; i < instsCount; i++) {
 		if ((*usedInstructionsCount + i) >= maxInstructions) return DECRES_MEMORYERR;
 
 		/* Copy the current decomposed result to a temp structure, so we can override the result with text. */
-		memcpy(&di, (char*)result + (i * sizeof(_DecodedInst)), sizeof(_DecompedInst));
+		memcpy(&di, (char*)result + (i * sizeof(_DecodedInst)), sizeof(_DInst));
 #ifdef SUPPORT_64BIT_OFFSET
 		distorm_format64(&ci, &di, &result[i]);
 #else
