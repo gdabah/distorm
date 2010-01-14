@@ -1,0 +1,19 @@
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "disasm", "disasm.vcproj", "{91227BA8-F7EB-43CC-8C4A-A4944C00567B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{91227BA8-F7EB-43CC-8C4A-A4944C00567B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{91227BA8-F7EB-43CC-8C4A-A4944C00567B}.Debug|Win32.Build.0 = Debug|Win32
+		{91227BA8-F7EB-43CC-8C4A-A4944C00567B}.Release|Win32.ActiveCfg = Release|Win32
+		{91227BA8-F7EB-43CC-8C4A-A4944C00567B}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
