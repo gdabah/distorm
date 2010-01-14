@@ -1,5 +1,5 @@
 #
-# diStorm64 (Linux Port)
+# diStorm3 (Linux Port)
 #
 
 TARGET	= libdistorm64.so
@@ -13,7 +13,7 @@ clean:
 	/bin/rm -rf ../../src/*.o ${TARGET} ../../distorm64.a ../../mnemonics.o
 
 clib: ${COBJS}
-	${CC} ${CFLAGS} ${VERSION} ${COBJS} -shared -o ${TARGET} -pg
+	${CC} ${CFLAGS} ${VERSION} ${COBJS} -shared -o ${TARGET}
 	ar rs ../../distorm64.a ${COBJS}
 
 install: libdistorm64.so
@@ -21,5 +21,5 @@ install: libdistorm64.so
 	@echo "... running ldconfig might be smart ..."
 
 .c.o:
-	${CC} ${CFLAGS} ${VERSION} -p -c $< -o $@ -pg
+	${CC} ${CFLAGS} ${VERSION} -c $< -o $@
 
