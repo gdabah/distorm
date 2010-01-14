@@ -41,7 +41,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="0"
+				Optimization="3"
 				InlineFunctionExpansion="1"
 				FavorSizeOrSpeed="0"
 				OmitFramePointers="true"

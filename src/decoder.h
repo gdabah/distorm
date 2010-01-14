@@ -13,6 +13,6 @@ This file is licensed under the GPL license. See the file COPYING.
 
 typedef unsigned int _iflags;
 
-_DecodeResult decode_internal(const _CodeInfo* ci, int supportOldIntr, _DecompedInst result[], unsigned int maxResultCount, unsigned int* usedInstructionsCount);
+_DecodeResult decode_internal(const _CodeInfo* ci, int supportOldIntr, _DInst result[], unsigned int maxResultCount, unsigned int* usedInstructionsCount);
 
 #endif /* DECODER_H */

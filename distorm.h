@@ -3,8 +3,23 @@
 /*
 distorm.h
 
-Copyright (C) 2003-2009 Gil Dabah, http://ragestorm.net/distorm/
-This file is licensed under the GPL license. See the file COPYING.
+diStorm3 - Powerful disassembler for X86/AMD64
+http://ragestorm.net/distorm/
+distorm at gmail dot com
+Copyright (C) 2010  Gil Dabah
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
 
@@ -216,10 +231,10 @@ typedef struct {
 	uint16_t unusedPrefixesMask;
 	/* Meta defines the instruction set class, and the flow control flags. Use META macros. */
 	uint8_t meta;
-} _DecompedInst;
+} _DInst;
 
 /* Static size of strings. Do not change this value. */
-#define MAX_TEXT_SIZE (60)
+#define MAX_TEXT_SIZE (32)
 typedef struct {
 	unsigned int length;
 	unsigned char p[MAX_TEXT_SIZE]; /* p is a null terminated string. */
@@ -351,16 +366,16 @@ typedef enum {DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, DE
  *         2)You will have to synchronize the offset,code and length by yourself if you pass code fragments and not a complete code block!
  */
 #ifdef SUPPORT_64BIT_OFFSET
-	_DecodeResult distorm_decompose64(const _CodeInfo* ci, _DecompedInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
+	_DecodeResult distorm_decompose64(const _CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
 	_DecodeResult distorm_decode64(_OffsetType codeOffset, const unsigned char* code, int codeLen, _DecodeType dt, _DecodedInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
-	void distorm_format64(const _CodeInfo* ci, const _DecompedInst* di, _DecodedInst* result);
+	void distorm_format64(const _CodeInfo* ci, const _DInst* di, _DecodedInst* result);
 	#define distorm_decompose distorm_decompose64
 	#define distorm_decode distorm_decode64
 	#define distorm_format distorm_format64
 #else
-	_DecodeResult distorm_decompose32(const _CodeInfo* ci, _DecompedInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
+	_DecodeResult distorm_decompose32(const _CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
 	_DecodeResult distorm_decode32(_OffsetType codeOffset, const unsigned char* code, int codeLen, _DecodeType dt, _DecodedInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
-	void distorm_format32(const _CodeInfo* ci, const _DecompedInst* di, _DecodedInst* result);
+	void distorm_format32(const _CodeInfo* ci, const _DInst* di, _DecodedInst* result);
 	#define distorm_decompose distorm_decompose32
 	#define distorm_decode distorm_decode32
 	#define distorm_format distorm_format32

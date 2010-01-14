@@ -1,8 +1,23 @@
 /*
 operands.h
 
-Copyright (C) 2003-2009 Gil Dabah, http://ragestorm.net/distorm/
-This file is licensed under the GPL license. See the file COPYING.
+diStorm3 - Powerful disassembler for X86/AMD64
+http://ragestorm.net/distorm/
+distorm at gmail dot com
+Copyright (C) 2010  Gil Dabah
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
 
@@ -15,7 +30,7 @@ This file is licensed under the GPL license. See the file COPYING.
 #include "prefix.h"
 #include "instructions.h"
 
-int operands_extract(_CodeInfo* ci, _DecompedInst* di, _InstInfo* ii,
+int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 					 _OpType type, _OperandNumberType opNum,
 					 unsigned int modrm, _PrefixState* ps, _DecodeType effOpSz,
                      _DecodeType effAdrSz, int* lockableInstruction);

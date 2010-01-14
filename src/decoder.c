@@ -1,8 +1,23 @@
 /*
 decoder.c
 
-Copyright (C) 2003-2009 Gil Dabah, http://ragestorm.net/distorm/
-This file is licensed under the GPL license. See the file COPYING.
+diStorm3 - Powerful disassembler for X86/AMD64
+http://ragestorm.net/distorm/
+distorm at gmail dot com
+Copyright (C) 2010  Gil Dabah
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
 
@@ -61,7 +76,7 @@ static _DecodeType decode_get_effective_op_size(_DecodeType dt, _iflags decodedP
 	return dt;
 }
 
-static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DecompedInst* di)
+static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 {
 	/* The ModR/M byte of the current instruction. */
 	unsigned int modrm = 0;
@@ -151,7 +166,7 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DecompedInst*
 	effOpSz = decode_get_effective_op_size(ci->dt, ps->decodedPrefixes, vrex, ii->flags);
 	effAdrSz = decode_get_effective_addr_size(ci->dt, ps->decodedPrefixes);
 
-	memset(di, 0, sizeof(_DecompedInst));
+	memset(di, 0, sizeof(_DInst));
 	di->base = R_NONE;
 
 	/*
@@ -319,7 +334,7 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DecompedInst*
 	return DECRES_SUCCESS;
 
 _Undecodable: /* If the instruction couldn't be decoded for some reason, drop the first byte. */
-	memset(di, 0, sizeof(_DecompedInst));
+	memset(di, 0, sizeof(_DInst));
 
 	di->size = 1;
 	/* Clean operands just in case... */
@@ -350,11 +365,11 @@ _Undecodable: /* If the instruction couldn't be decoded for some reason, drop th
  * decode_internal
  *
  * supportOldIntr - Since now we work with new structure instead of the old _DecodedInst, we are still interested in backward compatibility.
- *                  So although, the array is now of type _DecompedInst, we want to read it in jumps of the old array element's size.
+ *                  So although, the array is now of type _DInst, we want to read it in jumps of the old array element's size.
  *                  This is in order to save memory allocation for conversion between the new and the old structures.
  *                  It really means we can do the conversion in-place now.
  */
-_DecodeResult decode_internal(const _CodeInfo* _ci, int supportOldIntr, _DecompedInst result[], unsigned int maxResultCount, unsigned int* usedInstructionsCount)
+_DecodeResult decode_internal(const _CodeInfo* _ci, int supportOldIntr, _DInst result[], unsigned int maxResultCount, unsigned int* usedInstructionsCount)
 {
 	_PrefixState ps;
 	unsigned int prefixSize;
@@ -375,7 +390,7 @@ _DecodeResult decode_internal(const _CodeInfo* _ci, int supportOldIntr, _Decompe
 
 	/* Current working decoded instruction in results. */
 	unsigned int nextPos = 0;
-	_DecompedInst *pdi = NULL;
+	_DInst *pdi = NULL;
 
 	_DecodeResult decodeResult;
 
@@ -411,10 +426,10 @@ _DecodeResult decode_internal(const _CodeInfo* _ci, int supportOldIntr, _Decompe
 
 				for (p = code; p < ps.last; p++, startInstOffset++) {
 					/* Use next entry. */
-					if (supportOldIntr) pdi = (_DecompedInst*)((char*)result + nextPos * sizeof(_DecodedInst));
+					if (supportOldIntr) pdi = (_DInst*)((char*)result + nextPos * sizeof(_DecodedInst));
 					else pdi = &result[nextPos];
 					nextPos++;
-					memset(pdi, 0, sizeof(_DecompedInst));
+					memset(pdi, 0, sizeof(_DInst));
 
 					pdi->flags = FLAG_NOT_DECODABLE;
 					pdi->imm.byte = *p;
@@ -462,7 +477,7 @@ _DecodeResult decode_internal(const _CodeInfo* _ci, int supportOldIntr, _Decompe
 
 		/* Make sure there is at least one more entry to use, for the upcoming instruction. */
 		if (nextPos + 1 > maxResultCount) return DECRES_MEMORYERR;
-		if (supportOldIntr) pdi = (_DecompedInst*)((char*)result + nextPos * sizeof(_DecodedInst));
+		if (supportOldIntr) pdi = (_DInst*)((char*)result + nextPos * sizeof(_DecodedInst));
 		else pdi = &result[nextPos];
 		nextPos++;
 
@@ -501,11 +516,11 @@ _DecodeResult decode_internal(const _CodeInfo* _ci, int supportOldIntr, _Decompe
 
 				for (p = ps.start; p < ps.last + 1; p++, startInstOffset++) {
 					/* Use next entry. */
-					if (supportOldIntr) pdi = (_DecompedInst*)((char*)result + nextPos * sizeof(_DecodedInst));
+					if (supportOldIntr) pdi = (_DInst*)((char*)result + nextPos * sizeof(_DecodedInst));
 					else pdi = &result[nextPos];
 					nextPos++;
 
-					memset(pdi, 0, sizeof(_DecompedInst));
+					memset(pdi, 0, sizeof(_DInst));
 					pdi->flags = FLAG_NOT_DECODABLE;
 					pdi->imm.byte = *p;
 					pdi->size = 1;

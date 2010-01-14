@@ -2,9 +2,23 @@
 pydistorm.c
 
 diStorm3 Python Module Extension
-The ultimate disassembler library (80x86, AMD64)
-Copyright (C) 2003-2009 Gil Dabah, http://ragestorm.net/distorm/
-This file is licensed under the GPL license. See the file COPYING.
+diStorm3 - Powerful disassembler for X86/AMD64
+http://ragestorm.net/distorm/
+distorm at gmail dot com
+Copyright (C) 2010  Gil Dabah
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
 
@@ -39,7 +53,7 @@ _DLLEXPORT_ void initdistorm3()
 	PyModule_AddIntConstant(distormModule, "R_NONE", (uint8_t)R_NONE);
 
 	PyModule_AddIntConstant(distormModule, "OffsetTypeSize", sizeof(_OffsetType) * 8);
-	PyModule_AddStringConstant(distormModule, "info", "diStorm3 v1.0\r\nCopyright (C) 2009, Gil Dabah\r\n\r\nhttp://ragestorm.net/distorm/\r\n");
+	PyModule_AddStringConstant(distormModule, "info", "diStorm3 v1.0\r\nCopyright (C) 2010, Gil Dabah\r\n\r\nhttp://ragestorm.net/distorm/\r\n");
 }
 
 /* A helper function to raise memory exception and kill decode. */
@@ -57,7 +71,7 @@ PyObject* distorm_Decompose(PyObject* pSelf, PyObject* pArgs)
 	_CodeInfo ci;
 	_DecodeResult res = DECRES_NONE;
 
-	_DecompedInst decodedInstructions[MAX_INSTRUCTIONS];
+	_DInst decodedInstructions[MAX_INSTRUCTIONS];
 	unsigned int decodedInstructionsCount = 0, i = 0, j = 0, next = 0;
 
 	PyObject *ret = NULL, *pyObj = NULL, *dtObj = NULL, *featObj = NULL, *opsObj = NULL, *o = NULL;
