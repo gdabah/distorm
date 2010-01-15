@@ -89,11 +89,6 @@ static void distorm_format_size(_WString* str, const _DInst* di, int opNum)
 		}
 	}
 }
-/*
-static distorm_format_address(_WString* str, _OffsetType addr)
-{
-	wrap around addresses for 32 bits and check addresses in general, for 16/32/64 bits.
-}*/
 
 static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t addrMask)
 {
