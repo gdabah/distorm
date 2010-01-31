@@ -58,6 +58,5 @@ _DecodeResult distorm_decode(
 
 Return code (of type DecodeResult) -
 If the input was incorrect, like NULL pointers were passed, or negative _codeLen_, then the return code is DECRES_INPUTERR. This is only done to verify the input is alright.
-
-Otherwise, if *all* instructions in the stream were decoded the return code is DECRESS_SUCCESS.
-However, *important(!)*: if the return code is DECRES_MEMORYERR then it means there was not enough space to write more instructions into the _result_ array. Therefore in a case where you want to disassemble all instructions in the stream, you will have to call the disassembler once again after updating all pointers, etc. A good example of how to do this synchronization can be seen at http://code.google.com/p/distorm/source/browse/trunk/win32proj/main.cpp
+Otherwise, if *all* instructions in the stream were decoded the return code is DECRESS_SUCCESS.<br>
+However, *important(!)*: if the return code is DECRES_MEMORYERR then it means there was not enough space to write more instructions into the _result_ array. You still get as many as possible instructions written to _result_. Therefore in a case where you want to disassemble all instructions in the stream, you will have to call the disassembler once again after updating all pointers, etc. A good example of how to do this synchronization can be seen at http://code.google.com/p/distorm/source/browse/trunk/win32proj/main.cpp
