@@ -3,6 +3,8 @@
 == Simple Interface ==
 It's called 'simple' as opposed to the new structure-output interface. Also since it returns only text. If you wish to parse the results, you should not, and instead use the new structure-output interface.
 
+This is the old interface from diStorm64, which is still accessible in diStorm3.
+
 All the information in this page is taken from _distorm.h_.
 If you want to see how to use this interface go to [CSample].
 
