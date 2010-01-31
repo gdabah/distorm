@@ -1,4 +1,4 @@
-#Introduction Page.
+# Main Page - Start here!
 
 = diStorm3 =
 Featrues- no more string parsings :)
