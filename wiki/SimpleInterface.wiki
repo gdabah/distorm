@@ -32,15 +32,32 @@ typedef struct {
     unsigned int size; /* Size of decoded instruction. */
     _OffsetType offset; /* Start offset of the decoded instruction. */
 } _DecodedInst;
+
+/* Return code of the decoding function. */
+typedef enum {DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR} _DecodeResult;
 }}}
 
 {{{
 _DecodeResult distorm_decode(
-    _OffsetType codeOffset,
-    const unsigned char* code,
-    int codeLen,
-    _DecodeType dt,
-    _DecodedInst result[],
-    unsigned int maxInstructions,
-    unsigned int* usedInstructionsCount);
+    IN _OffsetType codeOffset,
+    IN const unsigned char* code,
+    IN int codeLen,
+    IN _DecodeType dt,
+    OUT _DecodedInst result[],
+    IN unsigned int maxInstructions,
+    OUT unsigned int* usedInstructionsCount);
 }}}
+
+ * *codeOffset* - Virtual address of the code in the disassembly listing. It is not an offset inside _code_! It is similar to the [org] directive of Assemblers.
+ * *code* - Pointer to a block of memory to disassemble.
+ * *codeLen* - The maximum number of bytes that can be read from _code_.
+ * *dt* - Decoding mode, either Decode16Bits, Decode32Bits or Decode64Bits.
+ * *result* - An array of DecodedInst structures that will be filled by the disassembler.
+ * *maxInstructions* - The maximum number of instructions that _result_ can hold, which means, the number of instructions to read from the stream.
+ * *usedInstructionsCount* - The number of instructions that were successfully decoded and written to _result_.
+
+Return code (of type DecodeResult) -
+If the input was incorrect, like NULL pointers were passed, or negative _codeLen_, then the return code is DECRES_INPUTERR. This is only done to verify the input is alright.
+
+Otherwise, if *all* instructions in the stream were decoded the return code is DECRESS_SUCCESS.
+However, *important(!)*: if the return code is DECRES_MEMORYERR then it means there was not enough space to write more instructions into the _result_ array. Therefore in a case where you want to disassemble all instructions in the stream, you will have to call the disassembler once again after updating all pointers, etc. A good example of how to do this synchronization can be seen at http://code.google.com/p/distorm/source/browse/trunk/win32proj/main.cpp
