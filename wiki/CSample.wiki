@@ -1,4 +1,4 @@
-#summary How to use diStorm in C, sample.
+#summary How to use diStorm in C, sample code.
 
 diStorm3 is backward compatible with diStorm64.
 In this page I will show how to use diStorm64's interface, which only returns text.
@@ -34,8 +34,10 @@ unsigned int decodedInstructionsCount = 0;
 // Default decoding mode is 32 bits.
 _DecodeType dt = Decode32Bits;
 
+unsigned char* buf = "\x90\x90\x90\x33\xc0\x66\xb8\x34\x12\x50\x40\xc3";
+
 // Decode the buffer at given offset (virtual address).
-res = distorm_decode(offset, (const unsigned char*)buf, filesize, dt, decodedInstructions, MAX_INSTRUCTIONS, &decodedInstructionsCount); 
+res = distorm_decode(offset, (const unsigned char*)buf, sizeof(buf), dt, decodedInstructions, MAX_INSTRUCTIONS, &decodedInstructionsCount); 
 if (res == DECRES_INPUTERR) { 
  // Error handling...
 }}}
