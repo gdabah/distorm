@@ -1,5 +1,17 @@
 #summary How to use diStorm in Python
 
+===Python===
+list Decode(long offset, string code, int mode)
+Input:
+offset - *Virtual* address of the code itself (as in origin)
+code -   Buffer of the binary code
+mode -      Decode16Bits - 80286 decoding
+            Decode32Bits - IA-32 decoding
+            Decode64Bits - AMD64 decoding
+Return:
+list - List of tuples with the disassembled instructions,
+       each tuple consists of offset, size, mnemonic and hex strings per instruction
+
 {{{
 from distorm3 import Decode, Decode16Bits, Decode32Bits, Decode64Bits
 l = Decode(0x100, open("file.com", "rb").read(), Decode16Bits)
