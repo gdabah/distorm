@@ -6,6 +6,7 @@ In this page I will show how to use diStorm64's interface, which only returns te
 To see the function declarations go to [SimpleInterface Simple Interface].
 
 For a more complete code sample in Windows see: http://code.google.com/p/distorm/source/browse/trunk/win32proj/main.cpp
+
 And for Linux:
 http://code.google.com/p/distorm/source/browse/trunk/linuxproj/main.c
 
