@@ -3,13 +3,12 @@
 ==Python==
 list Decode(long offset, string code, int mode)
 Input:
-<pre>
-offset - *Virtual* address of the code itself (as in origin)
-code -   Buffer of the binary code
-mode -      Decode16Bits - 80286 decoding
-            Decode32Bits - IA-32 decoding
-            Decode64Bits - AMD64 decoding
-</pre>
+
+|| Argument Name || Description ||
+||offset|| *Virtual* address of the code itself (as in origin) ||
+||code|| Buffer of the binary code ||
+||mode|| Decode16Bits - 80286 decoding, Decode32Bits - IA-32 decoding, Decode64Bits - AMD64 decoding||
+
 
 Return:
 list - List of tuples with the disassembled instructions,
