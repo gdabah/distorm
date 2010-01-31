@@ -35,7 +35,7 @@ typedef struct {
 }}}
 
 {{{
-_DecodeResult distorm_decode64(
+_DecodeResult distorm_decode(
     _OffsetType codeOffset,
     const unsigned char* code,
     int codeLen,
