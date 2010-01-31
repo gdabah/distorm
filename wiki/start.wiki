@@ -10,13 +10,12 @@ The source code is portable and platform independent (supports both little and b
 diStorm solely depends on the C library, therefore it can be used in embedded or kernel modules.
 
 == Table Of Contents ==
- * Python Sample
- * C Code Sample Link
- * Structure Layout
- * Showcases
- * Advanced Features
- * Compilation
- * Documentation
- * Related Projects
- * Mailing List
- * Links
+ * [Python Sample]
+ * [C Code Sample Link]
+ * [Structure Layout]
+ * [Showcases]
+ * [Advanced Features]
+ * [Compilation]
+ * [Documentation]
+ * [Related Projects]
+ * [Mailing List]
