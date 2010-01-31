@@ -1,0 +1,44 @@
+#summary diStorm's Simple Interface
+
+== Simple Interface ==
+It's called 'simple' as opposed to the new structure-output interface. Also since it returns only text. If you wish to parse the results, you should not, and instead use the new structure-output interface.
+
+All the information in this page is taken from _distorm.h_.
+If you want to see how to use this interface go to [CSample C Sample].
+
+{{{
+/* Decodes modes of the disassembler, 16 bits or 32 bits or 64 bits for AMD64, x86-64. */
+typedef enum {Decode16Bits = 0, Decode32Bits = 1, Decode64Bits = 2} _DecodeType;
+typedef OFFSET_INTEGER _OffsetType;
+
+/* Static size of strings. Do not change this value. */
+#define MAX_TEXT_SIZE (32)
+typedef struct {
+    unsigned int length;
+    unsigned char p[MAX_TEXT_SIZE]; /* p is a null terminated string. */
+} _WString;
+
+/* 
+  * Old decoded instruction structure in text format.
+  * Used only for backward compatibility with diStorm64.
+  * This structure holds all information the disassembler generates per instruction.
+  */
+typedef struct {
+    _WString mnemonic; /* Mnemonic of decoded instruction, prefixed if required by REP, LOCK etc. */
+    _WString operands; /* Operands of the decoded instruction, up to 3 operands, comma-seperated. */
+    _WString instructionHex; /* Hex dump - little endian, including prefixes. */
+    unsigned int size; /* Size of decoded instruction. */
+    _OffsetType offset; /* Start offset of the decoded instruction. */
+} _DecodedInst;
+}}}
+
+{{{
+_DecodeResult distorm_decode64(
+    _OffsetType codeOffset,
+    const unsigned char* code,
+    int codeLen,
+    _DecodeType dt,
+    _DecodedInst result[],
+    unsigned int maxInstructions,
+    unsigned int* usedInstructionsCount);
+}}}
