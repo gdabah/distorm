@@ -3,9 +3,16 @@
 diStorm3 is backward compatible with diStorm64.
 In this page I will show how to use diStorm64's interface, which only returns text.
 
+To see the function declarations go to [SimpleInterface Simple Interface].
+
 Always start with:
 {{{
 #include "distorm.h"
+}}}
+
+In Windows you might need to link the library using the following line:
+{{{
+#pragma comment(lib, "distorm.lib") 
 }}}
 
 {{{
@@ -31,8 +38,12 @@ _DecodeType dt = Decode32Bits;
 res = distorm_decode(offset, (const unsigned char*)buf, filesize, dt, decodedInstructions, MAX_INSTRUCTIONS, &decodedInstructionsCount); 
 if (res == DECRES_INPUTERR) { 
  // Error handling...
- // Note that even on error handling, you still should read the output normally!
- // So error really means that the array wasn't big enough.
+}}}
+
+Note that even on error handling, you still should read the output normally!
+So error really means that the array wasn't big enough.
+
+{{{
 } 
 for (i = 0; i < decodedInstructionsCount; i++) { 
     printf("%0*I64x (%02d) %-24s %s%s%s\r\n", dt != Decode64Bits ? 8 : 16, decodedInstructions[i].offset, decodedInstructions[i].size, (char*)decodedInstructions[i].instructionHex.p, (char*)decodedInstructions[i].mnemonic.p, decodedInstructions[i].operands.length != 0 ? " " : "", (char*)decodedInstructions[i].operands.p); 
