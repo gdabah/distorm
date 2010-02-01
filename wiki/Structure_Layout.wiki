@@ -1,0 +1,96 @@
+#summary Structure Output Description
+
+=== diStorm3 Interface ===
+
+{{{
+/* Decodes modes of the disassembler, 16 bits or 32 bits or 64 bits for AMD64, x86-64. */
+typedef enum {Decode16Bits = 0, Decode32Bits = 1, Decode64Bits = 2} _DecodeType;
+
+typedef OFFSET_INTEGER _OffsetType;
+
+typedef struct {
+	_OffsetType codeOffset;
+	const uint8_t* code;
+	int codeLen; /* Using signed integer makes it easier to detect an underflow. */
+	_DecodeType dt;
+	unsigned int features;
+} _CodeInfo;
+
+typedef enum { O_NONE, O_REG, O_IMM, O_IMM1, O_IMM2, O_DISP, O_SMEM, O_MEM, O_PC, O_PTR } _OperandType;
+
+typedef struct {
+	/* Virtual address of first byte of instruction. */
+	_OffsetType addr;
+	/* Size of the whole instruction. */
+	uint8_t size;
+	/* General flags of instruction, holds prefixes, if -1, instruction is invalid. */
+	uint16_t flags;
+	/* Segment information of memory indirection. */
+	uint8_t segment;
+	/* Used by ops[n].type == O_MEM. Base global register index (might be R_NONE), scale size (2/4/8), ignored for 0 or 1. */
+	uint8_t base, scale;
+	uint8_t dispSize;
+	/* ID of opcode in the global opcode table. Use for mnemonic look up. */
+	uint16_t opcode;
+	/* Up to four operands per instruction, ignored if ops[n].type == O_NONE. */
+	_Operand ops[OPERANDS_NO];
+	/* Used by ops[n].type == O_SMEM/O_MEM/O_DISP. Its size is dispSize. */
+	uint64_t disp;
+	/* Used by ops[n].type == O_IMM/O_IMM1&O_IMM2/O_PTR/O_PC. Its size is ops[n].size. */
+	_Value imm;
+	/* Unused prefixes mask, for each bit that is set that prefix is not used (LSB is byte [addr + 0]). */
+	uint16_t unusedPrefixesMask;
+	/* Meta defines the instruction set class, and the flow control flags. Use META macros. */
+	uint8_t meta;
+} _DInst;
+
+typedef struct {
+	/* Type of operand:
+		O_NONE: operand is to be ignored.
+		O_REG: index holds global register index.
+		O_IMM: instruction.imm.
+		O_IMM1: instruction.imm.ex.i1.
+		O_IMM2: instruction.imm.ex.i2.
+		O_DISP: memory dereference with displacement only, instruction.disp.
+		O_SMEM: simple memory dereference with optional displacement (a single register memory dereference).
+		O_MEM: complex memory dereference (optional fields: s/i/b/disp).
+		O_PC: the absolute target address of a branch instruction (instruction.imm.addr).
+		O_PTR: the absolute target address of a far branch instruction (instruction.imm.ptr.seg/off).
+	*/
+	uint8_t type; /* _OperandType */
+
+	/* Index of:
+		O_REG: holds global register index
+		O_SMEM: holds the 'base' register. E.G: [ECX], [EBX+0x1234] are both in operand.index.
+		O_MEM: holds the 'index' register. E.G: [EAX*4] is in operand.index.
+	*/
+	uint8_t index;
+
+	/* Size of:
+		O_REG: register
+		O_IMM: instruction.imm
+		O_IMM1: instruction.imm.ex.i1
+		O_IMM2: instruction.imm.ex.i2
+		O_DISP: instruction.disp
+		O_SMEM: size of indirection.
+		O_MEM: size of indirection.
+		O_PC: size of the relative offset
+		O_PTR: size of instruction.imm.ptr.off (16 or 32)
+	*/
+	uint16_t size;
+} _Operand;
+}}}
+
+
+{{{
+_DecodeResult distorm_decompose(
+                                IN const _CodeInfo* ci,
+                                OUT _DInst result[],
+                                IN unsigned int maxInstructions,
+                                OUT unsigned int* usedInstructionsCount);
+
+void distorm_format(
+                    IN const _CodeInfo* ci,
+                    IN const _DInst* di,
+                    OUT _DecodedInst* result);
+}}}
