@@ -56,7 +56,7 @@ _DecodeResult distorm_decode(
  * *maxInstructions* - The maximum number of instructions that _result_ can hold, which means, the number of instructions to read from the stream.
  * *usedInstructionsCount* - The number of instructions that were successfully decoded and written to _result_.
 
-Return code (of type DecodeResult) -
+Return code (of type DecodeResult) -<br>
 If the input was incorrect, like NULL pointers were passed, or negative _codeLen_, then the return code is DECRES_INPUTERR. This is only done to verify the input is alright.
 Otherwise, if all *bytes* in the stream were decoded the return code is DECRESS_SUCCESS.<br>
 However, *important(!)*: if the return code is DECRES_MEMORYERR then it means there was not enough space to write more instructions into the _result_ array. You still get as many as possible instructions written to _result_. Therefore in a case where you want to disassemble all instructions in the stream, you will have to call the disassembler once again after updating all pointers, etc. A good example of how to do this synchronization can be seen at http://code.google.com/p/distorm/source/browse/trunk/win32proj/main.cpp
