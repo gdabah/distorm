@@ -44,7 +44,7 @@ _DLLEXPORT_ void initdistorm3()
 	PyModule_AddIntConstant(distormModule, "O_MEM", O_MEM);
 	PyModule_AddIntConstant(distormModule, "O_PC", O_PC);
 	PyModule_AddIntConstant(distormModule, "O_PTR", O_PTR);
-	PyModule_AddIntConstant(distormModule, "FLAG_NOT_DECODABLE", (uint8_t)FLAG_NOT_DECODABLE);
+	PyModule_AddIntConstant(distormModule, "FLAG_NOT_DECODABLE", FLAG_NOT_DECODABLE);
 	PyModule_AddIntConstant(distormModule, "FLAG_LOCK", FLAG_LOCK);
 	PyModule_AddIntConstant(distormModule, "FLAG_REPNZ", FLAG_REPNZ);
 	PyModule_AddIntConstant(distormModule, "FLAG_REP", FLAG_REP);
@@ -148,7 +148,7 @@ PyObject* distorm_Decompose(PyObject* pSelf, PyObject* pArgs)
 					Py_DECREF(pyObj);
 				} else break;
 			}
-			pyObj = Py_BuildValue("{s:" _PY_OFF_INT_SIZE_ "s:Bs:Bs:Bs:is:Hs:Bs:Bs:Bs:Ks:Hs:B}",
+			pyObj = Py_BuildValue("{s:" _PY_OFF_INT_SIZE_ "s:Bs:Hs:Bs:is:Hs:Bs:Bs:Bs:Ks:Hs:B}",
 			                      "addr",
 			                      decodedInstructions[i].addr,
 			                      "size",

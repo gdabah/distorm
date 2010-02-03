@@ -5,7 +5,7 @@
 TARGET	= libdistorm64.so
 COBJS	= ../../mnemonics.o ../../src/wstring.o ../../src/textdefs.o ../../src/x86defs.o ../../src/prefix.o ../../src/operands.o ../../src/insts.o ../../src/instructions.o ../../src/distorm.o ../../src/decoder.o
 CC	= gcc
-CFLAGS	= -O2 -Wall -DSUPPORT_64BIT_OFFSET -D_LIB
+CFLAGS	= -fPIC -O2 -Wall -DSUPPORT_64BIT_OFFSET -D_LIB
 
 all: clib
 
