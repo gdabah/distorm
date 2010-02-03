@@ -34,8 +34,8 @@ uint16_t _OPSIZETOINT[] = {0, 8, 16, 32, 64, 80, 128, 256};
 /* A helper function to fix the 8 bits register if REX is used (to support SIL, DIL, etc). */
 static unsigned int _FASTCALL_ operands_fix_8bit_rex_base(unsigned int reg)
 {
-	if ((reg >= 4) && (reg < 8)) return reg + _REGS8_REX_BASE - 4;
-	return reg + _REGS8_BASE;
+	if ((reg >= 4) && (reg < 8)) return reg + REGS8_REX_BASE - 4;
+	return reg + REGS8_BASE;
 }
 
 /* A helper function to set operand's type and size. */
@@ -148,7 +148,7 @@ static void operands_extract_sib(_DInst* di, _OperandNumberType opNum,
 
 	if (base != 5) {
 		if (vrex & PREFIX_EX_B) ps->usedPrefixes |= INST_PRE_REX;
-		*pIndex = effAdrSz == Decode64Bits ? _REGS64_BASE : _REGS32_BASE;
+		*pIndex = effAdrSz == Decode64Bits ? REGS64_BASE : REGS32_BASE;
 		*pIndex += (uint8_t)(base + ((vrex & PREFIX_EX_B) ? EX_GPR_BASE : 0));
 	} else if (mod != 0) {
 		/*
@@ -160,8 +160,8 @@ static void operands_extract_sib(_DInst* di, _OperandNumberType opNum,
 		 */
 
 		if (vrex & PREFIX_EX_B) ps->usedPrefixes |= INST_PRE_REX;
-		if (effAdrSz == Decode64Bits) *pIndex = _REGS64_BASE + 5 + ((vrex & PREFIX_EX_B) ? EX_GPR_BASE : 0);
-		else *pIndex = _REGS32_BASE + 5 + ((vrex & PREFIX_EX_B) ? EX_GPR_BASE : 0);
+		if (effAdrSz == Decode64Bits) *pIndex = REGS64_BASE + 5 + ((vrex & PREFIX_EX_B) ? EX_GPR_BASE : 0);
+		else *pIndex = REGS32_BASE + 5 + ((vrex & PREFIX_EX_B) ? EX_GPR_BASE : 0);
 	} else if (index == 4) {
 		 /* 32bits displacement only. */
 		op->type = O_DISP;
@@ -169,8 +169,8 @@ static void operands_extract_sib(_DInst* di, _OperandNumberType opNum,
 	}
 
 	if (index != 4) { /* In 64 bits decoding mode, if index == R12, it's valid! */
-		if (effAdrSz == Decode64Bits) op->index = (uint8_t)(_REGS64_BASE + index);
-		else op->index = (uint8_t)(_REGS32_BASE + index);
+		if (effAdrSz == Decode64Bits) op->index = (uint8_t)(REGS64_BASE + index);
+		else op->index = (uint8_t)(REGS32_BASE + index);
 		di->scale = scale != 0 ? (1 << scale) : 0;
 	}
 }
@@ -219,7 +219,7 @@ static int operands_extract_modrm(_CodeInfo* ci,
 							rm += EX_GPR_BASE;
 						}
 						size = 16;
-						rm += _REGS16_BASE;
+						rm += REGS16_BASE;
 					break;
 					case Decode32Bits:
 						ps->usedPrefixes |= INST_PRE_OP_SIZE;
@@ -228,7 +228,7 @@ static int operands_extract_modrm(_CodeInfo* ci,
 							rm += EX_GPR_BASE;
 						}
 						size = 32;
-						rm += _REGS32_BASE;
+						rm += REGS32_BASE;
 					break;
 					case Decode64Bits:
 						/* A fix for SMSW RAX which use the REX prefix. */
@@ -241,7 +241,7 @@ static int operands_extract_modrm(_CodeInfo* ci,
 							rm += EX_GPR_BASE;
 						}
 						size = 64;
-						rm += _REGS64_BASE;
+						rm += REGS64_BASE;
 					break;
 				}
 			break;
@@ -257,17 +257,17 @@ static int operands_extract_modrm(_CodeInfo* ci,
 				/* Is it a promoted instruction? (only INST_64BITS is set and REX isn't required.) */
 				if ((ci->dt == Decode64Bits) && ((instFlags & (INST_64BITS | INST_PRE_REX)) == INST_64BITS)) {
 					size = 64;
-					rm += _REGS64_BASE;
+					rm += REGS64_BASE;
 					break;
 				}
 				/* Give a chance to REX.W. Because if it was a promoted instruction we don't care about REX.W anyways. */
 				if (vrex & PREFIX_EX_W) {
 					ps->usedPrefixes |= INST_PRE_REX;
 					size = 64;
-					rm += _REGS64_BASE;
+					rm += REGS64_BASE;
 				} else {
 					size = 32;
-					rm += _REGS32_BASE;
+					rm += REGS32_BASE;
 				}
 			break;
 			case OT_RM16_32: /* Used only with MOVZXD instruction to support 16 bits operand. */
@@ -279,10 +279,10 @@ static int operands_extract_modrm(_CodeInfo* ci,
 				if (ps->decodedPrefixes & INST_PRE_OP_SIZE) {
 					ps->usedPrefixes |= INST_PRE_OP_SIZE;
 					size = 16;
-					rm += _REGS16_BASE;
+					rm += REGS16_BASE;
 				} else {
 					size = 32;
-					rm += _REGS32_BASE;
+					rm += REGS32_BASE;
 				}
 			break;
 			case OT_RM16:
@@ -290,19 +290,19 @@ static int operands_extract_modrm(_CodeInfo* ci,
 					ps->usedPrefixes |= INST_PRE_REX;
 					rm += EX_GPR_BASE;
 				}
-				rm += _REGS16_BASE;
+				rm += REGS16_BASE;
 			break;
 			case OT_RM8:
 				if (ps->prefixExtType == PET_REX) {
 					ps->usedPrefixes |= INST_PRE_REX;
 					rm = operands_fix_8bit_rex_base(rm + ((vrex & PREFIX_EX_B) ? EX_GPR_BASE : 0));
-				} else rm += _REGS8_BASE;
+				} else rm += REGS8_BASE;
 			break;
 			case OT_MM32:
 			case OT_MM64:
 				/* MMX doesn't support extended registers. */
 				size = 64;
-				rm += _MMXREGS_BASE;
+				rm += MMXREGS_BASE;
 			break;
 
 			case OT_XMM16:
@@ -314,7 +314,7 @@ static int operands_extract_modrm(_CodeInfo* ci,
 					rm += EX_GPR_BASE;
 				}
 				size = 128;
-				rm += _SSEREGS_BASE;
+				rm += SSEREGS_BASE;
 			break;
 
 			case OT_RM32:
@@ -325,29 +325,29 @@ static int operands_extract_modrm(_CodeInfo* ci,
 					rm += EX_GPR_BASE;
 				}
 				size = 32;
-				rm += _REGS32_BASE;
+				rm += REGS32_BASE;
 			break;
 
 			case OT_YMM256:
 				if (vrex & PREFIX_EX_B) rm += EX_GPR_BASE;
-				rm += _AVXREGS_BASE;
+				rm += AVXREGS_BASE;
 			break;
 			case OT_YXMM64_256:
 			case OT_YXMM128_256:
 				if (vrex & PREFIX_EX_B) rm += EX_GPR_BASE;
 				if (vrex & PREFIX_EX_L) {
 					size = 256;
-					rm += _AVXREGS_BASE;
+					rm += AVXREGS_BASE;
 				} else {
 					size = 128;
-					rm += _SSEREGS_BASE;
+					rm += SSEREGS_BASE;
 				}
 			break;
 			case OT_WXMM32_64:
 			case OT_LXMM64_128:
 				if (vrex & PREFIX_EX_B) rm += EX_GPR_BASE;
 				size = 128;
-				rm += _SSEREGS_BASE;
+				rm += SSEREGS_BASE;
 			break;
 
 			case OT_WRM32_64:
@@ -356,10 +356,10 @@ static int operands_extract_modrm(_CodeInfo* ci,
 				if (vrex & PREFIX_EX_B) rm += EX_GPR_BASE;
 				if (vrex & PREFIX_EX_W) {
 					size = 64;
-					rm += _REGS64_BASE;
+					rm += REGS64_BASE;
 				} else {
 					size = 32;
-					rm += _REGS32_BASE;
+					rm += REGS32_BASE;
 				}
 			break;
 
@@ -443,8 +443,8 @@ static int operands_extract_modrm(_CodeInfo* ci,
 					rm += EX_GPR_BASE;
 				}
 
-				if (effAdrSz == Decode64Bits) op->index = (uint8_t)(_REGS64_BASE + rm);
-				else op->index = (uint8_t)(_REGS32_BASE + rm);
+				if (effAdrSz == Decode64Bits) op->index = (uint8_t)(REGS64_BASE + rm);
+				else op->index = (uint8_t)(REGS32_BASE + rm);
 			}
 
 			if (mod == 1) {
@@ -757,10 +757,10 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 				 */
 				ps->usedPrefixes |= INST_PRE_REX;
 				op->index = (uint8_t)operands_fix_8bit_rex_base(reg + ((vrex & PREFIX_EX_R) ? EX_GPR_BASE : 0));
-			} else op->index = (uint8_t)(_REGS8_BASE + reg);
+			} else op->index = (uint8_t)(REGS8_BASE + reg);
 		break;
 		case OT_REG16:
-			operands_set_tsi(op, O_REG, 16, _REGS16_BASE + reg);
+			operands_set_tsi(op, O_REG, 16, REGS16_BASE + reg);
 		break;
 		case OT_REG_FULL:
 			switch (effOpSz)
@@ -771,18 +771,18 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 						ps->usedPrefixes |= INST_PRE_REX;
 						reg += EX_GPR_BASE;
 					}
-					operands_set_tsi(op, O_REG, 16, _REGS16_BASE + reg);
+					operands_set_tsi(op, O_REG, 16, REGS16_BASE + reg);
 				break;
 				case Decode32Bits:
 					if (vrex & PREFIX_EX_R) {
 						ps->usedPrefixes |= INST_PRE_REX;
 						reg += EX_GPR_BASE;
 					} else ps->usedPrefixes |= INST_PRE_OP_SIZE;
-					operands_set_tsi(op, O_REG, 32, _REGS32_BASE + reg);
+					operands_set_tsi(op, O_REG, 32, REGS32_BASE + reg);
 				break;
 				case Decode64Bits: /* rex must be presented. */
 					ps->usedPrefixes |= INST_PRE_REX;
-					operands_set_tsi(op, O_REG, 64, _REGS64_BASE + reg + ((vrex & PREFIX_EX_R) ? EX_GPR_BASE : 0));
+					operands_set_tsi(op, O_REG, 64, REGS64_BASE + reg + ((vrex & PREFIX_EX_R) ? EX_GPR_BASE : 0));
 				break;
 			}
 		break;
@@ -791,7 +791,7 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 				ps->usedPrefixes |= INST_PRE_REX;
 				reg += EX_GPR_BASE;
 			}
-			operands_set_tsi(op, O_REG, 32, _REGS32_BASE + reg);
+			operands_set_tsi(op, O_REG, 32, REGS32_BASE + reg);
 		break;
 		case OT_REG32_64: /* Handle CVT's, MOVxX and MOVNTI instructions which could be extended to 64 bits registers with REX. */
 			if (vrex & PREFIX_EX_R) {
@@ -801,14 +801,14 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 
 			/* Is it a promoted instruction? (only INST_64BITS is set and REX isn't required.) */
 			if ((ci->dt == Decode64Bits) && ((instFlags & (INST_64BITS | INST_PRE_REX)) == INST_64BITS)) {
-				operands_set_tsi(op, O_REG, 64, _REGS64_BASE + reg);
+				operands_set_tsi(op, O_REG, 64, REGS64_BASE + reg);
 				break;
 			}
 			/* Give a chance to REX.W. Because if it was a promoted instruction we don't care about REX.W anyways. */
 			if (vrex & PREFIX_EX_W) {
 				ps->usedPrefixes |= INST_PRE_REX;
-				operands_set_tsi(op, O_REG, 64, _REGS64_BASE + reg);
-			} else operands_set_tsi(op, O_REG, 32, _REGS32_BASE + reg);
+				operands_set_tsi(op, O_REG, 64, REGS64_BASE + reg);
+			} else operands_set_tsi(op, O_REG, 32, REGS32_BASE + reg);
 		break;
 		case OT_FREG32_64_RM: /* Force decoding mode. Used for MOV CR(n)/DR(n) which defaults to 64 bits operand size in 64 bits. */
 			if (vrex & PREFIX_EX_B) {
@@ -816,14 +816,14 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 				rm += EX_GPR_BASE;
 			}
 
-			if (ci->dt == Decode64Bits) operands_set_tsi(op, O_REG, 64, _REGS64_BASE + rm);
-			else operands_set_tsi(op, O_REG, 32, _REGS32_BASE + rm);
+			if (ci->dt == Decode64Bits) operands_set_tsi(op, O_REG, 64, REGS64_BASE + rm);
+			else operands_set_tsi(op, O_REG, 32, REGS32_BASE + rm);
 		break;
 		case OT_MM: /* MMX register */
-			operands_set_tsi(op, O_REG, 64, _MMXREGS_BASE + reg);
+			operands_set_tsi(op, O_REG, 64, MMXREGS_BASE + reg);
 		break;
 		case OT_MM_RM: /* MMX register, this time from the RM field */
-			operands_set_tsi(op, O_REG, 64, _MMXREGS_BASE + rm);
+			operands_set_tsi(op, O_REG, 64, MMXREGS_BASE + rm);
 		break;
 		case OT_REGXMM0: /* Implicit XMM0 operand. */
 			reg = 0;
@@ -834,14 +834,14 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 				ps->usedPrefixes |= INST_PRE_REX;
 				reg += EX_GPR_BASE;
 			}
-			operands_set_tsi(op, O_REG, 128, _SSEREGS_BASE + reg);
+			operands_set_tsi(op, O_REG, 128, SSEREGS_BASE + reg);
 		break;
 		case OT_XMM_RM: /* SSE register, this time from the RM field */
 			if (vrex & PREFIX_EX_B) {
 				ps->usedPrefixes |= INST_PRE_REX;
 				rm += EX_GPR_BASE;
 			}
-			operands_set_tsi(op, O_REG, 128, _SSEREGS_BASE + rm);
+			operands_set_tsi(op, O_REG, 128, SSEREGS_BASE + rm);
 		break;
 		case OT_CREG:
 			/*
@@ -865,7 +865,7 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 			op->type = O_REG;
 			if (ci->dt == Decode64Bits) op->size = 64;
 			else op->size = 32;
-			op->index = (uint8_t)(_CREGS_BASE + reg);
+			op->index = (uint8_t)(CREGS_BASE + reg);
 		break;
 		case OT_DREG:
 			/*
@@ -877,13 +877,13 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 			op->type = O_REG;
 			if (ci->dt == Decode64Bits) op->size = 64;
 			else op->size = 32;
-			op->index = (uint8_t)(_DREGS_BASE + reg);
+			op->index = (uint8_t)(DREGS_BASE + reg);
 		break;
 		case OT_SREG: /* Works with REG16 only! */
 			/* If lockableInstruction pointer is non-null we know it's the first operand. */
 			if (lockableInstruction && (reg == 1)) return FALSE; /* Can't MOV CS, <REG>. */
 			/*Don't parse if the reg exceeds the bounds of the array. */
-			if (reg <= SEG_REGS_MAX - 1) operands_set_tsi(op, O_REG, 16, _SREGS_BASE + reg);
+			if (reg <= SEG_REGS_MAX - 1) operands_set_tsi(op, O_REG, 16, SREGS_BASE + reg);
 			else return FALSE;
 		break;
 		case OT_SEG:
@@ -1029,14 +1029,14 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 
 		case OT_FPU_SI:
 			/* Low 3 bits specify the REG, similar to the MODR/M byte reg. */
-			operands_set_tsi(op, O_REG, 32, _FPUREGS_BASE + (*(ci->code-1) & 7));
+			operands_set_tsi(op, O_REG, 32, FPUREGS_BASE + (*(ci->code-1) & 7));
 		break;
 		case OT_FPU_SSI:
 			operands_set_tsi(op, O_REG, 32, R_ST0);
-			operands_set_tsi(op + 1, O_REG, 32, _FPUREGS_BASE + (*(ci->code-1) & 7));
+			operands_set_tsi(op + 1, O_REG, 32, FPUREGS_BASE + (*(ci->code-1) & 7));
 		break;
 		case OT_FPU_SIS:
-			operands_set_tsi(op, O_REG, 32, _FPUREGS_BASE + (*(ci->code-1) & 7));
+			operands_set_tsi(op, O_REG, 32, FPUREGS_BASE + (*(ci->code-1) & 7));
 			operands_set_tsi(op + 1, O_REG, 32, R_ST0);
 		break;
 
@@ -1058,7 +1058,7 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 			} else if (ps->prefixExtType == PET_REX) {
 				ps->usedPrefixes |= INST_PRE_REX;
 				op->index = (uint8_t)operands_fix_8bit_rex_base(reg);
-			} else op->index = (uint8_t)(_REGS8_BASE + reg);
+			} else op->index = (uint8_t)(REGS8_BASE + reg);
 		break;
 		case OT_IB_R_FULL:
 			reg = *(ci->code-1) & 7;
@@ -1070,14 +1070,14 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 						ps->usedPrefixes |= INST_PRE_REX;
 						reg += EX_GPR_BASE;
 					}
-					operands_set_tsi(op, O_REG, 16, _REGS16_BASE + reg);
+					operands_set_tsi(op, O_REG, 16, REGS16_BASE + reg);
 				break;
 				case Decode32Bits:
 					if (vrex & PREFIX_EX_B) {
 						ps->usedPrefixes |= INST_PRE_REX;
 						reg += EX_GPR_BASE;
 					} else ps->usedPrefixes |= INST_PRE_OP_SIZE;
-					operands_set_tsi(op, O_REG, 32, _REGS32_BASE + reg);
+					operands_set_tsi(op, O_REG, 32, REGS32_BASE + reg);
 				break;
 				case Decode64Bits:
 					/*
@@ -1094,7 +1094,7 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 						ps->usedPrefixes |= INST_PRE_REX;
 						reg += (vrex & PREFIX_EX_B) ? EX_GPR_BASE : 0;
 					}
-					operands_set_tsi(op, O_REG, 64, _REGS64_BASE + reg);
+					operands_set_tsi(op, O_REG, 64, REGS64_BASE + reg);
 				break;
 			}
 		break;
@@ -1216,7 +1216,7 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 			}
 		break;
 		case OT_VXMM:
-			operands_set_tsi(op, O_REG, 128, _SSEREGS_BASE + vexV);
+			operands_set_tsi(op, O_REG, 128, SSEREGS_BASE + vexV);
 		break;
 		case OT_XMM_IMM:
 			ci->codeLen -= sizeof(int8_t);
@@ -1224,14 +1224,14 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 
 			if (ci->dt == Decode32Bits) reg = (*ci->code >> 4) & 0x7;
 			else reg = (*ci->code >> 4) & 0xf;
-			operands_set_tsi(op, O_REG, 128, _SSEREGS_BASE + reg);
+			operands_set_tsi(op, O_REG, 128, SSEREGS_BASE + reg);
 
 			ci->code += sizeof(int8_t);
 		break;
 		case OT_YXMM:
 			if (vrex & PREFIX_EX_R) reg += EX_GPR_BASE;
-			if (ps->vrex & PREFIX_EX_L) operands_set_tsi(op, O_REG, 256, _AVXREGS_BASE + reg);
-			else operands_set_tsi(op, O_REG, 128, _SSEREGS_BASE + reg);
+			if (ps->vrex & PREFIX_EX_L) operands_set_tsi(op, O_REG, 256, AVXREGS_BASE + reg);
+			else operands_set_tsi(op, O_REG, 128, SSEREGS_BASE + reg);
 		break;
 		case OT_YXMM_IMM:
 			ci->codeLen -= sizeof(int8_t);
@@ -1240,26 +1240,26 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 			if (ci->dt == Decode32Bits) reg = (*ci->code >> 4) & 0x7;
 			else reg = (*ci->code >> 4) & 0xf;
 
-			if (ps->vrex & PREFIX_EX_L) operands_set_tsi(op, O_REG, 256, _AVXREGS_BASE + reg);
-			else operands_set_tsi(op, O_REG, 128, _SSEREGS_BASE + reg);
+			if (ps->vrex & PREFIX_EX_L) operands_set_tsi(op, O_REG, 256, AVXREGS_BASE + reg);
+			else operands_set_tsi(op, O_REG, 128, SSEREGS_BASE + reg);
 
 			ci->code += sizeof(int8_t);
 		break;
 		case OT_YMM:
 			if (vrex & PREFIX_EX_R) reg += EX_GPR_BASE;
-			operands_set_tsi(op, O_REG, 256, _AVXREGS_BASE + reg);
+			operands_set_tsi(op, O_REG, 256, AVXREGS_BASE + reg);
 		break;
 		case OT_VYMM:
-			operands_set_tsi(op, O_REG, 256, _AVXREGS_BASE + vexV);
+			operands_set_tsi(op, O_REG, 256, AVXREGS_BASE + vexV);
 		break;
 		case OT_VYXMM:
-			if (ps->vrex & PREFIX_EX_L) operands_set_tsi(op, O_REG, 256, _AVXREGS_BASE + vexV);
-			else operands_set_tsi(op, O_REG, 128, _SSEREGS_BASE + vexV); 
+			if (ps->vrex & PREFIX_EX_L) operands_set_tsi(op, O_REG, 256, AVXREGS_BASE + vexV);
+			else operands_set_tsi(op, O_REG, 128, SSEREGS_BASE + vexV); 
 		break;
 		case OT_WREG32_64:
 			if (vrex & PREFIX_EX_R) reg += EX_GPR_BASE;
-			if (ps->vrex & PREFIX_EX_W) operands_set_tsi(op, O_REG, 64, _REGS64_BASE + reg);
-			else operands_set_tsi(op, O_REG, 32, _REGS32_BASE + reg);
+			if (ps->vrex & PREFIX_EX_W) operands_set_tsi(op, O_REG, 64, REGS64_BASE + reg);
+			else operands_set_tsi(op, O_REG, 32, REGS32_BASE + reg);
 		break;
 		default: return FALSE;
 	}

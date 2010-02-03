@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #define CONFIG_H
 
 /* diStorm version number. */
-#define __DISTORMV__ 0x010000
+#define __DISTORMV__ 0x030000
 
 #include <string.h> /* strlen, memset, memcpy - can be easily self implemented for libc independency. */
 
@@ -151,11 +151,11 @@ static _INLINE_ uint32_t RULONG(const uint8_t *s)
 }
 static _INLINE_ int64_t RLLONG(const uint8_t *s)
 {
-	return s[0] | (s[1] << 8) | (s[2] << 16) | (s[3] << 24) | (s[4] << 32) | (s[5] << 40) | (s[6] << 48) | (s[7] << 56);
+	return s[0] | (s[1] << 8) | (s[2] << 16) | (s[3] << 24) | ((uint64_t)s[4] << 32) | ((uint64_t)s[5] << 40) | ((uint64_t)s[6] << 48) | ((uint64_t)s[7] << 56);
 }
 static _INLINE_ uint64_t RULLONG(const uint8_t *s)
 {
-	return s[0] | (s[1] << 8) | (s[2] << 16) | (s[3] << 24) | (s[4] << 32) | (s[5] << 40) | (s[6] << 48) | (s[7] << 56);
+	return s[0] | (s[1] << 8) | (s[2] << 16) | (s[3] << 24) | ((uint64_t)s[4] << 32) | ((uint64_t)s[5] << 40) | ((uint64_t)s[6] << 48) | ((uint64_t)s[7] << 56);
 }
 #else
 /* Little endian macro's will just make the cast. */

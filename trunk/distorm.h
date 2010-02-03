@@ -124,7 +124,7 @@ typedef struct {
 		O_DISP: memory dereference with displacement only, instruction.disp.
 		O_SMEM: simple memory dereference with optional displacement (a single register memory dereference).
 		O_MEM: complex memory dereference (optional fields: s/i/b/disp).
-		O_PC: the absolute target address of a branch instruction (instruction.imm.addr).
+		O_PC: the relative address of a branch instruction (instruction.imm.addr).
 		O_PTR: the absolute target address of a far branch instruction (instruction.imm.ptr.seg/off).
 	*/
 	uint8_t type; /* _OperandType */
@@ -152,7 +152,7 @@ typedef struct {
 
 #define OPCODE_ID_NONE 0
 /* Instruction could not be disassembled. */
-#define FLAG_NOT_DECODABLE ((uint8_t)-1)
+#define FLAG_NOT_DECODABLE ((uint16_t)-1)
 /* The instruction locks memory access. */
 #define FLAG_LOCK (1 << 0)
 /* The instruction is prefixed with a REPNZ. */
@@ -167,19 +167,19 @@ typedef struct {
 /* No register was defined. */
 #define R_NONE ((uint8_t)-1)
 
-#define _REGS64_BASE (0)
-#define _REGS32_BASE (16)
-#define _REGS16_BASE (32)
-#define _REGS8_BASE (48)
-#define _REGS8_REX_BASE (64)
-#define _SREGS_BASE (68)
+#define REGS64_BASE (0)
+#define REGS32_BASE (16)
+#define REGS16_BASE (32)
+#define REGS8_BASE (48)
+#define REGS8_REX_BASE (64)
+#define SREGS_BASE (68)
 /* #define RIP 74 */
-#define _FPUREGS_BASE (75)
-#define _MMXREGS_BASE (83)
-#define _SSEREGS_BASE (91)
-#define _AVXREGS_BASE (107)
-#define _CREGS_BASE (123)
-#define _DREGS_BASE (132)
+#define FPUREGS_BASE (75)
+#define MMXREGS_BASE (83)
+#define SSEREGS_BASE (91)
+#define AVXREGS_BASE (107)
+#define CREGS_BASE (123)
+#define DREGS_BASE (132)
 
 /*
  * Operand Size or Adderss size are stored inside the flags:
@@ -212,9 +212,9 @@ typedef struct {
 	_OffsetType addr;
 	/* Size of the whole instruction. */
 	uint8_t size;
-	/* General flags of instruction, holds prefixes, if -1, instruction is invalid. */
+	/* General flags of instruction, holds prefixes and more, if FLAG_NOT_DECODABLE, instruction is invalid. */
 	uint16_t flags;
-	/* Segment information of memory indirection. */
+	/* Segment information of memory indirection, default segment, or overriden one, can be -1. */
 	uint8_t segment;
 	/* Used by ops[n].type == O_MEM. Base global register index (might be R_NONE), scale size (2/4/8), ignored for 0 or 1. */
 	uint8_t base, scale;
