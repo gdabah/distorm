@@ -54,7 +54,7 @@ typedef struct {
 		O_DISP: memory dereference with displacement only, instruction.disp.
 		O_SMEM: simple memory dereference with optional displacement (a single register memory dereference).
 		O_MEM: complex memory dereference (optional fields: s/i/b/disp).
-		O_PC: the absolute target address of a branch instruction (instruction.imm.addr).
+		O_PC: the relative address of a branch instruction (instruction.imm.addr).
 		O_PTR: the absolute target address of a far branch instruction (instruction.imm.ptr.seg/off).
 	*/
 	uint8_t type; /* _OperandType */
