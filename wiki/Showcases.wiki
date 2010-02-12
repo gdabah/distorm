@@ -18,10 +18,169 @@ ci.features = DF_NONE;
 distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
 }}}
 
-NOP
-INC EAX
-MOV EAX, 0x1
-MOV [EAX], AL
-MOV EDI, [EAX+0x12345678]
-MOV EDI, [EBP+EAX*4+0x12345678]
-JMP 0x105
+===NOP:===
+{{{
+		addr	0x0000000000000000
+		size	0x01
+		flags	0x00a0
+		segment	0xff
+		base	0xff
+		scale	0x00
+		dispSize	0x00
+		opcode	0x0067
++		ops	0x0012ff3a {type=0x00 index=0x00 size=0x0000 }	_Operand [4]
+		disp	0x0000000000000000
++		imm	{sbyte=0x00 byte=0x00 sword=0x0000 ...}	_Value
+		unusedPrefixesMask	0x0000
+		meta	0x08
+}}}
+
+===INC EAX:===
+{{{
+		addr	0x0000000000000000
+		size	0x01
+		flags	0x00a0
+		segment	0xff
+		base	0xff
+		scale	0x00
+		dispSize	0x00
+		opcode	0x000f
+-		ops	0x0012ff3a {type='' index='' size=0x0020 }	_Operand [4]
+-			[0x0]	{type='' index='' size=0x0020 }	_Operand
+				type	0x01
+				index	0x10
+				size	0x0020
++			[0x1]	{type=0x00 index=0x00 size=0x0000 }	_Operand
++			[0x2]	{type=0x00 index=0x00 size=0x0000 }	_Operand
++			[0x3]	{type=0x00 index=0x00 size=0x0000 }	_Operand
+		disp	0x0000000000000000
++		imm	{sbyte=0x00 byte=0x00 sword=0x0000 ...}	_Value
+		unusedPrefixesMask	0x0000
+		meta	0x08
+}}}
+
+===MOV EAX, 0x1:===
+{{{
+		addr	0x0000000000000000
+		size	0x05
+		flags	0x00a0
+		segment	0xff
+		base	0xff
+		scale	0x00
+		dispSize	0x00
+		opcode	0x002a
+-		ops	0x0012ff36 {type='' index='' size=0x0020 }	_Operand [4]
+-			[0x0]	{type='' index='' size=0x0020 }	_Operand
+				type	0x01
+				index	0x10
+				size	0x0020
+-			[0x1]	{type='' index=0x00 size=0x0020 }	_Operand
+				type	0x02
+				index	0x00
+				size	0x0020
++			[0x2]	{type=0x00 index=0x00 size=0x0000 }	_Operand
++			[0x3]	{type=0x00 index=0x00 size=0x0000 }	_Operand
+		disp	0x0000000000000000
++		imm	{sbyte='' byte='' sword=0x0001 ...}	_Value
+		unusedPrefixesMask	0x0000
+		meta	0x08
+
+}}}
+
+===MOV [EAX], AL:===
+{{{
+		addr	0x0000000000000000
+		size	0x02
+		flags	0x00a0
+		segment	0xc7
+		base	0xff
+		scale	0x00
+		dispSize	0x00
+		opcode	0x002a
+-		ops	0x0012ff3a {type='' index='' size=0x0008 }	_Operand [4]
+-			[0x0]	{type='' index='' size=0x0008 }	_Operand
+				type	0x06
+				index	0x10
+				size	0x0008
+-			[0x1]	{type='' index='0' size=0x0008 }	_Operand
+				type	0x01
+				index	0x30
+				size	0x0008
++		[0x2]	{type=0x00 index=0x00 size=0x0000 }	_Operand
++		[0x3]	{type=0x00 index=0x00 size=0x0000 }	_Operand
+		disp	0x0000000000000000
++		imm	{sbyte=0x00 byte=0x00 sword=0x0000 ...}	_Value
+		unusedPrefixesMask	0x0000
+		meta	0x08
+}}}
+
+===MOV EDI, [EAX+0x12345678]:===
+{{{
+		addr	0x0000000000000000
+		size	0x06
+		flags	0x00a0
+		segment	0xc7
+		base	0xff
+		scale	0x00
+		dispSize	0x20
+		opcode	0x002a
+-		ops	0x0012ff36 {type='' index='' size=0x0020 }	_Operand [4]
+-			[0x0]	{type='' index='' size=0x0020 }	_Operand
+				type	0x01
+				index	0x17
+				size	0x0020
+-			[0x1]	{type='' index='' size=0x0020 }	_Operand
+				type	0x06
+				index	0x10
+				size	0x0020
++		[0x2]	{type=0x00 index=0x00 size=0x0000 }	_Operand
++		[0x3]	{type=0x00 index=0x00 size=0x0000 }	_Operand
+		disp	0x0000000012345678
++		imm	{sbyte=0x00 byte=0x00 sword=0x0000 ...}	_Value
+		unusedPrefixesMask	0x0000
+		meta	0x08
+}}}
+
+===MOV EDI, [EBP+EAX*4+0x12345678]:===
+{{{
+		addr	0x0000000000000000
+		size	0x07
+		flags	0x00a0
+		segment	0xc6
+		base	0x15
+		scale	0x04
+		dispSize	0x20
+		opcode	0x002a
+-		ops	0x0012ff36 {type='' index='' size=0x0020 }	_Operand [4]
+-			[0x0]	{type='' index='' size=0x0020 }	_Operand
+				type	0x01
+				index	0x17
+				size	0x0020
+-			[0x1]	{type='' index='' size=0x0020 }	_Operand
+				type	0x07
+				index	0x10
+				size	0x0020
++		[0x2]	{type=0x00 index=0x00 size=0x0000 }	_Operand
++		[0x3]	{type=0x00 index=0x00 size=0x0000 }	_Operand
+		disp	0x0000000012345678
++		imm	{sbyte=0x00 byte=0x00 sword=0x0000 ...}	_Value
+		unusedPrefixesMask	0x0000
+		meta	0x08
+}}}
+
+===JMP 0x105:===
+{{{
+		addr	0x0000000000000000
+		size	0x05
+		flags	0x00a0
+		segment	0xff
+		base	0xff
+		scale	0x00
+		dispSize	0x00
+		opcode	0x0053
++		ops	0x0012ff36 {type='' index=0x00 size=0x0020 }	_Operand [4]
+		disp	0x0000000000000000
++		imm	{sbyte=0x00 byte=0x00 sword=0x0100 ...}	_Value
+		unusedPrefixesMask	0x0000
+		meta	0x0c
+}}}
