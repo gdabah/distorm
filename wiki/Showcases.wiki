@@ -114,7 +114,7 @@ distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
 		meta	0x08
 }}}
 
-===MOV EDI, ![EAX+0x12345678]:===
+===MOV EDI, [EAX+0x12345678]:===
 {{{
 		addr	0x0000000000000000
 		size	0x06
@@ -141,7 +141,7 @@ distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
 		meta	0x08
 }}}
 
-===MOV EDI, ![EBP+EAX*4+0x12345678]:===
+===MOV EDI, [EBP+EAX*4+0x12345678]:===
 {{{
 		addr	0x0000000000000000
 		size	0x07
