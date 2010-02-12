@@ -87,7 +87,7 @@ distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
 
 }}}
 
-===MOV [EAX], AL:===
+===MOV [ EAX ], AL:===
 {{{
 		addr	0x0000000000000000
 		size	0x02
