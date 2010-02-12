@@ -28,7 +28,7 @@ distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
 		scale	0x00
 		dispSize	0x00
 		opcode	0x0067
-+		ops	0x0012ff3a {type=0x00 index=0x00 size=0x0000 }	_Operand [4]
++		ops
 		disp	0x0000000000000000
 +		imm	{sbyte=0x00 byte=0x00 sword=0x0000 ...}	_Value
 		unusedPrefixesMask	0x0000
@@ -45,7 +45,7 @@ distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
 		scale	0x00
 		dispSize	0x00
 		opcode	0x000f
--		ops	0x0012ff3a {type='' index='' size=0x0020 }	_Operand [4]
+-		ops:
 -			[0x0]	{type='' index='' size=0x0020 }	_Operand
 				type	0x01
 				index	0x10
@@ -69,7 +69,7 @@ distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
 		scale	0x00
 		dispSize	0x00
 		opcode	0x002a
--		ops	0x0012ff36 {type='' index='' size=0x0020 }	_Operand [4]
+-		ops:
 -			[0x0]	{type='' index='' size=0x0020 }	_Operand
 				type	0x01
 				index	0x10
@@ -97,7 +97,7 @@ distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
 		scale	0x00
 		dispSize	0x00
 		opcode	0x002a
--		ops	0x0012ff3a {type='' index='' size=0x0008 }	_Operand [4]
+-		ops:
 -			[0x0]	{type='' index='' size=0x0008 }	_Operand
 				type	0x06
 				index	0x10
@@ -114,7 +114,7 @@ distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
 		meta	0x08
 }}}
 
-===MOV EDI, [EAX+0x12345678]:===
+===MOV EDI, ![EAX+0x12345678]:===
 {{{
 		addr	0x0000000000000000
 		size	0x06
@@ -124,7 +124,7 @@ distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
 		scale	0x00
 		dispSize	0x20
 		opcode	0x002a
--		ops	0x0012ff36 {type='' index='' size=0x0020 }	_Operand [4]
+-		ops:
 -			[0x0]	{type='' index='' size=0x0020 }	_Operand
 				type	0x01
 				index	0x17
@@ -141,7 +141,7 @@ distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
 		meta	0x08
 }}}
 
-===MOV EDI, [EBP+EAX*4+0x12345678]:===
+===MOV EDI, ![EBP+EAX*4+0x12345678]:===
 {{{
 		addr	0x0000000000000000
 		size	0x07
@@ -151,7 +151,7 @@ distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
 		scale	0x04
 		dispSize	0x20
 		opcode	0x002a
--		ops	0x0012ff36 {type='' index='' size=0x0020 }	_Operand [4]
+-		ops:
 -			[0x0]	{type='' index='' size=0x0020 }	_Operand
 				type	0x01
 				index	0x17
@@ -178,7 +178,7 @@ distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
 		scale	0x00
 		dispSize	0x00
 		opcode	0x0053
-+		ops	0x0012ff36 {type='' index=0x00 size=0x0020 }	_Operand [4]
++		ops
 		disp	0x0000000000000000
 +		imm	{sbyte=0x00 byte=0x00 sword=0x0100 ...}	_Value
 		unusedPrefixesMask	0x0000
