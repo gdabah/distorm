@@ -1,0 +1,27 @@
+#summary Structure Output Showcases
+
+Here I'm going to show a few samples of the input and output of the new diStorm interface. This should give you a good idea of how to use the structures and what they contain. Note that the default decoding mode is 32 bits, unless specificed otherwise.
+
+The following snippet shows how I called diStorm to decompose a single instruction:
+{{{
+_DInst decodedInstructions[1];
+unsigned int decodedInstructionsCount = 0;
+_DecodeType dt = Decode32Bits;
+unsigned char buf[] = "\x90";
+
+_CodeInfo ci;
+ci.code = buf;
+ci.codeLen = sizeof(buf);
+ci.codeOffset = 0;
+ci.dt = dt;
+ci.features = DF_NONE;
+distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
+}}}
+
+NOP
+INC EAX
+MOV EAX, 0x1
+MOV [EAX], AL
+MOV EDI, [EAX+0x12345678]
+MOV EDI, [EBP+EAX*4+0x12345678]
+JMP 0x105
