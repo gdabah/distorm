@@ -199,6 +199,14 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 			case O_IMM:
 				/* If the instruction is 'push', show explicit size (except byte imm). */
 				if (di->opcode == I_PUSH && di->ops[i].size != 8) distorm_format_size(str, di, i);
+				/* Special fix for negative sign extended immediates. */
+				if ((di->flags & FLAG_IMM_SIGNED) && (di->ops[i].size == 8)) {
+					if (di->imm.sbyte < 0) {
+						chrcat_WS(str, MINUS_DISP_CHR);
+						str_code_hb(str, -di->imm.sbyte);
+						break;
+					}
+				}
 				if (di->ops[i].size == 64) str_code_hqw(str, (uint8_t*)&di->imm.qword);
 				else str_code_hdw(str, di->imm.dword);
 			break;
