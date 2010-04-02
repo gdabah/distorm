@@ -218,7 +218,7 @@ class Instructions:
         Set("68", ["PUSH"], [OPT.IMM_FULL], IFlag._64BITS)
         Set("69", ["IMUL"], [OPT.REG_FULL, OPT.RM_FULL, OPT.IMM_FULL], IFlag.MODRM_REQUIRED)
         Set("6a", ["PUSH"], [OPT.SEIMM8], IFlag.PRE_OP_SIZE | IFlag._64BITS)
-        Set("6b", ["IMUL"], [OPT.REG_FULL, OPT.RM_FULL, OPT.IMM8], IFlag.MODRM_REQUIRED)
+        Set("6b", ["IMUL"], [OPT.REG_FULL, OPT.RM_FULL, OPT.SEIMM8], IFlag.MODRM_REQUIRED)
         # V 1.5.14 - String instructions aren't supposed to be promoted automatically in 64bits, only with a REX prefix.
         # In 64 bits INS/OUTS still supports only 8/16/32 bits.
         Set("6c", ["INS"], [OPT.REGI_EDI, OPT.REGDX], IFlag.PRE_REPNZ | IFlag.PRE_REP)
