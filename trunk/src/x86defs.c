@@ -28,12 +28,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 _InstInfo II_arpl = {INT_INFO, ISC_INTEGER << 3, OT_REG16, OT_RM16, I_ARPL, INST_MODRM_REQUIRED};
 /*
- * MOVSXD is now being decoded properly, definition was incorrect.
- * AMD64: movsxd Gv, Ed
- * Intel: movsxd Gv, Ev
- * Decided on: (OT_REG_FULL, OT_RM_FULL)
+ * MOVSXD:
+ * This is the worst defined instruction ever. It has so many variations.
+ * I decided after a third review, to make it like MOVSXD RAX, EAX when there IS a REX.W.
+ * Otherwise it will be MOVSXD EAX, EAX, which really zero extends to RAX.
+ * Completely ignoring DB 0x66, which is possible by the docs, BTW.
  */
-_InstInfoEx II_movsxd = {INT_INFO, ISC_INTEGER << 3, OT_RM_FULL, OT_REG_FULL, I_MOVSXD, INST_MODRM_REQUIRED | INST_PRE_REX | INST_64BITS, 0, OT_NONE, OT_NONE, 0, 0};
+_InstInfoEx II_movsxd = {INT_INFO, ISC_INTEGER << 3, OT_RM32, OT_REG32_64, I_MOVSXD, INST_MODRM_REQUIRED | INST_PRE_REX | INST_64BITS, 0, OT_NONE, OT_NONE, 0, 0};
 
 _InstInfo II_nop = {INT_INFO, ISC_INTEGER << 3, OT_NONE, OT_NONE, I_NOP, INST_FLAGS_NONE};
 
