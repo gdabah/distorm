@@ -1,11 +1,11 @@
 #!/bin/bash
 
 #
-# instpython.sh, Install .so into Python2.3 Library
+# instpython.sh, Install .so into Python2.6 Library
 #
 
 #
-# Check for libdistorm64.so in given Directory
+# Check for libdistorm3.so in given Directory
 #
 
 if [ ! -f libdistorm64.dylib ]; then
@@ -17,14 +17,14 @@ fi
 # Copy it
 #
 
-cp libdistorm64.so /System/Library/Frameworks/Python.framework/Versions/Current/lib/python2.5/lib-dynload/distorm.so 2> /dev/null
+cp libdistorm3.so /System/Library/Frameworks/Python.framework/Versions/Current/lib/python2.6/lib-dynload/distorm3.so 2> /dev/null
 
 #
 # Everything went well?
 #
 
 if [ $? == 1 ]; then
-	echo "*** Error: Unable to copy libdistorm64.so to /System/Library/Frameworks/Python.framework/Versions/Current/lib/python2.5/lib-dynload, Permission denied?"
+	echo "*** Error: Unable to copy libdistorm3.so to /System/Library/Frameworks/Python.framework/Versions/Current/lib/python2.6/lib-dynload, Permission denied?"
 	exit 0
 fi
 
