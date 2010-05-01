@@ -8,8 +8,8 @@
 # Check for libdistorm3.so in given Directory
 #
 
-if [ ! -f libdistorm64.dylib ]; then
-	echo "*** Error: Can't find libdistorm64.dylib!"
+if [ ! -f libdistorm3.dylib ]; then
+	echo "*** Error: Can't find libdistorm3.dylib!"
 	exit 0
 fi
 
