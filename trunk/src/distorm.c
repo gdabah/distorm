@@ -31,11 +31,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #include "../mnemonics.h"
 
 
-/* C LIBRARY EXPORTS */
+/* C DLL EXPORTS */
 #ifdef SUPPORT_64BIT_OFFSET
-	_DecodeResult distorm_decompose64(const _CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount)
+	_DLLEXPORT_ _DecodeResult distorm_decompose64(const _CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount)
 #else
-	_DecodeResult distorm_decompose32(const _CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount)
+	_DLLEXPORT_ _DecodeResult distorm_decompose32(const _CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount)
 #endif
 {
 	if (usedInstructionsCount == NULL) {
