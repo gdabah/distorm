@@ -132,8 +132,9 @@
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
+				WarnAsError="true"
 				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 				CompileAs="1"
 			/>
 			<Tool
@@ -197,7 +198,7 @@
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="false"
 				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN32;NDEBU;_DLL;_LIB"
+				PreprocessorDefinitions="WIN32;NDEBUG;_DLL;_LIB;SUPPORT_64BIT_OFFSET"
 				StringPooling="true"
 				MinimalRebuild="true"
 				ExceptionHandling="1"
@@ -220,7 +221,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="..\..\distorm64.dll"
+				OutputFile="..\..\distorm3.dll"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -300,7 +301,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="..\..\distorm64.dll"
+				OutputFile="..\..\distorm3.dll"
 				TargetMachine="17"
 			/>
 			<Tool

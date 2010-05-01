@@ -382,7 +382,7 @@ typedef enum {ONT_NONE = -1, ONT_1 = 0, ONT_2 = 1, ONT_3 = 2, ONT_4 = 3} _Operan
 
 typedef struct {
 	uint8_t type;
-	uint8_t meta; /* Hi nibble=Instruction set class | Lo nibble=flow control flags */
+	uint8_t meta; /* Hi 5 bits = Instruction set class | Lo 3 bits = flow control flags */
 	uint8_t s, d; /* OpType */
 	uint16_t opcodeId;
 	_iflags flags;
@@ -402,7 +402,7 @@ typedef struct {
  */
 typedef struct {
 	uint8_t type;
-	uint8_t meta; /* Hi 3 bits = Instruction set class | Lo 5 bits = flow control flags */
+	uint8_t meta; /* Hi 5 bits = Instruction set class | Lo 3 bits = flow control flags */
 	uint8_t s, d; /* OpType */
 	uint16_t opcodeId;
 	_iflags flags;
