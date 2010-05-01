@@ -20,16 +20,20 @@ __all__ = [
 ]
 
 from ctypes import *
+from os.path import split, join
 
 #==============================================================================
 # Load the diStorm DLL
 
 # Guess the DLL filename and load the library.
+_distorm_path = split(__file__)[0]
 try:
-    _distorm = cdll.LoadLibrary('distorm3.dll')
+    _distorm_file = join(_distorm_path, 'distorm3.dll')
+    _distorm = cdll.LoadLibrary(_distorm_file)
 except OSError:
     try:
-        _distorm = cdll.LoadLibrary('libdistorm3.so')
+        _distorm_file = join(_distorm_path, 'libdistorm3.so')
+        _distorm = cdll.LoadLibrary(_distorm_file)
     except OSError:
         raise ImportError("Error loading distorm")
 
@@ -85,7 +89,7 @@ class _DecodedInst (Structure):
 Decode16Bits    = 0     # 80286 decoding
 Decode32Bits    = 1     # IA-32 decoding
 Decode64Bits    = 2     # AMD64 decoding
-OffsetTypeSize  = sizeof(_OffsetType) * 8
+OffsetTypeSize  = sizeof(_OffsetType)
 
 Mnemonics = ["ADD", "PUSH", "POP", "OR", "ADC", "SBB", "AND", "DAA", "SUB", "DAS", "XOR", "AAA", "CMP", "AAS", 
 "INC", "DEC", "PUSHA", "POPA", "BOUND", "ARPL", "IMUL", "INS", "OUTS", "JO", "JNO", "JB", "JAE", 
@@ -319,51 +323,3 @@ def Decode(offset, code, type = Decode32Bits):
     @raise ValueError: Invalid arguments.
     """
     return list( DecodeGenerator(offset, code, type) )
-
-#==============================================================================
-# Example code
-
-if __name__ == '__main__':
-    import sys
-    import optparse
-
-    # Parse the command line arguments
-    usage  = 'Usage: %prog [--b16 | --b32 | --b64] filename [offset]'
-    parser = optparse.OptionParser(usage=usage)
-    parser.add_option(  '--b16', help='80286 decoding',
-                        action='store_const', dest='dt', const=Decode16Bits  )
-    parser.add_option(  '--b32', help='IA-32 decoding [default]',
-                        action='store_const', dest='dt', const=Decode32Bits  )
-    parser.add_option(  '--b64', help='AMD64 decoding',
-                        action='store_const', dest='dt', const=Decode64Bits  )
-    parser.set_defaults(dt=Decode32Bits)
-    options, args = parser.parse_args(sys.argv)
-    if len(args) < 2:
-        parser.error('missing parameter: filename')
-    filename = args[1]
-    offset   = 0
-    length   = None
-    if len(args) == 3:
-        try:
-            offset = int(args[2], 10)
-        except ValueError:
-            parser.error('invalid offset: %s' % args[2])
-        if offset < 0:
-            parser.error('invalid offset: %s' % args[2])
-    elif len(args) > 3:
-        parser.error('too many parameters')
-
-    # Read the code from the file
-    try:
-        code = open(filename, 'rb').read()
-    except Exception as e:
-        parser.error('error reading file %s: %s' % (filename, e))
-
-    # Print each decoded instruction
-    try:
-        generator = DecodeGenerator
-    except NameError:
-        generator = Decode
-    iterable = generator(offset, code, options.dt)
-    for (offset, size, instruction, hexdump) in iterable:
-        print("%.8x: %-32s %s" % (offset, hexdump, instruction))
