@@ -36,7 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 /* TINYC has a problem with some 64bits library functions, so pass. */
 #ifndef __TINYC__
-	#ifndef _LIB /* Used only for library. */
+	#ifndef LIBDISTORM /* Used only for library. */
 		/* Comment out the following line to disable 64 bits support */
 		#define SUPPORT_64BIT_OFFSET
 	#endif
@@ -347,7 +347,7 @@ typedef struct {
 /* Return code of the decoding function. */
 typedef enum {DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, DECRES_FILTERED} _DecodeResult;
 
-#ifndef _LIB /* Don't redefine those exports when compiling the library itself, only for library-user project. */
+#ifndef LIBDISTORM /* Don't redefine those exports when compiling the library itself, only for library-user project. */
 
 /* distorm_decode
  * Input:
@@ -392,7 +392,7 @@ typedef enum {DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, DE
  */
 extern unsigned int distorm_version();
 
-#endif /* _LIB */
+#endif /* LIBDISTORM */
 
 #ifdef __cplusplus
 } /* End Of Extern */
