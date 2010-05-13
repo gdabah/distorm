@@ -28,14 +28,21 @@ from os.path import split, join
 # Guess the DLL filename and load the library.
 _distorm_path = split(__file__)[0]
 try:
+    # Give a try for Windows.
     _distorm_file = join(_distorm_path, 'distorm3.dll')
     _distorm = cdll.LoadLibrary(_distorm_file)
 except OSError:
     try:
+        # Linux
         _distorm_file = join(_distorm_path, 'libdistorm3.so')
         _distorm = cdll.LoadLibrary(_distorm_file)
     except OSError:
-        raise ImportError("Error loading distorm")
+        try:
+            # Mac
+            _distorm_file = join(_distorm_path, 'libdistorm3.dylib')
+            _distorm = cdll.LoadLibrary(_distorm_file)
+        except OSError:
+            raise ImportError("Error loading distorm")
 
 # Get the decode C function (try 64 bits version first, only then 32 bits).
 SUPPORT_64BIT_OFFSET = False
