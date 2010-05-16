@@ -1,5 +1,6 @@
 # :[diStorm3}: Python binding
 # Based on diStorm64 Python binding by Mario Vilas
+# Initial support for decompose API added by Roee Shenberg
 # Changed license to GPLv3.
 
 info = (
@@ -12,6 +13,8 @@ __revision__ = "$Id: distorm.py 186 2010-05-01 14:20:41Z gdabah $"
 __all__ = [
     'Decode',
     'DecodeGenerator',
+    'Decompose',
+    'DecomposeGenerator',
     'Decode16Bits',
     'Decode32Bits',
     'Decode64Bits',
@@ -81,6 +84,15 @@ class _WString (Structure):
         ('p',       c_char * MAX_TEXT_SIZE),
     ]
 
+class _CodeInfo (Structure):
+    _fields_ = [
+        ('codeOffset',  _OffsetType),
+        ('code',        c_char_p),
+        ('codeLen',     c_int),
+        ('dt',          c_byte),
+        ('features',    c_uint),
+        ]
+
 class _DecodedInst (Structure):
     _fields_ = [
         ('mnemonic',        _WString),
@@ -89,6 +101,71 @@ class _DecodedInst (Structure):
         ('size',            c_uint),
         ('offset',          _OffsetType),
     ]
+
+# _OperandType enum
+_OperandType = c_ubyte
+
+O_NONE = 0
+O_REG  = 1
+O_IMM  = 2
+O_IMM1 = 3 
+O_IMM2 = 4
+O_DISP = 5
+O_SMEM = 6
+O_MEM  = 7
+O_PC   = 8
+O_PTR  = 9
+
+class _Operand (Structure):
+    _fields_ = [
+        ('type',  c_ubyte), # of type _OperandType
+        ('index', c_ubyte),
+        ('size',  c_uint16),
+    ]
+    
+class _ex (Structure):
+    _fields_ = [
+        ('i1', c_uint32),
+        ('i2', c_uint32),
+    ]
+class _ptr (Structure):
+    _fields_ = [
+        ('seg', c_uint16),
+        ('off', c_uint32),
+    ]
+
+class _Value (Union):
+    _fields_ = [
+        ('sbyte', c_byte),
+        ('byte', c_ubyte),
+        ('sword', c_int16),
+        ('word', c_uint16),
+        ('sdword', c_int32),
+        ('dword', c_uint32),
+        ('sqword', c_int64),
+        ('qword', c_uint64),
+        ('addr', _OffsetType),
+        ('ptr', _ptr),
+        ('ex', _ex),
+        ]
+    
+class _DInst (Structure):
+    _fields_ = [
+        ('addr',  _OffsetType),
+        ('size', c_ubyte),
+        ('flags',  c_uint16), # -1 if invalid. See C headers for more info
+        ('segment', c_ubyte),
+        ('base', c_ubyte),    # base register for indirections
+        ('scale', c_ubyte),   # ignore for values 0, 1 (other valid values - 2,4,8)
+        ('dispSize', c_ubyte),
+        ('opcode', c_uint16),  # look up in opcode table
+        ('ops', _Operand*4),
+        ('disp', c_uint64),    # displacement. size is according to dispSize
+        ('imm', _Value),
+        ('unusedPrefixesMask', c_uint16),        
+        ('meta', c_ubyte), # meta flags - instruction set class, etc. See C headers again...
+    ]
+
 
 #==============================================================================
 # diStorm Python interface
@@ -229,6 +306,30 @@ Registers = ["RAX", "RCX", "RDX", "RBX", "RSP", "RBP", "RSI", "RDI", "R8", "R9",
 "CR0", "", "CR2", "CR3", "CR4", "", "", "", "CR8",
 "DR0", "DR1", "DR2", "DR3", "", "", "DR6", "DR7"]
 
+# Special case
+R_NONE = 0xFF # -1 in uint8
+
+
+FLAGS = [
+# The instruction locks memory access. 
+"FLAG_LOCK",
+# The instruction is prefixed with a REPNZ. 
+"FLAG_REPNZ",
+# The instruction is prefixed with a REP, this can be a REPZ, it depends on the specific instruction. 
+"FLAG_REP",
+# Indicates there is a hint taken for Jcc instructions only. 
+"FLAG_HINT_TAKEN",
+# Indicates there is a hint non-taken for Jcc instructions only. 
+"FLAG_HINT_NOT_TAKEN",
+# The Imm value is signed extended. 
+"FLAG_IMM_SIGNED",
+]
+
+# Instruction could not be disassembled. Special-case handling
+FLAG_NOT_DECODABLE = 0xFFFF # -1 in uint16 
+
+
+
 def DecodeGenerator(codeOffset, code, dt):
     """
     @type  codeOffset: long
@@ -330,3 +431,352 @@ def Decode(offset, code, type = Decode32Bits):
     @raise ValueError: Invalid arguments.
     """
     return list( DecodeGenerator(offset, code, type) )
+
+OPERAND_NONE = ""
+OPERAND_IMMEDIATE = "Immediate"
+OPERAND_REGISTER = "Register"
+
+# the operand is a memory address
+OPERAND_RELATIVE_MEMORY = "RelativeMemory" # The address calculated is relative to ip/eip/rip
+OPERAND_ABSOLUTE_MEMORY = "AbsoluteMemory" # The address calculated is absolute
+OPERAND_FAR_MEMORY = "FarMemory" # like absolute but with selector/segment specified too
+
+InstructionSetClasses = [
+"ISC_UNKNOWN",
+# Indicates the instruction belongs to the General Integer set. 
+"ISC_INTEGER",
+# Indicates the instruction belongs to the 387 FPU set. 
+"ISC_FPU",
+# Indicates the instruction belongs to the P6 set. 
+"ISC_P6",
+# Indicates the instruction belongs to the MMX set. 
+"ISC_MMX",
+# Indicates the instruction belongs to the SSE set. 
+"ISC_SSE",
+# Indicates the instruction belongs to the SSE2 set. 
+"ISC_SSE2",
+# Indicates the instruction belongs to the SSE3 set. 
+"ISC_SSE3",
+# Indicates the instruction belongs to the SSSE3 set. 
+"ISC_SSSE3",
+# Indicates the instruction belongs to the SSE4.1 set. 
+"ISC_SSE4_1",
+# Indicates the instruction belongs to the SSE4.2 set. 
+"ISC_SSE4_2",
+# Indicates the instruction belongs to the AMD's SSE4.A set. 
+"ISC_SSE4_A",
+# Indicates the instruction belongs to the 3DNow! set. 
+"ISC_3DNOW",
+# Indicates the instruction belongs to the 3DNow! Extensions set. 
+"ISC_3DNOWEXT",
+# Indicates the instruction belongs to the VMX (Intel) set. 
+"ISC_VMX",
+# Indicates the instruction belongs to the SVM (AMD) set. 
+"ISC_SVM",
+# Indicates the instruction belongs to the AVX (Intel) set. 
+"ISC_AVX",
+# Indicates the instruction belongs to the FMA (Intel) set. 
+"ISC_FMA",
+# Indicates the instruction belongs to the AES/AVX (Intel) set. 
+"ISC_AES",
+# Indicates the instruction belongs to the CLMUL (Intel) set. 
+"ISC_CLMUL",
+]
+
+FlowControlFlags = [
+# Indicates the instruction is not a flow-control instruction.
+"FC_NONE",
+# Indicates the instruction is one of: CALL, CALL FAR.
+"FC_CALL",
+# Indicates the instruction is one of: RET, IRET, RETF.
+"FC_RET",
+# Indicates the instruction is one of: SYSCALL, SYSRET, SYSENTER, SYSEXIT.
+"FC_SYS",
+# Indicates the instruction is one of: JMP, JMP FAR.
+"FC_BRANCH",
+# Indicates the instruction is one of:
+# JCXZ, JO, JNO, JB, JAE, JZ, JNZ, JBE, JA, JS, JNS, JP, JNP, JL, JGE, JLE, JG, LOOP, LOOPZ, LOOPNZ.
+"FC_COND_BRANCH",
+# Indiciates the instruction is one of: INT, INT1, INT 3, INTO, UD2. */
+"FC_INT",
+]
+
+def _getISC(metaflags):
+    realvalue = ((metaflags >> 3) & 0x1f)
+    return InstructionSetClasses[realvalue]
+
+def _getFC(metaflags):    
+    realvalue = (metaflags & 0x7)
+    try:
+        return FlowControlFlags[realvalue]
+    except IndexError:
+        print "Bad meta-flags: %d", realvalue
+        raise
+
+def _getMnem(opcode):
+    return Mnemonics[opcode - 1]
+
+def _unsignedToSigned64(val):
+    return val if val < 0x8000000000000000 else (val - 0x10000000000000000)
+
+def _unsignedToSigned32(val):
+    return val if val < 0x80000000 else (val - 0x10000000)
+
+if SUPPORT_64BIT_OFFSET:
+    _unsignedToSigned = _unsignedToSigned64
+else:
+    _unsignedToSigned = _unsignedToSigned32
+
+class Instruction (object):
+    def __init__(self, di):
+        "Expects a filled _DInst structure"
+        self.opcode = di.opcode
+        self.operands = []
+        self.flags = []
+        self.instructionClass = _getISC(0)
+        self.flowControl = _getFC(0)
+        self.address = di.addr
+        self.size = di.size
+        self.valid = False
+
+        flags = di.flags
+        
+        if flags == FLAG_NOT_DECODABLE:
+            self.mnemonic = 'DB'
+            self.flags = ['FLAG_NOT_DECODABLE']
+            return
+
+        # TODO: perhaps make the validation better
+        self.valid = True        
+
+        self.mnemonic = _getMnem(self.opcode)        
+        
+        # decompose the flags for a valid opcode
+        # TODO: stop ignoring the size here (important for memory writes/reads)
+        for index, flag in enumerate(FLAGS):
+            if (flags & (1 << index)) != 0:
+                self.flags.append(flag)
+
+        # read the operands
+        # TODO: move into a method for clarity's sake
+        for operand in di.ops:
+            if operand.type == O_NONE:
+                continue
+            else:
+                # an single operand can be up to: reg1 + reg2*scale + constant
+                reg1 = ''
+                reg2 = ''
+                scale_reg2 = 1
+                constant = 0 # displacement or immediate
+                op_type = OPERAND_NONE
+                if operand.type == O_IMM:
+                    op_type = OPERAND_IMMEDIATE
+                    if ("FLAG_IMM_SIGNED" in self.flags):
+                        # immediate is sign-extended, do your thing
+                        if (operand.size == 8):
+                            constant = di.imm.sbyte
+                        elif (operand.size == 16):
+                            constant = di.imm.sword
+                        elif (operand.size == 32):
+                            constant = di.imm.sdword
+                        elif (operand.size == 64):
+                            constant = di.imm.sqword
+                        else:
+                            raise ValueError("Bad operand size: %d" % operand.size)
+                    else:
+                        # immediate is zero-extended
+                        if (operand.size == 8):
+                            constant = di.imm.byte
+                        elif (operand.size == 16):
+                            constant = di.imm.word
+                        elif (operand.size == 32):
+                            constant = di.imm.dword
+                        elif (operand.size == 64):
+                            constant = di.imm.qword
+                        else:
+                            raise ValueError("Bad operand size: %d" % operand.size)
+
+                # TODO: check out correct sign-extension behavior? which opcodes actually use IMM1/2?
+                elif operand.type == O_IMM1:
+                    op_type = OPERAND_IMMEDIATE
+                    constant = di.imm.ex.im1
+                elif operand.type == O_IMM2:
+                    op_type = OPERAND_IMMEDIATE
+                    constant = di.imm.ex.im2
+                elif operand.type == O_REG:
+                    op_type = OPERAND_REGISTER
+                    reg1 = Registers[operand.index]
+                elif operand.type == O_MEM:
+                    op_type = OPERAND_ABSOLUTE_MEMORY
+                    reg1_index = di.base
+                    if R_NONE != reg1_index:
+                        reg1 = Registers[reg1_index]
+                    reg2_index = operand.index
+                    if R_NONE != reg2_index:
+                        reg2 = Registers[reg2_index]
+                        # didn't check for validity (only 2,4,8 are valid, didn't make sure value is in range, only >1)
+                        scale_reg2 = di.scale if di.scale > 1 else 1
+                    constant = di.disp
+                elif operand.type == O_SMEM:
+                    op_type = OPERAND_ABSOLUTE_MEMORY
+                    reg2 = Registers[operand.index]
+                    # didn't check for validity
+                    scale_reg2 = di.scale if di.scale > 1 else 1
+                    constant = di.disp
+                elif operand.type == O_DISP:
+                    op_type = OPERAND_RELATIVE_MEMORY
+                    constant = di.disp
+                elif operand.type == O_PC:
+                    # no dereference involved, it's an immediate you add to ip/eip/rip
+                    op_type = OPERAND_IMMEDIATE
+                    constant = _unsignedToSigned(di.imm.addr)
+                elif operand.type == O_PTR:
+                    op_type = OPERAND_FAR_MEMORY
+                    constant = di.imm.ptr.off
+                    #TODO: handle segment information!
+                else:
+                    raise ValueError("Unknown operand type encountered: %d!" % operand.type)
+                # done decoding the operand. add tuple to operand list
+                self.operands.append((reg1, reg2, scale_reg2, constant, op_type))
+
+            # decode the meta-flags
+            metas = di.meta
+            self.instructionClass = _getISC(metas)
+            self.flowControl = _getFC(metas)
+
+    def _operandToText(self, operand):
+        operand_type = operand[4]
+        if operand_type == OPERAND_NONE:
+            return ""
+        elif operand_type == OPERAND_IMMEDIATE:
+            if (self.flowControl == "FC_CALL") or (self.flowControl == "FC_BRANCH"):
+                return hex(operand[3] + self.address + self.size)
+            return hex(operand[3]) # constant only in case of immediate
+        elif operand_type == OPERAND_REGISTER:
+            return operand[0]
+        elif operand_type == OPERAND_RELATIVE_MEMORY:
+            return '[%s]' % hex(operand[3] + self.address + self.size)
+        elif (operand_type == OPERAND_ABSOLUTE_MEMORY) or \
+            (operand_type == OPERAND_FAR_MEMORY): # TODO: for now far gets the same handling as absolute
+            baseRegister = operand[0]
+            indexRegister = operand[1]
+            scale = operand[2]
+            constant = operand[3]
+            result = []
+        
+            if baseRegister != "":
+                result.append(baseRegister)
+                
+            if indexRegister != "":
+                if scale > 1:
+                    result.append("%s*%d" % (indexRegister, scale))
+                else:
+                    result.append(indexRegister)
+
+            if constant != 0:             
+                result.append(hex(constant))
+            
+            return "[%s]" % (" + ".join(result))
+        
+    def _toText(self):
+        opcodeFmt = "%-10s %s"
+        paramsText = ", ".join(map(self._operandToText, self.operands))
+        return opcodeFmt % (self.mnemonic, paramsText)
+                            
+    def __str__(self):
+        return self._toText()
+
+
+                
+def DecomposeGenerator(codeOffset, code, dt):
+    """
+    @type  codeOffset: long
+    @param codeOffset: Memory address where the code is located.
+        This is B{not} an offset into the code!
+        It's the actual memory address where it was read from.
+
+    @type  code: str
+    @param code: Code to disassemble.
+
+    @type  dt: int
+    @param dt: Disassembly type. Can be one of the following:
+
+         * L{Decode16Bits}: 80286 decoding
+
+         * L{Decode32Bits}: IA-32 decoding
+
+         * L{Decode64Bits}: AMD64 decoding
+
+    @rtype:  generator of TODO
+    @return: Generator of TODO
+
+    @raise ValueError: Invalid arguments.
+    """
+
+    if not code:
+        return
+
+    if not codeOffset:
+        codeOffset = 0
+
+    if dt not in (Decode16Bits, Decode32Bits, Decode64Bits):
+        raise ValueError("Invalid decode type value: %r" % (dt,))
+
+    codeLen         = len(code)
+    code            = create_string_buffer(code)
+    p_code          = addressof(code)
+    result          = (_DInst * MAX_INSTRUCTIONS)()
+    p_result        = byref(result)
+    codeInfo = _CodeInfo(_OffsetType(codeOffset), p_code, codeLen, dt, 0)
+
+    while codeLen > 0:
+
+        usedInstructionsCount = c_uint(0)
+        status = internal_decompose(byref(codeInfo),
+                     p_result, MAX_INSTRUCTIONS, byref(usedInstructionsCount))
+        if status == DECRES_INPUTERR:
+            raise ValueError("Invalid arguments passed to distorm_decode()")
+
+        used = usedInstructionsCount.value
+        if not used:
+            break
+
+        delta = 0
+        for index in xrange(used):
+            di   = result[index]
+            
+            delta += di.size
+            yield Instruction(di)
+
+        if delta <= 0:
+            break
+        codeOffset = codeOffset + delta
+        p_code     = p_code + delta
+        codeLen    = codeLen - delta
+
+def Decompose(offset, code, type = Decode32Bits):
+    """
+    @type  offset: long
+    @param offset: Memory address where the code is located.
+        This is B{not} an offset into the code!
+        It's the actual memory address where it was read from.
+
+    @type  code: str
+    @param code: Code to disassemble.
+
+    @type  type: int
+    @param type: Disassembly type. Can be one of the following:
+
+         * L{Decode16Bits}: 80286 decoding
+
+         * L{Decode32Bits}: IA-32 decoding
+
+         * L{Decode64Bits}: AMD64 decoding
+
+    @rtype:  TODO
+    @return: TODO
+    @raise ValueError: Invalid arguments.
+    """
+    return list( DecomposeGenerator(offset, code, type) )
+
+
