@@ -420,30 +420,32 @@ _DecodeResult decode_internal(const _CodeInfo* _ci, int supportOldIntr, _DInst r
 			 * Also take into consideration of flow control instruction filter.
 			 */
 			codeLen -= prefixSize;
-			if (((codeLen == 0) || (prefixSize == INST_MAXIMUM_SIZE)) && (~_ci->features & DF_RETURN_FC_ONLY)) {
-				/* Make sure there is enough room. */
-				if (nextPos + (ps.last - code) > maxResultCount) return DECRES_MEMORYERR;
+			if ((codeLen == 0) || (prefixSize == INST_MAXIMUM_SIZE)) {
+				if (~_ci->features & DF_RETURN_FC_ONLY) {
+					/* Make sure there is enough room. */
+					if (nextPos + (ps.last - code) > maxResultCount) return DECRES_MEMORYERR;
 
-				for (p = code; p < ps.last; p++, startInstOffset++) {
-					/* Use next entry. */
-					if (supportOldIntr) pdi = (_DInst*)((char*)result + nextPos * sizeof(_DecodedInst));
-					else pdi = &result[nextPos];
-					nextPos++;
-					memset(pdi, 0, sizeof(_DInst));
+					for (p = code; p < ps.last; p++, startInstOffset++) {
+						/* Use next entry. */
+						if (supportOldIntr) pdi = (_DInst*)((char*)result + nextPos * sizeof(_DecodedInst));
+						else pdi = &result[nextPos];
+						nextPos++;
+						memset(pdi, 0, sizeof(_DInst));
 
-					pdi->flags = FLAG_NOT_DECODABLE;
-					pdi->imm.byte = *p;
-					pdi->size = 1;
-					pdi->addr = startInstOffset;
+						pdi->flags = FLAG_NOT_DECODABLE;
+						pdi->imm.byte = *p;
+						pdi->size = 1;
+						pdi->addr = startInstOffset;
+					}
+					*usedInstructionsCount = nextPos; /* Include them all. */
 				}
-				*usedInstructionsCount = nextPos; /* Include them all. */
 				if (codeLen == 0) break; /* Bye bye, out of bytes. */
 			}
 			code += prefixSize;
 			codeOffset += prefixSize;
 
-			/* If we got only prefixes or we want only flow control instructions, continue to next instruction. */
-			if ((prefixSize == INST_MAXIMUM_SIZE) || (_ci->features & DF_RETURN_FC_ONLY)) continue;
+			/* If we got only prefixes continue to next instruction. */
+			if (prefixSize == INST_MAXIMUM_SIZE) continue;
 		}
 
 		/*
