@@ -1,0 +1,7 @@
+#summary Potential problems using a stream disassembler the user must know
+
+1) Keep on disassembling the next instruction correctly
+2) 'Return-flow-control-instructions-only' feature can misbehave
+3) Invalid code that contains only prefixes
+
+TBD
