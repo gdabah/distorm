@@ -107,7 +107,8 @@ typedef union {
 		/* Can be 16 or 32 bits, size is in ops[n].size. */
 		uint32_t off;
 	} ptr;
-	/* Used by O_IMM1 (i1) and O_IMM2 (i2). */
+
+	/* Used by O_IMM1 (i1) and O_IMM2 (i2). ENTER instruction only. */
 	struct {
 		uint32_t i1;
 		uint32_t i2;
@@ -235,7 +236,7 @@ typedef struct {
 	uint8_t meta;
 } _DInst;
 
-/* Static size of strings. Do not change this value. */
+/* Static size of strings. Do not change this value. Keep Python wrapper in sync. */
 #define MAX_TEXT_SIZE (32)
 typedef struct {
 	unsigned int length;
