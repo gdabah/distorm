@@ -435,8 +435,8 @@ OPERAND_IMMEDIATE = "Immediate"
 OPERAND_REGISTER = "Register"
 
 # the operand is a memory address
-OPERAND_RELATIVE_MEMORY = "RelativeMemory" # The address calculated is relative to ip/eip/rip
-OPERAND_ABSOLUTE_MEMORY = "AbsoluteMemory" # The address calculated is absolute
+OPERAND_ABSOLUTE_ADDRESS = "AbsoluteMemoryAddress" # The address calculated is absolute
+OPERAND_MEMORY = "AbsoluteMemory" # The address calculated uses registers expression
 OPERAND_FAR_MEMORY = "FarMemory" # like absolute but with selector/segment specified too
 
 InstructionSetClasses = [
@@ -515,15 +515,93 @@ def _getMnem(opcode):
     return Mnemonics[opcode - 1]
 
 def _unsignedToSigned64(val):
-    return val if val < 0x8000000000000000 else (val - 0x10000000000000000)
+    return int(val if val < 0x8000000000000000 else (val - 0x10000000000000000))
 
 def _unsignedToSigned32(val):
-    return val if val < 0x80000000 else (val - 0x10000000)
+    return int(val if val < 0x80000000 else (val - 0x10000000))
 
 if SUPPORT_64BIT_OFFSET:
     _unsignedToSigned = _unsignedToSigned64
 else:
     _unsignedToSigned = _unsignedToSigned32
+
+class Operand (object):
+    def __init__(self, type, *args):
+        self._type = type
+        self._index = None
+        self._name = ""
+        self._size = 0
+        self._value = 0
+        self._disp = 0
+        self._dispSize = 0
+        self._base = 0
+        if type == OPERAND_IMMEDIATE:
+            self._value = int(args[0])
+            self._size = args[1]
+        elif type == OPERAND_REGISTER:
+            self._index = args[0]
+            self._size = args[1]
+            self._name = Registers[self._index]
+        elif type == OPERAND_MEMORY:
+            self._base = args[0] if args[0] != R_NONE else None
+            self._index = args[1]
+            self._size = args[2]
+            self._scale = args[3] if args[3] > 1 else 1
+            self._disp = int(args[4])
+            self._dispSize = args[5]
+        elif type == OPERAND_ABSOLUTE_ADDRESS:
+            self._size = args[0]
+            self._disp = int(args[1])
+            self._dispSize = args[2]
+        elif type == OPERAND_FAR_MEMORY:
+            self._seg = args[0]
+            self._off = args[1]
+
+    def GetType(self):
+        return self._type
+    def GetValue(self):
+        return self._value
+    def GetIndex(self):
+        return self._index
+    def GetName(self):
+        return self._name
+    def GetSize(self):
+        return self._size
+    def GetDisplacement(self):
+        return self._disp
+    def GetDisplacementSize(self):
+        return self._dispSize
+    def GetExpression(self):
+        return ""
+
+    def _toText(self):
+        if self._type == OPERAND_IMMEDIATE:
+            if self._value >= 0:
+                return "0x%x" % self._value
+            else:
+                return "-0x%x" % abs(self._value)
+        elif self._type == OPERAND_REGISTER:
+            return self.GetName()
+        elif self._type == OPERAND_ABSOLUTE_ADDRESS:
+            return '[0x%x]' % self._disp
+        elif self._type == OPERAND_FAR_MEMORY:
+            return '%s:%s' % (hex(self._seg), hex(self._off))
+        elif (self._type == OPERAND_MEMORY):
+            result = "["
+            if self._base != None:
+                result += Registers[self._base] + "+"
+            if self._index != None:
+                result += Registers[self._index]
+                if self._scale > 1:
+                    result += "*%d" % self._scale
+            if self._disp >= 0:
+                result += "+0x%x" % self._disp
+            else:
+                result += "-0x%x" % abs(self._disp)
+            return result + "]"
+    def __str__(self):
+        return self._toText()
+
 
 class Instruction (object):
     def __init__(self, di):
@@ -537,11 +615,13 @@ class Instruction (object):
         self.size = di.size
         flags = di.flags
 
+        self.valid = False
         if flags == FLAG_NOT_DECODABLE:
             self.mnemonic = 'DB 0x%02x' % (di.imm.byte)
             self.flags = ['FLAG_NOT_DECODABLE']
             return
 
+        self.valid = True
         self.mnemonic = _getMnem(self.opcode)
 
         # decompose the flags for a valid opcode
@@ -552,104 +632,45 @@ class Instruction (object):
         # read the operands
         for operand in di.ops:
             if operand.type != O_NONE:
-                self.operands.append(self._extractOperand(operand))
+                self.operands.append(self._extractOperand(di, operand))
 
         # decode the meta-flags
         metas = di.meta
         self.instructionClass = _getISC(metas)
         self.flowControl = _getFC(metas)
 
-    def _extractOperand(self):
+    def _extractOperand(self, di, operand):
         # a single operand can be up to: reg1 + reg2*scale + constant
-        reg1 = ''
-        reg2 = ''
-        scale_reg2 = 1
-        constant = 0 # displacement or immediate
-        op_type = OPERAND_NONE
         if operand.type == O_IMM:
-            op_type = OPERAND_IMMEDIATE
             if ("FLAG_IMM_SIGNED" in self.flags):
                 # immediate is sign-extended, do your thing. it's already signed, just make it Python-signed.
                 constant = _unsignedToSigned(di.imm.sqword)
             else:
                 # immediate is zero-extended, though it's already aligned.
                 constant = di.imm.qword
+            return Operand(OPERAND_IMMEDIATE, constant, operand.size)
         elif operand.type == O_IMM1: # first operand for ENTER
-            op_type = OPERAND_IMMEDIATE
-            constant = di.imm.ex.im1
+            return Operand(OPERAND_IMMEDIATE, di.imm.ex.im1, operand.size)
         elif operand.type == O_IMM2: # second operand for ENTER
-            op_type = OPERAND_IMMEDIATE
-            constant = di.imm.ex.im2
+            return Operand(OPERAND_IMMEDIATE, di.imm.ex.im2, operand.size)
         elif operand.type == O_REG:
-            op_type = OPERAND_REGISTER
-            reg1 = Registers[operand.index]
+            return Operand(OPERAND_REGISTER, operand.index, operand.size)
         elif operand.type == O_MEM:
-            op_type = OPERAND_ABSOLUTE_MEMORY
-            reg1_index = di.base
-            if R_NONE != reg1_index:
-                reg1 = Registers[reg1_index]
-            reg2_index = operand.index
-            if R_NONE != reg2_index:
-                reg2 = Registers[reg2_index]
-                scale_reg2 = di.scale if di.scale > 1 else 1
-            constant = di.disp
+            return Operand(OPERAND_MEMORY, di.base, operand.index, operand.size, di.scale, _unsignedToSigned(di.disp), di.dispSize)
         elif operand.type == O_SMEM:
-            op_type = OPERAND_ABSOLUTE_MEMORY
-            reg2 = Registers[operand.index]
-            scale_reg2 = di.scale if di.scale > 1 else 1
-            constant = di.disp
+            return Operand(OPERAND_MEMORY, None, operand.index, operand.size, di.scale, _unsignedToSigned(di.disp), di.dispSize)
         elif operand.type == O_DISP:
-            op_type = OPERAND_RELATIVE_MEMORY
-            constant = di.disp
+            return Operand(OPERAND_ABSOLUTE_ADDRESS, operand.size, di.disp, di.dispSize)
         elif operand.type == O_PC:
-            op_type = OPERAND_IMMEDIATE
-            constant = _unsignedToSigned(di.imm.addr)
+            return Operand(OPERAND_IMMEDIATE, _unsignedToSigned(di.imm.addr) + self.address + self.size, operand.size)
         elif operand.type == O_PTR:
-            op_type = OPERAND_FAR_MEMORY
-            constant = di.imm.ptr.off
-            #TODO: handle segment information!
+            return Operand(OPERAND_FAR_MEMORY, di.imm.ptr.seg, di.imm.ptr.off, operand.size)
         else:
             raise ValueError("Unknown operand type encountered: %d!" % operand.type)
-        # done decoding the operand. add tuple to operand list
-        self.operands.append((reg1, reg2, scale_reg2, constant, op_type))
-
-    def _operandToText(self, operand):
-        operand_type = operand[4]
-        if operand_type == OPERAND_NONE:
-            return ""
-        elif operand_type == OPERAND_IMMEDIATE:
-            if (self.flowControl == "FC_CALL") or (self.flowControl == "FC_BRANCH"):
-                return hex(operand[3] + self.address + self.size)
-            return hex(operand[3]) # constant only in case of immediate
-        elif operand_type == OPERAND_REGISTER:
-            return operand[0]
-        elif operand_type == OPERAND_RELATIVE_MEMORY:
-            return '[%s]' % hex(operand[3] + self.address + self.size)
-        elif (operand_type == OPERAND_ABSOLUTE_MEMORY) or \
-            (operand_type == OPERAND_FAR_MEMORY): # TODO: for now far gets the same handling as absolute
-            baseRegister = operand[0]
-            indexRegister = operand[1]
-            scale = operand[2]
-            constant = operand[3]
-            result = []
-
-            if baseRegister != "":
-                result.append(baseRegister)
-
-            if indexRegister != "":
-                if scale > 1:
-                    result.append("%s*%d" % (indexRegister, scale))
-                else:
-                    result.append(indexRegister)
-
-            if constant != 0:
-                result.append(hex(constant))
-
-            return "[%s]" % (" + ".join(result))
 
     def _toText(self):
         opcodeFmt = "%-10s %s"
-        paramsText = ", ".join(map(self._operandToText, self.operands))
+        paramsText = ", ".join(["%s" % i for i in self.operands])
         return opcodeFmt % (self.mnemonic, paramsText)
 
     def __str__(self):
