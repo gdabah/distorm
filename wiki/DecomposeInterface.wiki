@@ -2,11 +2,15 @@
 
 In this page I'm going to cover how to parse the Decompose output.
 
-Valid instructions
-Invalid instructions
-Basic fields
-Use macros
+The _DInst structure is very compact, is it designed to be as minimal as possible, knowing that diStorm is aimed for x86 and AMD64 helped in saving memory space.
 
+<i>A few *must-follow* rules for using the Decompose interface:</i>
+ # Always check that the returned instruction is valid first! Do that by comparing the 'flags' field to FLAG_NOT_DECODABLE.
+ # Access only fields that you know you are allowed to by the type of the operands. In the explanation below, every field indicates when it's set. Some fields are always set, and some are dependent on other fields.
+ # Always use the helper macros that are described along this page, in the future I might change some bits and bytes and it will break your software.
+ # The last rule applies to macros that define values as well rather than only 'functionality', like R_NONE. Always check that a register index is set, by comparing it to R_NONE. (For instance, if you compare it yourself to -1, you might get bogus results because of integer promotions).  
+
+Again, the following structure was designed specially for the x86 and AMD64 architectures, that's why some fields are global to the instruction although a more appropriate place for them should be inside the Operand structure. This is in order to spare bytes. For example, there's no reason to have an 'immediate' field in every operand, because the x86 defines that an instruction can have at most 1 immediate operand. (This is true except the ENTER instruction, you will find more information below about it).
 
 struct _DInst:
 
@@ -114,7 +118,7 @@ The FLAG_IMM_SIGNED is important if you want to know whether to treat the immedi
 ===Operands===
 
 ===Immediate===
-The 'immediate' field should be treated very carefully. If you will take a closer look it is defined as a _Value type, which looks like this:
+The 'immediate' field should be treated very carefully. If you take a closer look, you will notice it is defined as a _Value type, which defined as:
 {{{
 typedef union {
 	/* Used by O_IMM: */
@@ -144,3 +148,15 @@ typedef union {
 	} ex;
 } _Value;
 }}}
+
+*Important note:*
+As you can see, if the operand type is *O_IMM*, you can get the immediate value from the sbyte, byte, ..., sqword, qword. On first glance it looks intimidating. Let me explain, in most cases you want and should use the qword or sqword parts of the union. diStorm already *signed extends* the immediates to the size of 64 bits types. So stick to them, it will be much easier for you.
+Although, you can happily use the other union-fields for accessing the same immediate, if that suits, go ahead. That's why you have the size of the immediate stored in the operand.size field.
+
+Now let's talk about the ENTER instruction, it's the only instruction so far that has *two* immediates. Now, we surely don't want to allocate a whole _Value structure for a rare used instruction. And besides since the sizeof(_Value) is 8 bytes, we can surely squeeze in a 16 bits and 8 bits immeidates inside, and that's why I added the sub-structure 'ex'.
+So if you encounter an operand type of O_IMM1, it means you should read the immediate from 'imm.ex.i1', and 'imm.ex.i2' for O_IMM2.
+
+The O_PTR type is found only in instruction that access <i>far</i> memory, such as: JMP FAR, CALL FAR, etc. So to get both the segment/selector and the offset use 'imm.ptr.seg' and 'imm.ptr.off'.
+
+The O_PC type is found in branching instruction such as: JNZ, JB, JMP, CALL, etc. The value stored in the union is really the *relative offset* from the current instruction. Therefore if you want to calculate the *target* address of the branch, use the helper macro GET_TARGET_ADDR. In order to access the relative part solely, use 'imm.addr'. The size of the relative value is operand.size field.
+Note: in the past, before diStorm3 was official, the 'imm.addr' used to be the absolute target address, I might revert it in the future. And unfortunately, I can't recall why I did this change.
