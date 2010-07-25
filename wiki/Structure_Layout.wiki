@@ -2,6 +2,9 @@
 
 === diStorm3 Interface ===
 
+For more information look at [DecomposeInterface].
+In this page I gathered a quick reference of all the relevant structures.
+
 {{{
 /* Decodes modes of the disassembler, 16 bits or 32 bits or 64 bits for AMD64, x86-64. */
 typedef enum {Decode16Bits = 0, Decode32Bits = 1, Decode64Bits = 2} _DecodeType;
