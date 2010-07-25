@@ -23,6 +23,7 @@ struct _DInst:
  * Always set.
  * Very important to check this field before touching the other fields.
  * If it's set to FLAG_NOT_DECODABLE, the instruction is invalid.
+ * See [DecomposeInterface#Flags] for more information.
 
 <b>uint8_t segment;</b>
  * Set when one of the operands is of type O_SMEM, O_MEM, O_DISP.
@@ -54,6 +55,9 @@ struct _DInst:
  * For instance, if you want to check that a decomposed instruction is 'POP', then compare this field to I_POP. Basically add a prefix of "I_" to the upcased name of the instruction you want to check. You can see the whole list in the "mnemonics.h" file.
 
 <b>_Operand ops[OPERANDS_NO];</b>
+ * An array of 4 _Operand's.
+ * However, they might be empty.
+ * See [DecomposeInterface#Operands] for more information.
 
 <b>uint64_t disp;</b>
  * Set when one of the operands is of type O_SMEM, O_MEM, O_DISP and the instruction has a displacement.
@@ -61,6 +65,10 @@ struct _DInst:
  * Some instructions use a displacement of 0. I.E: MOV [EBP], EAX.
 
 <b>_Value imm;</b>
+ * Set when one of the operands is of type O_IMM, O_IMM1&O_IMM2, O_PTR, O_PC.
+ * The size of the immediate value itself is the Operand.size field.
+ * See [DecomposeInterface#The-Immediate-Field] for more information.
+
 <b>uint16_t unusedPrefixesMask;</b>
  * Always set.
  * This field indicates which of the prefixes of the instruction were unused.
@@ -68,11 +76,12 @@ struct _DInst:
  * Normally instructions *should not* have unused prefixes. It might mean that you disassemble invalid code (or data). Or it might mean you disassemble an aligning instruction such as: 0x66, 0x66, 0x90 to fill in a space of 3 bytes to round up to next multiple of 8/16, etc.
  * A quick check to see if the instruction has unused prefixes is 'unusedPrefixesMask != 0'.
  * So which prefixes are unused really? Since this field is a mask, the first bit denotes the first byte of the instruction, and so on, starting at 'addr' field. Basically use the following code:
-
+{{{
 for (int i = 0; i < sizeof(uint16_t); i++) {
  if (DecomposedInst.unusedPrefixesMask & (1 << i))
   printf("Unused prefix %02x at offset: %x\n", CodeBuffer[DecomposedInst.addr - StartCodeOffset + i], DecomposedInst.addr + i); 
 }
+}}}
 
 <b>uint8_t meta;</b>
  * Always set.
@@ -81,3 +90,10 @@ for (int i = 0; i < sizeof(uint16_t); i++) {
  * META_GET_ISC returns the Instruction-Set-Class type of the instruction. I.E: ISC_INTEGER, ISC_FPU, and many more. See distorm.h for the complete list.
  * META_GET_FC returns the Flow-Control type of the instruction. I.E: FC_CALL, FC_BRANCH and others. Usually it's FC_NONE. See the rest of them inside distorm.h.
  * The meta-FC is very useful for flow control analysis.
+
+
+#Flags The Flags - 
+
+#Operands The Operands -
+
+#Immediate The Immediate -
