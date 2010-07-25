@@ -1,0 +1,18 @@
+#summary Things you need to know in order to compile diStorm on your own
+
+TBD
+
+Compilation under Windows
+clib
+dll
+
+Compilation under Linux
+.so
+.ar
+
+Compilation macros, SUPPORT_64BIT_OFFSETS, LIBDISTORM.
+
+config.h:
+Little/big endianity
+Cross platform
+32/64 bits support
