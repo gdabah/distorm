@@ -95,11 +95,11 @@ typedef union {
 	uint16_t word;
 	int32_t sdword;
 	uint32_t dword;
-	int64_t sqword;
+	int64_t sqword; /* All immediates are SIGN-EXTENDED to 64 bits! */
 	uint64_t qword;
 
-	/* Used by O_PC: */
-	_OffsetType addr;
+	/* Used by O_PC: (Use GET_TARGET_ADDR).*/
+	_OffsetType addr; /* It's a relative offset as for now. */
 
 	/* Used by O_PTR: */
 	struct {
@@ -184,6 +184,9 @@ typedef struct {
 #define CREGS_BASE (123)
 #define DREGS_BASE (132)
 
+/* A helper macro to get the target address of a branching instruction. */
+#define GET_TARGET_ADDR(di) ((_OffsetType)(((di)->addr + (di)->imm.addr + (di)->size)))
+
 /*
  * Operand Size or Adderss size are stored inside the flags:
  * 0 - 16 bits
@@ -201,7 +204,7 @@ typedef struct {
 #define FLAG_GET_PREFIX(flags) ((flags) & 7)
 
 /*
- * Macros to extract segment registers from segmentInfo:
+ * Macros to extract segment registers from 'segment':
  */
 #define SEGMENT_DEFAULT 0x80
 #define SEGMENT_SET(di, seg) ((di->segment) |= seg)
@@ -217,7 +220,7 @@ typedef struct {
 	uint8_t size;
 	/* General flags of instruction, holds prefixes and more, if FLAG_NOT_DECODABLE, instruction is invalid. */
 	uint16_t flags;
-	/* Segment information of memory indirection, default segment, or overriden one, can be -1. */
+	/* Segment information of memory indirection, default segment, or overriden one, can be -1. Use SEGMENT macros. */
 	uint8_t segment;
 	/* Used by ops[n].type == O_MEM. Base global register index (might be R_NONE), scale size (2/4/8), ignored for 0 or 1. */
 	uint8_t base, scale;
@@ -258,6 +261,7 @@ typedef struct {
 
 /* Get the ISC of the instruction, used with the definitions below. */
 #define META_GET_ISC(meta) (((meta) >> 3) & 0x1f)
+#define META_SET_ISC(di, isc) (((di)->meta) |= ((isc) << 3))
 /* Get the flow control flags of the instruction, see 'features for decompose' below. */
 #define META_GET_FC(meta) ((meta) & 0x7)
 
