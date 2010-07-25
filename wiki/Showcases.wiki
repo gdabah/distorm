@@ -21,35 +21,35 @@ distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
 ===NOP:===
 {{{
 		addr	0x0000000000000000
-		size	0x01
+		size	0x01         ; 1 byte long instruction
 		flags	0x00a0
-		segment	0xff
-		base	0xff
+		segment	0xff         ; not set
+		base	0xff         ; not set
 		scale	0x00
 		dispSize	0x00
-		opcode	0x0067
+		opcode	0x0067       ; I_NOP
 +		ops
 		disp	0x0000000000000000
 +		imm	{sbyte=0x00 byte=0x00 sword=0x0000 ...}	_Value
 		unusedPrefixesMask	0x0000
-		meta	0x08
+		meta	0x08         ; META_GET_ISC(0x08): ISC_INTEGER
 }}}
 
 ===INC EAX:===
 {{{
 		addr	0x0000000000000000
-		size	0x01
-		flags	0x00a0
+		size	0x01         ; 1 byte long instruction
+		flags	0x00a0       ;
 		segment	0xff
 		base	0xff
 		scale	0x00
 		dispSize	0x00
-		opcode	0x000f
+		opcode	0x000f       ; I_INC
 -		ops:
 -			[0x0]	{type='' index='' size=0x0020 }	_Operand
-				type	0x01
-				index	0x10
-				size	0x0020
+				type	0x01         ; O_REG
+				index	0x10         ; R_EAX
+				size	0x0020       ; 32 bits register
 +			[0x1]	{type=0x00 index=0x00 size=0x0000 }	_Operand
 +			[0x2]	{type=0x00 index=0x00 size=0x0000 }	_Operand
 +			[0x3]	{type=0x00 index=0x00 size=0x0000 }	_Operand
@@ -62,22 +62,22 @@ distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
 ===MOV EAX, 0x1:===
 {{{
 		addr	0x0000000000000000
-		size	0x05
+		size	0x05        ; 5 bytes long instruction
 		flags	0x00a0
 		segment	0xff
 		base	0xff
 		scale	0x00
 		dispSize	0x00
-		opcode	0x002a
+		opcode	0x002a      ; I_MOV
 -		ops:
 -			[0x0]	{type='' index='' size=0x0020 }	_Operand
-				type	0x01
-				index	0x10
-				size	0x0020
+				type	0x01          ; O_REG
+				index	0x10          ; R_EAX
+				size	0x0020        ; 32 bits register
 -			[0x1]	{type='' index=0x00 size=0x0020 }	_Operand
-				type	0x02
-				index	0x00
-				size	0x0020
+				type	0x02          ; O_IMM
+				index	0x00          ; unused
+				size	0x0020        ; 32 bits immediate
 +			[0x2]	{type=0x00 index=0x00 size=0x0000 }	_Operand
 +			[0x3]	{type=0x00 index=0x00 size=0x0000 }	_Operand
 		disp	0x0000000000000000
@@ -90,22 +90,22 @@ distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
 ===MOV [ EAX ], AL:===
 {{{
 		addr	0x0000000000000000
-		size	0x02
+		size	0x02        ; 2 bytes long instruction
 		flags	0x00a0
-		segment	0xc7
+		segment	0xc7        ; SEGMENT_IS_DEFAULT(0xc7): TRUE, SEGMENT_GET(0xc7): R_DS
 		base	0xff
 		scale	0x00
 		dispSize	0x00
-		opcode	0x002a
+		opcode	0x002a      ; I_MOV
 -		ops:
 -			[0x0]	{type='' index='' size=0x0008 }	_Operand
-				type	0x06
-				index	0x10
-				size	0x0008
+				type	0x06          ; O_SMEM
+				index	0x10          ; R_EAX
+				size	0x0008        ; size of memory access is 8 bits
 -			[0x1]	{type='' index='0' size=0x0008 }	_Operand
-				type	0x01
-				index	0x30
-				size	0x0008
+				type	0x01          ; O_REG
+				index	0x30          ; R_AL
+				size	0x0008        ; 8 bits register
 +		[0x2]	{type=0x00 index=0x00 size=0x0000 }	_Operand
 +		[0x3]	{type=0x00 index=0x00 size=0x0000 }	_Operand
 		disp	0x0000000000000000
@@ -119,23 +119,23 @@ distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
 		addr	0x0000000000000000
 		size	0x06
 		flags	0x00a0
-		segment	0xc7
+		segment	0xc7        ; SEGMENT_IS_DEFAULT(0xc7): TRUE, SEGMENT_GET(0xc7): R_DS
 		base	0xff
 		scale	0x00
-		dispSize	0x20
+		dispSize	0x20   ; the size of the displacement value in bits is 32
 		opcode	0x002a
 -		ops:
 -			[0x0]	{type='' index='' size=0x0020 }	_Operand
-				type	0x01
-				index	0x17
-				size	0x0020
+				type	0x01            ; O_REG
+				index	0x17            ; R_EDI
+				size	0x0020          ; 32 bits register
 -			[0x1]	{type='' index='' size=0x0020 }	_Operand
-				type	0x06
-				index	0x10
-				size	0x0020
+				type	0x06            ; O_SMEM
+				index	0x10            ; R_EAX
+				size	0x0020          ; size of memory access is 32 bits
 +		[0x2]	{type=0x00 index=0x00 size=0x0000 }	_Operand
 +		[0x3]	{type=0x00 index=0x00 size=0x0000 }	_Operand
-		disp	0x0000000012345678
+		disp	0x0000000012345678              ; relative offset = 0x12345678 
 +		imm	{sbyte=0x00 byte=0x00 sword=0x0000 ...}	_Value
 		unusedPrefixesMask	0x0000
 		meta	0x08
@@ -146,23 +146,23 @@ distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
 		addr	0x0000000000000000
 		size	0x07
 		flags	0x00a0
-		segment	0xc6
-		base	0x15
-		scale	0x04
-		dispSize	0x20
-		opcode	0x002a
+		segment	0xc6           ; SEGMENT_IS_DEFAULT(0xc6): TRUE, SEGMENT_GET(0xc6): R_SS
+		base	0x15           ; base register: R_EBP
+		scale	0x04           ; scale: 4
+		dispSize	0x20   ; the size of the displacement value in bits is 32
+		opcode	0x002a         ; I_MOV
 -		ops:
 -			[0x0]	{type='' index='' size=0x0020 }	_Operand
-				type	0x01
-				index	0x17
-				size	0x0020
+				type	0x01      ; O_REG
+				index	0x17      ; R_EDI
+				size	0x0020    ; 32 bits register
 -			[0x1]	{type='' index='' size=0x0020 }	_Operand
-				type	0x07
-				index	0x10
-				size	0x0020
+				type	0x07      ; O_MEM
+				index	0x10      ; R_EAX
+				size	0x0020    ; size of memory access is 32 bits
 +		[0x2]	{type=0x00 index=0x00 size=0x0000 }	_Operand
 +		[0x3]	{type=0x00 index=0x00 size=0x0000 }	_Operand
-		disp	0x0000000012345678
+		disp	0x0000000012345678        ; relative offset is 0x12345678
 +		imm	{sbyte=0x00 byte=0x00 sword=0x0000 ...}	_Value
 		unusedPrefixesMask	0x0000
 		meta	0x08
@@ -177,10 +177,10 @@ distorm_decompose(&ci, decodedInstructions, 1, &decodedInstructionsCount);
 		base	0xff
 		scale	0x00
 		dispSize	0x00
-		opcode	0x0053
+		opcode	0x0053         ; I_JMP
 +		ops
 		disp	0x0000000000000000
 +		imm	{sbyte=0x00 byte=0x00 sword=0x0100 ...}	_Value
 		unusedPrefixesMask	0x0000
-		meta	0x0c
+		meta	0x0c           ; META_GET_ISC(0x0c): ISC_INTEGER, META_GET_FC(0x0c): FC_BRANCH
 }}}
