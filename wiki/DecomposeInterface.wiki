@@ -9,7 +9,7 @@ Use macros
 
 
 struct _DInst:
- 
+
 <b>_OffsetType addr;</b>
  * Always set.
  * The virtual address of the instruction.
@@ -62,9 +62,22 @@ struct _DInst:
 
 <b>_Value imm;</b>
 <b>uint16_t unusedPrefixesMask;</b>
+ * Always set.
+ * This field indicates which of the prefixes of the instruction were unused.
+ * There are two reasons as for why a prefix is unused, either because it didn't affect the decoding of the instruction. I.E: db 0x66; ADD AL, 1. The 0x66 (Operand Size) prefix doesn't affect the instruction in this case and therefore is unused. The other reason is when there are more than one prefix of the same type (see x86 documentation). I.E: db 0x2e, db 0x3e, MOV [EAX], AL. We tried to set a segment override twice, so only the last one (0x3e) is taken into account, the first one is unused.
+ * Normally instructions *should not* have unused prefixes. It might mean that you disassemble invalid code (or data). Or it might mean you disassemble an aligning instruction such as: 0x66, 0x66, 0x90 to fill in a space of 3 bytes to round up to next multiple of 8/16, etc.
+ * A quick check to see if the instruction has unused prefixes is 'unusedPrefixesMask != 0'.
+ * So which prefixes are unused really? Since this field is a mask, the first bit denotes the first byte of the instruction, and so on, starting at 'addr' field. Basically use the following code:
+
+for (int i = 0; i < sizeof(uint16_t); i++) {
+ if (DecomposedInst.unusedPrefixesMask & (1 << i))
+  printf("Unused prefix %02x at offset: %x\n", CodeBuffer[DecomposedInst.addr - StartCodeOffset + i], DecomposedInst.addr + i); 
+}
+
 <b>uint8_t meta;</b>
  * Always set.
  * This field holds meta information to the instruction.
  * It contains two sub-fields which should be extracted using the helper macros: META_GET_ISC, META_GET_FC.
  * META_GET_ISC returns the Instruction-Set-Class type of the instruction. I.E: ISC_INTEGER, ISC_FPU, and many more. See distorm.h for the complete list.
- * META_GET_FC returns the Flow-Control type of the instruction. I.E: FC_CALL, FC_BRANCH and others. Usually it's FC_NONE. See the rest of them inside distorm.h 
+ * META_GET_FC returns the Flow-Control type of the instruction. I.E: FC_CALL, FC_BRANCH and others. Usually it's FC_NONE. See the rest of them inside distorm.h.
+ * The meta-FC is very useful for flow control analysis.
