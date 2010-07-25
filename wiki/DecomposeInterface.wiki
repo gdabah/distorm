@@ -8,11 +8,15 @@ The _DInst structure is very compact, is it designed to be as minimal as possibl
  # Always check that the returned instruction is valid first! Do that by comparing the 'flags' field to FLAG_NOT_DECODABLE.
  # Access only fields that you know you are allowed to by the type of the operands. In the explanation below, every field indicates when it's set. Some fields are always set, and some are dependent on other fields.
  # Always use the helper macros that are described along this page, in the future I might change some bits and bytes and it will break your software.
- # The last rule applies to macros that define values as well rather than only 'functionality', like R_NONE. Always check that a register index is set, by comparing it to R_NONE. (For instance, if you compare it yourself to -1, you might get bogus results because of integer promotions).  
+ # The last rule applies to macros that define values too rather than only 'functionality', like R_NONE. Always check that a register index is set, by comparing it to R_NONE. (For instance, if you compare it yourself to -1, you might get bogus results because of integer promotions).
 
 Again, the following structure was designed specially for the x86 and AMD64 architectures, that's why some fields are global to the instruction although a more appropriate place for them should be inside the Operand structure. This is in order to spare bytes. For example, there's no reason to have an 'immediate' field in every operand, because the x86 defines that an instruction can have at most 1 immediate operand. (This is true except the ENTER instruction, you will find more information below about it).
 
-struct _DInst:
+General note:
+If you want to get the textual representation of either a register or an instruction. You should include 'mnemonics.h' in your project. And use GET_REGISTER_NAME to get the string for a given register index.
+Also, in the 'mnemonics.h' you will find other enum's that will aid your parsing, like all supported registers (R_EAX, R_DS, R_CR0, etc) and opcodes (I_MOV, I_ADD, I_CALL), etc.
+
+===struct _DInst:===
 
 <b>_OffsetType addr;</b>
  * Always set.
@@ -116,6 +120,46 @@ The first two are pretty self-explanatory, if you know what they mean :)
 The FLAG_IMM_SIGNED is important if you want to know whether to treat the immediate as a signed or unsigned integer (some instructions supply this information).
 
 ===Operands===
+ As we said earlier, the 'operands' field is an array of 4 operand structures. This is probably the most important information you would want to extract from an instruction.
+
+An operand is defined as:
+{{{
+typedef struct {
+	/* Type of operand:
+		O_NONE: operand is to be ignored.
+		O_REG: index holds global register index.
+		O_IMM: instruction.imm.
+		O_IMM1: instruction.imm.ex.i1.
+		O_IMM2: instruction.imm.ex.i2.
+		O_DISP: memory dereference with displacement only, instruction.disp.
+		O_SMEM: simple memory dereference with optional displacement (a single register memory dereference).
+		O_MEM: complex memory dereference (optional fields: s/i/b/disp).
+		O_PC: the relative address of a branch instruction (instruction.imm.addr).
+		O_PTR: the absolute target address of a far branch instruction (instruction.imm.ptr.seg/off).
+	*/
+	uint8_t type; /* _OperandType */
+
+	/* Index of:
+		O_REG: holds global register index
+		O_SMEM: holds the 'base' register. E.G: [ECX], [EBX+0x1234] are both in operand.index.
+		O_MEM: holds the 'index' register. E.G: [EAX*4] is in operand.index.
+	*/
+	uint8_t index;
+
+	/* Size of:
+		O_REG: register
+		O_IMM: instruction.imm
+		O_IMM1: instruction.imm.ex.i1
+		O_IMM2: instruction.imm.ex.i2
+		O_DISP: instruction.disp
+		O_SMEM: size of indirection.
+		O_MEM: size of indirection.
+		O_PC: size of the relative offset
+		O_PTR: size of instruction.imm.ptr.off (16 or 32)
+	*/
+	uint16_t size;
+} _Operand;
+}}}
 
 ===Immediate===
 The 'immediate' field should be treated very carefully. If you take a closer look, you will notice it is defined as a _Value type, which defined as:
@@ -128,7 +172,7 @@ typedef union {
 	uint16_t word;
 	int32_t sdword;
 	uint32_t dword;
-	int64_t sqword;
+	int64_t sqword; /* All immediates are SIGN-EXTENDED to 64 bits! */
 	uint64_t qword;
 
 	/* Used by O_PC: */
