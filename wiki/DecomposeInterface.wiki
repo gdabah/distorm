@@ -99,6 +99,7 @@ for (int i = 0; i < sizeof(uint16_t); i++) {
  * META_GET_FC returns the Flow-Control type of the instruction. I.E: FC_CALL, FC_BRANCH and others. Usually it's FC_NONE. See the rest of them inside distorm.h.
  * The meta-FC is very useful for flow control analysis.
 
+---
 
 ===Flags===
 The 'flags' field has a few more options, they are pretty advanced though, but nothing special.
@@ -167,6 +168,9 @@ I just wanted to note that I decided to have both O_SMEM and O_MEM separated. Si
 
 About the operand.size field, it describes the size of the object that the operand represents, it can be the size of the register if the type is O_REG. Or it can be the size of the memory dereference. I.E: {{{MOV [BX], EAX}}} - The destination is size is 32 bits. But the size of the register is 16 bits, though in such a case the size of the index is not specified and you should know it because you have the index of the register which says, R_BX. So practically, the size of the register when the type is O_REG is a bonus, because we just realized we can get this information by the index of the register.
 
+I hope it is clear that the order of operands is based on the order of this array.
+If the operand.type is O_NONE you can stop querying the operands in the array.
+
 ===Immediate===
 The 'immediate' field should be treated very carefully. If you take a closer look, you will notice it is defined as a _Value type, which defined as:
 {{{
@@ -210,3 +214,6 @@ The O_PTR type is found only in instruction that access <i>far</i> memory, such 
 
 The O_PC type is found in branching instruction such as: JNZ, JB, JMP, CALL, etc. The value stored in the union is really the *relative offset* from the current instruction. Therefore if you want to calculate the *target* address of the branch, use the helper macro GET_TARGET_ADDR. In order to access the relative part solely, use 'imm.addr'. The size of the relative value is operand.size field.
 Note: in the past, before diStorm3 was official, the 'imm.addr' used to be the absolute target address, I might revert it in the future. And unfortunately, I can't recall why I did this change.
+
+---
+Now that you read everything, you should take a look at [Showcases] and you will understand what's going on. You're ready to go, good luck.
