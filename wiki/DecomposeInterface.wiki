@@ -110,6 +110,7 @@ FLAG_GET_ADRSIZE returns the DecodeType (Decode16Bits, Decode32Bits or Decode64B
 It is important to understand the meaning of the two sizes:
 {{{MOV EAX, EBX}}} - operand size is 32 in both operands.
 {{{MOV [EAX], byte ptr 0}}} - operand size is 8 in both operands, however the size of the register that references the memory, EAX, is obviously 32 (or Decode32Bits).
+And one more thing about it, it's the effective operand/address size, rather than the input DecodeType you supply when calling the Decompose function (this can happen with prefixes for the instruction)!
 
 FLAG_GET_PREFIX returns the prefix of the instruction (FLAG_LOCK, FLAG_REPNZ, FLAG_REP).
 
@@ -126,40 +127,45 @@ An operand is defined as:
 {{{
 typedef struct {
 	/* Type of operand:
-		O_NONE: operand is to be ignored.
-		O_REG: index holds global register index.
-		O_IMM: instruction.imm.
-		O_IMM1: instruction.imm.ex.i1.
-		O_IMM2: instruction.imm.ex.i2.
-		O_DISP: memory dereference with displacement only, instruction.disp.
-		O_SMEM: simple memory dereference with optional displacement (a single register memory dereference).
-		O_MEM: complex memory dereference (optional fields: s/i/b/disp).
-		O_PC: the relative address of a branch instruction (instruction.imm.addr).
-		O_PTR: the absolute target address of a far branch instruction (instruction.imm.ptr.seg/off).
+	O_NONE: operand is to be ignored.
+	O_REG: index holds global register index.
+	O_IMM: instruction.imm.
+	O_IMM1: instruction.imm.ex.i1.
+	O_IMM2: instruction.imm.ex.i2.
+	O_DISP: memory dereference with displacement only, instruction.disp.
+	O_SMEM: simple memory dereference with optional displacement (a single register memory dereference).
+	O_MEM: complex memory dereference (optional fields: s/i/b/disp).
+	O_PC: the relative address of a branch instruction (instruction.imm.addr).
+	O_PTR: the absolute target address of a far branch instruction (instruction.imm.ptr.seg/off).
 	*/
 	uint8_t type; /* _OperandType */
 
 	/* Index of:
-		O_REG: holds global register index
-		O_SMEM: holds the 'base' register. E.G: [ECX], [EBX+0x1234] are both in operand.index.
-		O_MEM: holds the 'index' register. E.G: [EAX*4] is in operand.index.
+	O_REG: holds global register index
+	O_SMEM: holds the 'base' register. E.G: [ECX], [EBX+0x1234] are both in operand.index.
+	O_MEM: holds the 'index' register. E.G: [EAX*4] is in operand.index.
 	*/
 	uint8_t index;
 
 	/* Size of:
-		O_REG: register
-		O_IMM: instruction.imm
-		O_IMM1: instruction.imm.ex.i1
-		O_IMM2: instruction.imm.ex.i2
-		O_DISP: instruction.disp
-		O_SMEM: size of indirection.
-		O_MEM: size of indirection.
-		O_PC: size of the relative offset
-		O_PTR: size of instruction.imm.ptr.off (16 or 32)
+	O_REG: register
+	O_IMM: instruction.imm
+	O_IMM1: instruction.imm.ex.i1
+	O_IMM2: instruction.imm.ex.i2
+	O_DISP: instruction.disp
+	O_SMEM: size of indirection.
+	O_MEM: size of indirection.
+	O_PC: size of the relative offset
+	O_PTR: size of instruction.imm.ptr.off (16 or 32)
 	*/
 	uint16_t size;
 } _Operand;
 }}}
+
+That's pretty self-explanatory I would say.
+I just wanted to note that I decided to have both O_SMEM and O_MEM separated. Since most of the times instructions have, what I call, simple memory dereference, so only one register, and you get its index in the operand.index already. The thing is, when you encounter O_MEM, it really means you are going to have two registers in the operand.
+
+About the operand.size field, it describes the size of the object that the operand represents, it can be the size of the register if the type is O_REG. Or it can be the size of the memory dereference. I.E: {{{MOV [BX], EAX}}} - The destination is size is 32 bits. But the size of the register is 16 bits, though in such a case the size of the index is not specified and you should know it because you have the index of the register which says, R_BX. So practically, the size of the register when the type is O_REG is a bonus, because we just realized we can get this information by the index of the register.
 
 ===Immediate===
 The 'immediate' field should be treated very carefully. If you take a closer look, you will notice it is defined as a _Value type, which defined as:
