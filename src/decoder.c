@@ -344,6 +344,7 @@ _Undecodable: /* If the instruction couldn't be decoded for some reason, drop th
 	if (*startCode == INST_WAIT_INDEX) {
 		di->flags = 0;
 		di->opcode = I_WAIT;
+		META_SET_ISC(di, ISC_INTEGER);
 		return DECRES_SUCCESS;
 	}
 
