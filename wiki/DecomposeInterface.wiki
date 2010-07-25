@@ -28,13 +28,13 @@ struct _DInst:
 <b>uint8_t segment;</b>
  * Set when one of the operands is of type O_SMEM, O_MEM, O_DISP.
  * Helper macros: SEGMENT_GET, SEGMENT_IS_DEFAULT.
- * SEGMENT_IS_DEFAULT returns TRUE if the segment register is the default one for the operand. For instance: MOV [EBP], AL - the default segment register is SS. However, MOV [FS:EAX], AL - The default segment is DS, but we overrode it with FS, therefore the macro will return TRUE.
+ * SEGMENT_IS_DEFAULT returns TRUE if the segment register is the default one for the operand. For instance: {{{MOV [EBP], AL}}} - the default segment register is SS. However, {{{MOV [FS:EAX], AL}}} - The default segment is DS, but we overrode it with FS, therefore the macro will return TRUE.
  * To extract the segment register index use the SEGMENT_GET macro.
  * R_NONE if not set.
 
 <b>uint8_t base;</b>
  * Set when one of the operands is of type O_MEM.
- * It is the register index of the Base. I.E: MOV [EAX+EBX*4], EDI - it is R_EAX.
+ * It is the register index of the Base. I.E: {{{MOV [EAX+EBX*4], EDI}}} - it is R_EAX.
  * R_NONE if not set.
 
 <b>uint8_t scale;</b>
@@ -54,7 +54,7 @@ struct _DInst:
  * An helper macro to get the textual representation for an instruction is GET_MNEMONIC_NAME.
  * For instance, if you want to check that a decomposed instruction is 'POP', then compare this field to I_POP. Basically add a prefix of "I_" to the upcased name of the instruction you want to check. You can see the whole list in the "mnemonics.h" file.
 
-<b>_Operand ops[OPERANDS_NO];</b>
+<b>{{{_Operand ops[OPERANDS_NO];}}}</b>
  * An array of 4 _Operand's.
  * However, they might be empty.
  * See [DecomposeInterface#Operands] for more information.
@@ -62,7 +62,7 @@ struct _DInst:
 <b>uint64_t disp;</b>
  * Set when one of the operands is of type O_SMEM, O_MEM, O_DISP and the instruction has a displacement.
  * The only way to know that an instruction as a displacement is to check that dispSize != 0.
- * Some instructions use a displacement of 0. I.E: MOV [EBP], EAX.
+ * Some instructions use a displacement of 0. I.E: {{{MOV [EBP], EAX}}}.
 
 <b>_Value imm;</b>
  * Set when one of the operands is of type O_IMM, O_IMM1&O_IMM2, O_PTR, O_PC.
