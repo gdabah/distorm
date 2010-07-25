@@ -2,6 +2,7 @@
 
 ==Python==
 list Decode(long offset, string code, int mode)
+
 Input:
 
 || Argument Name || Description ||
