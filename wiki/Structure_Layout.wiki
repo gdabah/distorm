@@ -3,7 +3,7 @@
 === diStorm3 Interface ===
 
 For more information look at [DecomposeInterface].
-In this page I gathered a quick reference of all the relevant structures.
+In this page I gathered a quick reference of all the relevant structures of the new functionality in diStorm3.
 
 {{{
 /* Decodes modes of the disassembler, 16 bits or 32 bits or 64 bits for AMD64, x86-64. */
