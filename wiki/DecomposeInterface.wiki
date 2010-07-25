@@ -67,7 +67,7 @@ struct _DInst:
 <b>_Value imm;</b>
  * Set when one of the operands is of type O_IMM, O_IMM1&O_IMM2, O_PTR, O_PC.
  * The size of the immediate value itself is the Operand.size field.
- * See [DecomposeInterface#The-Immediate-Field] for more information.
+ * See [DecomposeInterface#Immediate] for more information.
 
 <b>uint16_t unusedPrefixesMask;</b>
  * Always set.
@@ -92,8 +92,8 @@ for (int i = 0; i < sizeof(uint16_t); i++) {
  * The meta-FC is very useful for flow control analysis.
 
 
-#Flags The Flags - 
+===Flags===
 
-#Operands The Operands -
+===Operands===
 
-#Immediate The Immediate -
+===Immediate===
