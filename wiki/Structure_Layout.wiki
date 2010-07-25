@@ -1,4 +1,4 @@
-#summary Structure Output Description
+#summary Structure Output Quick Reference
 
 === diStorm3 Interface ===
 
