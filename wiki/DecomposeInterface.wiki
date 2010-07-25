@@ -93,7 +93,54 @@ for (int i = 0; i < sizeof(uint16_t); i++) {
 
 
 ===Flags===
+The 'flags' field has a few more options, they are pretty advanced though, but nothing special.
+Use the helper macros: FLAG_GET_OPSIZE, FLAG_GET_ADDRSIZE, FLAG_GET_PREFIX.
+FLAG_GET_OPSIZE returns the DecodeType (Decode16Bits, Decode32Bits or Decode64Bits) of the operand, thus it's the size of the operand.
+
+FLAG_GET_ADRSIZE returns the DecodeType (Decode16Bits, Decode32Bits or Decode64Bits) of the operand, thus it's the size of the referenced memory by the operand.
+
+It is important to understand the meaning of the two sizes:
+{{{MOV EAX, EBX}}} - operand size is 32 in both operands.
+{{{MOV [EAX], byte ptr 0}}} - operand size is 8 in both operands, however the size of the register that references the memory, EAX, is obviously 32 (or Decode32Bits).
+
+FLAG_GET_PREFIX returns the prefix of the instruction (FLAG_LOCK, FLAG_REPNZ, FLAG_REP).
+
+There are a few more flags such as:
+FLAG_HINT_TAKEN, FLAG_HINT_NOT_TAKEN, FLAG_IMM_SIGNED.
+You can check for these flags by doing: if ((DecomposedInst.flags & FLAG_XXX) != 0)
+The first two are pretty self-explanatory, if you know what they mean :)
+The FLAG_IMM_SIGNED is important if you want to know whether to treat the immediate as a signed or unsigned integer (some instructions supply this information).
 
 ===Operands===
 
 ===Immediate===
+The 'immediate' field should be treated very carefully. If you will take a closer look it is defined as a _Value type, which looks like this:
+{{{
+typedef union {
+	/* Used by O_IMM: */
+	int8_t sbyte;
+	uint8_t byte;
+	int16_t sword;
+	uint16_t word;
+	int32_t sdword;
+	uint32_t dword;
+	int64_t sqword;
+	uint64_t qword;
+
+	/* Used by O_PC: */
+	_OffsetType addr;
+
+	/* Used by O_PTR: */
+	struct {
+		uint16_t seg;
+		/* Can be 16 or 32 bits, size is in ops[n].size. */
+		uint32_t off;
+	} ptr;
+
+	/* Used by O_IMM1 (i1) and O_IMM2 (i2). ENTER instruction only. */
+	struct {
+		uint32_t i1;
+		uint32_t i2;
+	} ex;
+} _Value;
+}}}
