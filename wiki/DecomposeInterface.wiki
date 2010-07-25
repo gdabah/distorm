@@ -8,7 +8,8 @@ Basic fields
 Use macros
 
 
-typedef struct tag_DInst { 
+typedef struct tag_DInst {
+ 
 <b>_OffsetType addr;</b>
  * Always set.
  * The virtual address of the instruction.
@@ -28,17 +29,29 @@ typedef struct tag_DInst {
  * Helper macros: SEGMENT_GET, SEGMENT_IS_DEFAULT.
  * SEGMENT_IS_DEFAULT returns TRUE if the segment register is the default one for the operand. For instance: MOV [EBP], AL - the default segment register is SS. However, MOV [FS:EAX], AL - The default segment is DS, but we overrode it with FS, therefore the macro will return TRUE.
  * To extract the segment register index use the SEGMENT_GET macro.
- * If the operands don't represent memory indirection the value of 'segment' is R_NONE.
+ * R_NONE if not set.
 
 <b>uint8_t base;</b>
  * Set when one of the operands is of type O_MEM.
- * 
+ * It is the register index of the Base. I.E: MOV [EAX+EBX*4], EDI - it is R_EAX.
+ * R_NONE if not set.
 
 <b>uint8_t dispSize;</b>
+ * Set when one of the operands is of type O_SMEM, O_MEM, O_DISP and the instruction has a displacement.
+ * This is the size of the 'disp' field in bytes.
+ * If there's no displacement set, this field is 0.
+
 <b>uint16_t opcode;</b>
+ * Always set.
+ * If the instruction is invalid it is set to I_UNDEFINED.
+ * Include the file "mnemonics.h" to use the Instructions-Enum.
+ * An helper macro to get the textual representation for an instruction is GET_MNEMONIC_NAME.
+ * For instance, if you want to check that the decomposed instruction is 'POP', then compare this field to I_POP. Basically add a prefix of "I_" to the upcased name of the instruction you want to check. You can see the whole list in the "mnemonics.h" file.
+
 <b>_Operand ops[OPERANDS_NO];</b>
 <b>uint64_t disp;</b>
 <b>_Value imm;</b>
 <b>uint16_t unusedPrefixesMask;</b>
 <b>uint8_t meta;</b>
+
 } _DInst;
