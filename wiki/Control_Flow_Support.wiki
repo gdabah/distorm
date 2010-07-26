@@ -46,13 +46,15 @@ Note that you can combine any of the flags below, except DF_MAXIMUM_ADDR16 with 
 ----
 Note that most of the flags are telling the Decompose function when to *stop* decoding. However, the only filter is the <i>DF_RETURN_FC_ONLY</i> flag. Currently, there's no other way to filter all instruction except a specific type of instructions.
 
-Some examples. Suppose you want to get the target address of a call instruction in a specific code block:
+Suppose you want to get the target address of a call instruction in a specific code block:
+{{{
 mov eax, 1
 push eax
 push 0
 lea eax, [ebp+10]
 push eax
 call some_function
+}}}
 
 You can call the Decompose function with the DF_STOP_ON_CALL and DF_RETURN_FC_ONLY. Which will return only the CALL instruction, in this case(!). This is quiet good if you know there are no flow control instructions in the stream, except the one you're interested in.
 So basically what you can do next, is to check that the <i>last</i> instruction in the results array, is the call instruction.
