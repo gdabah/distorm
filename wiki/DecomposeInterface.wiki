@@ -212,7 +212,7 @@ So if you encounter an operand type of O_IMM1, it means you should read the imme
 
 The O_PTR type is found only in instruction that access <i>far</i> memory, such as: JMP FAR, CALL FAR, etc. So to get both the segment/selector and the offset use 'imm.ptr.seg' and 'imm.ptr.off'.
 
-The O_PC type is found in branching instruction such as: JNZ, JB, JMP, CALL, etc. The value stored in the union is really the *relative offset* from the current instruction. Therefore if you want to calculate the *target* address of the branch, use the helper macro GET_TARGET_ADDR. In order to access the relative part solely, use 'imm.addr'. The size of the relative value is operand.size field.
+The O_PC type is found in branching instruction such as: JNZ, JB, JMP, CALL, etc. The value stored in the union is really the *relative offset* from the current instruction. Therefore if you want to calculate the *target* address of the branch, use the helper macro INSTRUCTION_GET_TARGET. In order to access the relative part solely, use 'imm.addr'. The size of the relative value is operand.size field.
 Note: in the past, before diStorm3 was official, the 'imm.addr' used to be the absolute target address, I might revert it in the future. And unfortunately, I can't recall why I did this change.
 
 ----
