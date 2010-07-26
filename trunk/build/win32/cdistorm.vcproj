@@ -2,8 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="cdistorm"
+	Name="distorm"
 	ProjectGUID="{15051CE1-AB10-4239-973D-01B84F2AD0A9}"
+	RootNamespace="distorm"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
 	>
