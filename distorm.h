@@ -185,7 +185,7 @@ typedef struct {
 #define DREGS_BASE (132)
 
 /* A helper macro to get the target address of a branching instruction. */
-#define GET_TARGET_ADDR(di) ((_OffsetType)(((di)->addr + (di)->imm.addr + (di)->size)))
+#define INSTRUCTION_GET_TARGET(di) ((_OffsetType)(((di)->addr + (di)->imm.addr + (di)->size)))
 
 /*
  * Operand Size or Adderss size are stored inside the flags:
