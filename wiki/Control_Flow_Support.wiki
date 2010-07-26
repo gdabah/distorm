@@ -1,13 +1,42 @@
-#summary One-sentence summary of this page.
+#summary How to use Flow Control functionality in diStorm
 
-= Introduction =
+This page covers the advanced functionality that the new interface of diStorm3 supplies. This is the time to say that diStorm, as a stream disassembler, doesn't do the flow control analysis work for you, but it will help you do that more easily.
 
-Add your content here.
+The Decompose function requires the caller to pass a CodeInfo structure. In that structure there are all the parameters you pass normally to the Decode function and in addition there's a new parameter (or field) named 'features'. This is a flags parameter, so you can pass along a few flags together to control the way diStorm returns the disassembled instructions.
 
+Let's list the possible decode flags:
+<b>DF_NONE</b>
+ * If you don't want to use this stuff, just set this flag, and the Decompose will work normally. That is, like the Decode function, but return structure output.
 
-= Details =
+<b>DF_MAXIMUM_ADDR16</b>
+ * If you decode 16 bits code, you can limit the addresses range to 16 bits.
+ * For instance, if you have a piece of code that JMPs backwards to a negative offset, instead of getting something like 0xfffffffff, you will get 0xffff. Or only the low 16 bits of the address.
+ * This is mostly good for display.
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+<b>DF_MAXIMUM_ADDR32</b>
+ * Nowadays that we got 64 bits decoding as well, we sometimes want to limit addresses to 32 bits. Works like DF_MAXIMUM_ADDR16 but for 32 bits.
+
+<b>DF_RETURN_FC_ONLY</b>
+ * This is the most important flag IMHO. What it really does is telling the Decompose function that it should return only flow control instructions back to the caller, and filter the rest of them.
+ * Effectively, you will get only the branch and similar instructions, making it easier to track flow control code.
+
+<b>DF_STOP_ON_CALL</b>
+ * Makes the Decompose function return to the caller when a CALL/FAR instruction was decoded.
+
+<b>DF_STOP_ON_RET</b>
+ * Makes the Decompose function return to the caller when a RET/IRET/RETF instruction was decoded.
+
+<b>DF_STOP_ON_SYS</b>
+ * Makes the Decompose function return to the caller when a SYSENTER/SYSEXIT/SYSCALL/SYSRET instruction was decoded.
+
+<b>DF_STOP_ON_BRANCH</b>
+ * Makes the Decompose function return to the caller when a JMP/FAR instruction was decoded.
+
+<b>DF_STOP_ON_COND_BRANCH</b>
+ * Makes the Decompose function return to the caller when a conditional branch (Jxx, JCxx, LoopXX) instruction was decoded.
+
+<b>DF_STOP_ON_INT</b>
+ * Makes the Decompose function return to the caller when an interrupt instruction (INT, INTO, INT1, INT3, UD2) was decoded.
+
+<b>DF_STOP_ON_FLOW_CONTROL</b>
+ * Makes the Decompose function return to the caller when any of the above instructions are decoded.
