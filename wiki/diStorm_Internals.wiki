@@ -331,7 +331,7 @@ The rationale for naming it 'FULL' isn't so clever, I will just leave it this wa
  
 typedef enum OpType{
 
- For the complete updated list take a look at [instructions.h http://code.google.com/p/distorm/source/browse/trunk/src/instructions.h]
+ For the complete updated list take a look at http://code.google.com/p/distorm/source/browse/trunk/src/instructions.h
 
 } OpType;
  
