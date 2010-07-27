@@ -226,14 +226,14 @@ The REX is formatted as follows:
  
 -7---4--3---2---1---0-- <-- Bits Index
 | REX | W | R | X | B | <-- Field Name
------------------------ <-- End Line Marker
+\---------------------- <-- End Line Marker
  
 REX - 0x4, marks it is a REX prefix.
 <b>W</b>idth - 0, default operand size. 1, 64 bits operand size.
 Here is how the REX.W flag affects the final operand size of the instruction:
  
  
--------------------------------------
+/-----------------------------------\
 |Default   |Default  |With   |With  |
 |Operating-|Operand- |0x66   |REX.W |
 |Mode      |Size     |Prefix |      |
@@ -243,7 +243,7 @@ Here is how the REX.W flag affects the final operand size of the instruction:
 |64 Bits   |  32     |  16   |  0   |
 |-----------------------------------|
 |64 Bits   |  16     |  32   |  0   |
--------------------------------------
+\-----------------------------------/
  
 REX.W with a value of 0 causes no change to the operand size of the instruction.
 But a value of 1 causes the operand size to be 64 bits.
@@ -299,19 +299,19 @@ The ModR/M is built from 3 fields:
  
 -7---6--543---210--
 | MOD | REG | R/M |
--------------------
+\-----------------/
  
 The MOD field is the two most significant bits, it defines whether a displacement is used, and if so, its size.
 Well, and a few more things, keep on reading. Ah and MOD stands for Mode, how original.
  
-------------------
+/----------------\
 |MOD       | Bin |
 |----------+-----|
 |No DISP   | 00  |
 |DISP8     | 01  |
 |DISP16/32 | 10  |
 |REG       | 11  |
-------------------
+\----------------/
  
 MOD
 00 means no displacement is used.
@@ -344,7 +344,7 @@ The REG field or R/M field could be one of the following:
 |AL  |CL  |DL  |BL  |AH  |CH  |DH  |BH |
 |SS0 |SS1 |SS2 |SS3 |SS4 |SS5 |SS6 |SS7|
 |MM0 |MM1 |MM2 |MM3 |MM4 |MM5 |MM6 |MM7|
-----------------------------------------
+\--------------------------------------/
  
 The only way to know which registers set you should use is by the operand type itself,
 and of course by the corresponding field's value.
@@ -449,14 +449,14 @@ A fourth bit in the REG or R/M field permits access to 16 registers.
 There are new sets of registers for 64 bits.
  
 These are the 64 bits registers:
--------------------------------------------------------------------------------
+/-----------------------------------------------------------------------------\
 |RAX |RCX |RDX |RBX |RSP |RBP |RSI |RDI |R8 |R9 |R10 |R11 |R12 |R13 |R14 |R15 |
--------------------------------------------------------------------------------
+\-----------------------------------------------------------------------------/
  
 Even 32 bits registers can be extended!
----------------------------------------------------------------------------------------
+/-------------------------------------------------------------------------------------\
 |EAX |ECX |EDX |EBX |ESP |EBP |ESI |EDI |R8D |R9D |R10D |R11D |R12D |R13D |R14D |R15D |
----------------------------------------------------------------------------------------
+\-------------------------------------------------------------------------------------/
  
 Further 16 bits registers can be extended using the suffix letter 'W' instead.
  
@@ -465,14 +465,14 @@ I wonder how compilers will use these bytes in the future...
 Anyways, there are two tables now:
  
 8 bits registers <b>without</b> REX prefix (nothing special yet):
--------------------------------------------------------------------------------
+/-----------------------------------------------------------------------------\
 |AL |CL |DL |BL |AH |CH |DH |BH |R8B |R9B |R10B |R11B |R12B |R13B |R14B |R15B |
--------------------------------------------------------------------------------
+\-----------------------------------------------------------------------------/
  
 8 bits registers <b>with</b> REX prefix set (no matter its flags!):
------------------------------------------------------------------------------------
+/---------------------------------------------------------------------------------\
 |AL |CL |DL |BL |SPL |BPL |SIL |DIL |R8B |R9B |R10B |R11B |R12B |R13B |R14B |R15B |
------------------------------------------------------------------------------------
+\---------------------------------------------------------------------------------/
 This explains why a REX prefix with a value of 0x40 might affect the instruction, even with all bits cleared!
  
 Note that the extended 32 bits registers could be used in memory addressing forms!
@@ -480,7 +480,7 @@ For example: INC DWORD [R8D + R15D * 8 + 0x1234].
  
 One more comment about 64 bits -
 the default addressing size is 64 bits, wheareas the default operand size is 32!
-----------------------------------------
+/--------------------------------------\
 |Default   |Default  |With   |Effective|
 |Operating-|Address- |0x67   |Address- |
 |Mode      |Size     |Prefix |Size     |
@@ -488,7 +488,7 @@ the default addressing size is 64 bits, wheareas the default operand size is 32!
 |64 Bits   |   64    |  No   |   64    |
 |--------------------------------------|
 |64 Bits   |   64    |  Yes  |   32    |
-----------------------------------------
+\--------------------------------------/
  
 BTW - there are 16 XMM registers (SSE) as well in 64 bits.
  
@@ -504,7 +504,7 @@ It formats as:
  
 -7-----6-5-----3-2----0-
 | SCALE | INDEX | BASE |
-------------------------
+\----------------------/
  
 And results in [INDEX * 2**SCALE + BASE].
  
