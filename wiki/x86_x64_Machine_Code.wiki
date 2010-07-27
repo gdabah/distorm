@@ -1,0 +1,557 @@
+#summary Old Documentation of x86/x64 Machine Code
+<pre> 
+/--------------\
+|Decoding Modes|
+\--------------/
+Decoding mode specifies the default size of an operation.
+A code block is constructed from a sequence of instructions.
+The decoding mode tells how that code(-the instructions) is being processed.
+They can be processed in 16, 32 or 64 bits.
+The number of bits is the operation size of each instruction.
+DOS is known to be a 16 bits OS, thus the CPU executes its code in a 16 bits environment.
+Windows and Linux are 32 bits, and even 64 bits nowadays...
+Every piece of code or an instruction has to be disassembled in the corresponding size it was assembled/compiled to.
+The disassembler disassembles the instructions according to this decoding mode only,
+it makes much sense, because every decode mode supports different instruction sets or instructions and
+can do different operations, so you have to know in advance the decoding mode of the stream you want to disassemble.
+ 
+The 3 modes supported by diStorm are:
+16 bits (Decode16Bits) - Instruction sets supported: 80186/80286
+32 (Decode32Bits) - Instruction sets supported: 80x86 (Not including x64)
+AMD64 (Decode64Bits) - Instruction sets supported: 80x86 + x64 (Not including prohibited instructions)
+ 
+In addition to these instruction sets, there are more instruction sets that are supported no matter the mode,
+these are the FPU, SSE, SSE2, SSE3, 3DNow!, 3DNow! extensions (and some P6 instructions), VMX and SSSE3 instructions.
+Maybe the 16 bits decoding mode doesn't necessarily require all these sets,
+but I found it useful, it can't harm nobody, anyways...
+ 
+Every decode mode has a default operand size and address size, more on this later.
+ 
+/-----------------\
+|80x86 Instruction|
+\-----------------/
+A 80x86 instruction is divided to a number of elements:
+1)Instruction prefixes, affects the behaviour of the instruction's operation.
+2)Mandatory prefix used as an opcode byte for SSE instructions.
+3)Opcode bytes, could be one or more bytes (up to 3 whole bytes).
+4)ModR/M byte is optional and sometimes could contain a part of the opcode itself.
+5)SIB byte is optional and represents complex memory indirection forms.
+6)Displacement is optional and it is a value of a varying size of bytes(byte, word, long) and used as an offset.
+7)Immediate is optional and it is used as a general number value built from a varying size of bytes(byte, word, long).
+ 
+The format looks as follows:
+ 
+/-------------------------------------------------------------------------------------------------------------------------------------------\
+|*Prefixes | *Mandatory Prefix | *REX Prefix | <b>Opcode Bytes</b> | *ModR/M | *SIB | *Displacement (1,2 or 4 bytes) | *Immediate (1,2 or 4 bytes) |
+\-------------------------------------------------------------------------------------------------------------------------------------------/
+* means the element is optional.
+ 
+/--------------------\
+|Instruction Prefixes|
+\--------------------/
+The instruction prefixes are optional, they are used when the default behaviour of the instruction lacks functioning.
+If you want to extend the behaviour of the instruction, or change its parameters, prefixes might achieve your goal.
+There are 4 types of prefixes:
+Lock and Repeat
+Segment Override
+Operand Size
+Address Size
+ 
+The following table shows the value in hex of the prefix and its mnemonic:
+- Lock and Repeat:
+	- 0xF0 — LOCK
+	- 0xF2 — REPNE/REPNZ
+	- 0xF3 - REP/REPE/REPZ
+- Segment Override:
+	- 0x2E - CS
+	- 0x36 - SS
+	- 0x3E - DS
+	- 0x26 - ES
+	- 0x64 - FS
+	- 0x65 - GS
+- Operand-Size Override: 0x66, switching to non-default size.
+- Address-Size Override: 0x67, switching to non-default size.
+ 
+Every instruction could have up to 4 prefixes and each prefix mustn't be used twice,
+otherwise it could lead to undefined behaviour by the processor.
+ 
+<i>Lock</i> prefix is used in order to lock the bus for writing.
+It is used for spin locks and other techniques for the sake of code synchornization.
+There is a small set of instructions which support the Lock prefix and that's also when the first operand is used as a memory indirection.
+If this prefix is used for an instruction which doesn't support it or the first operand isn't a memory indirection form, an exception is
+raised by the processor. In the case of the disassembler this prefix will be dropped (simply ignored).
+ 
+There is a hack in the IA-32 processors to access CR8 register, using the Lock prefix for mov cr(n) instruction it acts
+as the fourth (upper) bit of the REG field, this allows the processor reaching to the 8 upper CR registers.
+ 
+The disassembler first makes sure the instruction is lockable and if so it validates that the destination operand is in the memory indirection form.
+If these conditions aren't met, the prefix will be dropped.
+ 
+<i>Repeat</i> prefixes are considered to be the same type of the Lock prefix, so an instruction could only have Lock or Repeat, not both at the same time.
+Note that the disassembler is based on Intel's reference in this part of the code.
+The AMD reference seperates the LOCK and the Repeat prefixes as two different types.
+Repeat prefixes are used only with string instructions which support this prefix.
+The disassembler ignores this prefix if used for other instructions, thus ending up with this prefix dropped.
+There are two repeat prefixes, REPZ and REPNZ, repeat as long as the Zero flag (and rCX!=0) isn't set and vice versa.
+ 
+Side note:
+The meaning of rCX is a general-purpose register which can be one of the following: CX, ECX or RCX.
+Notice the small letter 'r', which says it's one of the CX registers...The names of the register indicates its size,
+which is defined according to the decoding mode.
+ 
+Note that repeat prefix can be used as a mandatory prefix for SSE instructions.
+ 
+The Repeat prefixes are treated specially with string instructions and when more prefixes are set.
+It could change the textual representation of the instruction in some cases.
+The way it's done in the disassembler is the same for all string instructions and is covered below.
+One more thing to say about repeat prefixes is that IO string instructions also support this (such as: ins, outs).
+ 
+<i>Segment Override</i> prefix is used in order to change the default segment for the instruction.
+Every general-purpose register has its default segment. For example SS for ESP, DS for BX, etc...
+If the instruction uses the memory indirection form and there is a segment override prefix set,
+then it will be displayed in front of the operand. If the instruction doesn't support operands,
+or in case the operands aren't in the memory indirection form, the prefix is dropped.
+In 64 bits decoding mode the CS, SS, DS and ES segment overrides are ignored and ineffective.
+ 
+<i>Operand Size</i> prefix is responsible for switching the operation size from the default size
+(depends on the instruction and decoding mode) to the non-default mode.
+It means that if the code is being run on a 32bits environment and the operand size prefix is used,
+that specific prefixed instruction will be run as a 16bits instruction.
+ 
+It is wrong to think that XOR EAX, EAX is different from XOR AX, AX - in their opcodes.
+Both instructions have the same bytes. There are only two options for representing them these ways.
+As stated earlier, most of the instructions are dependant on the decoding mode (16, 32).
+So if you decode that XOR in 16 bits, you will end up with XOR AX, AX,
+but if you decode that XOR in 32 bits, you will end up with XOR EAX, EAX.
+The operand size prefix comes into play when you want to change the operation size of the instruction,
+instead of the default size which is set by the decoding mode, to the non-default size.
+If you decode the XOR instruction in 16 bits, but prefix it with operand size prefix, it will result in XOR EAX, EAX.
+ 
+A known usage for operand size prefix in DOS (that is 16 bits code) was to fill the VGA screen using:
+db 0x66
+rep stosw
+which actually run as:
+rep stosd
+ 
+Note that operand size prefix can be used as a mandatory prefix for SSE instructions.
+ 
+<i>Address Size</i> prefix is quiet the same as Operand Size prefix, but acts on the memory indirection form of the operand.
+It switches the memory indirection form to the non-default form.
+Thus, if you read (in 16 bits) from [BP+DI], when prefixing it, the result is reading from [EBX].
+(This is right, because 16 bits has a different memory indirections tables from 32 bits).
+ 
+If you still ask yourself why you need both address and operand prefixes, the answer is right here.
+Let's do some order in the mess:
+You have to distinguish between the operand size and the address size.
+The operand size acts on OPERATION size. The operation size is determined implicitly by the instruction.
+For example (The default decoding mode is 16 bits):
+MOV AX, BX --> we know the operation size is 16 bits, because we know that AX and BX are 16 bits registers.
+MOV EAX, EBX --> 32 bits.
+MOV EAX, [EBX] --> still easy, EAX is 32 bits, so we read 32 bits from the memory.
+But what about this one:
+MOV [EBX], 5 --> You see the problem, you don't know the operation size, it might be that we write only one byte, or maybe two or at last, four.
+That's why in this case we have to explicitly tell the assembler, or display as the disassembler the operation size.
+ 
+The confusion still exists.
+MOV [BP+DI], DX --> 16 bits operation size.
+ 
+MOV [EBX], DX
+Now what!? No operand size is able to change BX into EBX in this case.
+An operand size prefix won't affect the memory indirection form!
+However, an address size prefix will affect it, thus changing BP+DI to EBX.
+Even so, when the address size prefix is set, the operation size is untouched and stays the same one, the default one.
+ 
+It is given that we decode in 16 bits in the following example:
+MOV [BP+DI], AX --> Nothing special
+MOV [EBX], AX --> This is done by Address Size prefix only.
+MOV [BP+DI], EAX --> This is done by Operand Size prefix only.
+MOV [EBX], EAX --> This is done by both address and operand size prefixes.
+ 
+In the bottom line, the address size prefix affects the operand only if it's in the memory indirection form, otherwise it's ignored.
+And the operand size affects the operation size, no matter in what form it is. It changes the amount of bytes the instruction is to work upon.
+Of course, there are instructions which have a fixed operation size, thus the operand size prefix is ignored/dropped.
+ 
+The behaviour of the operand/address size is defined in the following table (ignoring 64 bits!):
+ 
+          /-------\
+Default   |16 | 32|
+          +-------+
+Prefixed  |32 | 16|
+          \-------/
+ 
+Now that you know how all prefixes effects, I will describe how prefixes affect string instructions, using examples:
+(Decoding mode is 16 bits)
+AD ~ LODSW
+66 AD ~ LODSD
+F3 AC ~ REP LODSB
+F3 66 AD ~ REP LODSD
+F3 3E AC ~ REP LODS BYTE DS:[SI]
+F3 67 AD ~ REP LODS WORD [ESI]
+ 
+Notice that if the instruction is not required to be in the long form, it has a suffix letter which represents the operation size.
+The long form of the string instructions are displayed when you change their address form or segment override them, which makes it explicit.
+ 
+/----------------\
+|Mandatory Prefix|
+\----------------/
+The mandatory prefixes are used as opcode bytes in special cases.
+Their values can be one of: 0x66, 0xf2 or 0xf3.
+The mandatory prefix byte must precede the first opcode byte, otherwise it is decoded just as a normal prefix.
+When a prefix is detected as a mandatory prefix, its behaviour isn't taken into account as a normal prefix.
+SSE instructions use the mandatory prefixes as part of the opcode itself,
+it makes life a bit harder when fetching an instruction in the fetching phase.
+This is covered thoroughly in the Decoding Phases!
+ 
+/--------------------\
+|REX Prefix - 64 Bits|
+\--------------------/
+REX stands for register extension.
+One of the most important changes in 64 bits is that it permits access to 16 registers.
+The REX prefix takes place <b>only</b> in 64 bits decoding mode.
+ 
+'till now all you had is 8 general purpose registers.
+Later on, I'm going to cover how the ModR/M is formatted and I will refer to the REX as well, so you see how it's related.
+ 
+Anyways, the REX prefix must precede the first byte of the opcode itself, otherwise it is ignored.
+I know I just wrote this same sentence about the mandatory prefix, but the REX prefix has a higher priority, calling it so.
+So if there is a REX prefix set and a mandatory prefix is set as well, they won't interfere with each other!
+It just comes out that the REX prefix has to be before the opcode itself, even if the mandatory prefix is set.
+And the mandatory prefix should be set before the REX prefix if it's set, and before these two all other prefixes can precede, no matter their order.
+ 
+The range of the REX prefix is 0x40 to 0x4f.
+It means that in 64 bits it overrides the instructions INC and DEC, but these instructions have an alternative opcodes, so no worry.
+ 
+So if we encounter a byte with the first (high) nibble with the value of 4, we know it's a REX prefix.
+The REX is formatted as follows:
+ 
+-7---4--3---2---1---0-- <-- Bits Index
+| REX | W | R | X | B | <-- Field Name
+----------------------- <-- End Line Marker
+ 
+REX - 0x4, marks it is a REX prefix.
+<b>W</b>idth - 0, default operand size. 1, 64 bits operand size.
+Here is how the REX.W flag affects the final operand size of the instruction:
+ 
+ 
+-------------------------------------
+|Default   |Default  |With   |With  |
+|Operating-|Operand- |0x66   |REX.W |
+|Mode      |Size     |Prefix |      |
+|----------+------------------------|
+|64 Bits   |  64     |IGNORED|  1   |
+|-----------------------------------|
+|64 Bits   |  32     |  16   |  0   |
+|-----------------------------------|
+|64 Bits   |  16     |  32   |  0   |
+-------------------------------------
+ 
+REX.W with a value of 0 causes no change to the operand size of the instruction.
+But a value of 1 causes the operand size to be 64 bits.
+Note that if a REX.W is 1 and an operand size prefix (0x66) is also set, then the 0x66 byte is fully ignored!
+However, if an operand size prefix is set and the REX.W is clear, that operand size will affect the instruction as well.
+REX.W won't affect byte operations as well as operand size prefix.
+ 
+So you see, when you disassemble instruction in 64 bits and a REX.W is set, the effective operand size becomes 64 bits.
+Now all instruction support 64 bits, that is their operands' types.
+On the contrast, there are some instructions that in 64 bits decoding mode their effective operand size becomes 64 bits by default,
+they are called promoted instructions. There is a limited list of promoted instructions,
+for example when you push a register in 64 bits you don't need the REX prefix to tell the processor it's a 64 bits register...
+ 
+<b>R</b>egister field - 1 (high) bit extension of the ModR/M REG field.
+inde<b>X</b> field - 1 (high) bit extension of the SIB Index field.
+<b>B</b>ase field - 1 (high) bit extension of the ModR/M or SIB Base field.
+ 
+Later on, I will explain precisely how these bits affect the decoding of registers.
+I just wanted to make sure you get familiar with them first.
+ 
+It is not true to assume that a REX prefix with a value of 0x40 doesn't have any implications on the instruction it precedes!
+ 
+/------\
+|Opcode|
+\------/
+Opcode is the static portion of the instruction which leads to (defines) the instruction itself.
+It is the bytes (and bits) you read from a stream in order to determine what instruction it is.
+The opcode size can vary from 1 bytes to 4 bytes. And it may also include 3 more bits from the REG field of the ModR/M byte.
+The instruction fetching mechanism in the disassembler is based on opcodes only
+(there could be tables which convert from ModR/M value to a string...).
+It is explained below how the fetch mechanism works with more info about the opcodes' varying sizes.
+Most of the instructions belong to two types: 8 bits instructions, and 16/32 bits instructions (could be prefixed...).
+The 16 or 32 bits operation size is set according to the decoding mode. I mentioned it earlier in the operand size prefix paragraph.
+Instructions which operate on 8 bits ignore operand size prefix.
+There are some instructions which are 5 bits long and the 3 other bits are used as the REG field,
+but treated as a whole byte instruction (for example: 40, 41 disassmbles to: inc ax; inc cx).
+ 
+The machine code of the opcodes is more complex than bytes granularity.
+I found it easier to treat opcodes as whole bytes and if required using the REG field as well.
+It simplifies stuff and makes the DB smaller, including its hierarchic structure (Trie data structure).
+ 
+/------\
+|ModR/M|
+\------/
+Some instructions require the ModR/M byte in order to specify the operands' forms.
+And some other instructions have the operands' types known in advance by their opcode only and don't need the ModR/M byte in order to specify them.
+The ModR/M byte is optional. The ModR/M could lead to a sequential SIB byte in 32 or 64 bits decoding modes.
+The opcode of the instruction itself has info about the operands' types, but these types, still could be
+extended in some ways, for instance, having an immediate number, or just a bit more complex effective-address.
+The role of the ModR/M is to define whether a SIB byte, an immediate or a displacement are required.
+And more than that, it defines the registers in use, according to the operands' types.
+The ModR/M is built from 3 fields:
+ 
+-7---6--543---210--
+| MOD | REG | R/M |
+-------------------
+ 
+The MOD field is the two most significant bits, it defines whether a displacement is used, and if so, its size.
+Well, and a few more things, keep on reading. Ah and MOD stands for Mode, how original.
+ 
+------------------
+|MOD       | Bin |
+|----------+-----|
+|No DISP   | 00  |
+|DISP8     | 01  |
+|DISP16/32 | 10  |
+|REG       | 11  |
+------------------
+ 
+MOD
+00 means no displacement is used.
+01 requires a displacement of 8 bits.
+10 requires a displacement of 16 or 32 bits, the size is set by the decoding mode, and could be altered by (operand size) prefix, of course.
+11 means that only general-purpose registers are in use.
+ 
+The famous REG field (3 bits).
+The REG field is used in order to specify the register of one of the operands, if used, of course.
+(The REG field defines the source or destination operand, it depends on the opcode itself).
+However, the special thing about it, is that it could be used just as a <i>part</i> of the opcode.
+This merely 3 bits are used many times in many instructions (0x80-0x83).
+Later on, it is explained how it becomes a part of the instructions DB.
+ 
+At last, but not least, the R/M field. The R/M field stands for Register or Memory.
+It has a different meaning, and its meaning is chosen according to the MOD field.
+It might be a general-purpose register when MOD is 11, or it might be a register for memory addressing when MOD is not 11.
+ 
+Notice that the operation size of the instruction wasn't mentioned yet,
+this is because for the ModR/M itself, the operation size isn't a matter.
+It becomes usable when you know the operands' types of the instructions,
+so with both parameters you will know what registers are used.
+ 
+The REG field or R/M field could be one of the following:
+ 
+-:Value to Register Table (32 bits):----
+|0   |1   |2   |3   |4   |5   |6   |7  |
+|EAX |ECX |EDX |EBX |ESP |EBP |ESI |EDI|
+|AX  |CX  |DX  |BX  |SP  |BP  |SI  |DI |
+|AL  |CL  |DL  |BL  |AH  |CH  |DH  |BH |
+|SS0 |SS1 |SS2 |SS3 |SS4 |SS5 |SS6 |SS7|
+|MM0 |MM1 |MM2 |MM3 |MM4 |MM5 |MM6 |MM7|
+----------------------------------------
+ 
+The only way to know which registers set you should use is by the operand type itself,
+and of course by the corresponding field's value.
+ 
+Let's decode some (in 32 bits) :)
+ 
+88 1B MOV [EBX], BL
+ 
+So 88 is a 8 bits operation size instruction.
+According to the specs 88 is defined as: MOV r/m8,r8
+ 
+In short, the first operand type: r/m means the operand could be a register or a memory addressing.
+The number following the r/m means the size of the instruction's operation.
+The other operand type, r8 or r32, means that the operand must be a register, its size is known too.
+ 
+Now that we know what's going on with these two operands and what to expect let's examine some bits:
+ 
+0x1B in binary is 00011011, making it ModR/M compatible: 00-011-011
+Knowing in advance the operands' types and the ModR/M, let's disassemble the instruction:
+88 is decoded as: MOV,
+The MOD is 00, means only a register for memory addressing is used.
+But how do we know which operand uses what field (REG or R/M), that's according to the operand type.
+So the R/M field used in this case as the Destination (=first) operand and has the value of 011, which is (3) EBX,
+and we know it's an R/M operand, thus it is a memory indirection form.
+We are left with the REG field, which in this case is also used, its value is 011 and decodes to (3) BL,
+it's BL and NOT EBX because the operand size is 8 bits, see that.
+ 
+Ok, another one:
+According to the specs:
+F6 /3 NEG r/m8
+ 
+Let's decode some more hex (in 32 bits) :
+F6 19
+ 
+Two things to note, the "/3" means it uses the REG field (as a part of the opcode!) with a value of 3 for indicating it's a NEG instruction.
+And the second thing, that it is a simple one-operand instruction.
+ 
+So encountering F6, we know it's a "NEG" instruction, alright.
+NO, that was not right! Encountering F6, we still don't know it's a NEG instruction, it could be something else,
+but we will know that we have to read the REG field in order to get the desired instruction, so after isolating the REG field,
+and testing it, we know it's the "NEG" instruction - now it's alright, for real.
+You see, reading F6 tells us that we have to read 3 more bits (REG),
+and only then we'll know the instruction, maybe if we read the REG we reach to another instruction,
+for example: F6 /6 is the DIV instruction.
+It's can't be that reading F6 tells us to read another whole byte for constructing the opcode, because then we would have collisions...
+Getting the instruction, we know its operands, in this case only one operand.
+By now you should know that type of operand.
+ 
+0x19 in binary ModR/M style is 00-011-001
+Notice that this time the REG field is indeed 3, which is the missing bits (1 byte, 0xf6 isn't enough to determine the instruction),
+which completes the opcode fetching.
+So the REG field was already used and is ignored for operand decoding.
+We know MOD of 00, so we look up the table and get [ECX] (because R/M=1).
+Eventually the instruction is decoded as: NEG BYTE [ECX]
+The "BYTE" is an addition to show the operation size explicitly,
+otherwise you could keep on guessing the operation size of this instruction, without having any clue.
+ 
+As you can see,
+there are 3 ingredients to a good instruction :)
+An opcode (which is a must, of course)
+and is bundled with the operands' types (in fact, this is 2 in 1 :).
+And ModR/M which is optional, but necessary most of the times.
+ 
+There are a few quirks to the ModR/M decoding,
+how to get from a ModR/M to SIB wasn't explained yet.
+It varies from 16 to 32 bits, which have different tables for decoding the ModR/M,
+but I will stick to the 32 bits version, as I have already done.
+Note that 16 bits don't have a SIB byte, thus there are no complex memory addressings in 16 bits.
+ 
+The ModR/M byte when decoded to specify the ESP as a memory addressing register, actually tells the processor to read the SIB byte!
+This is because when the R/M field's value is 4 (ESP register) it means the instruction includes the SIB byte,
+so in order to really specify an operand as ESP, we will have to use a SIB byte for that.
+ 
+And there is another special case when MOD is 00 and R/M is 5 (EBP register) it means the EBP is NOT used at all,
+and that a Displacement of 32 bits follows the ModR/M byte.
+That's why using the EBP register as memory addressing register takes one more byte (using MOD=01, Disp8=0), making it [EBP+00].
+I guess Intel chose the EBP register instead of the others, because EBP is intended as a stack frame pointer, and will have a disp8 offset.
+So it's not big deal to pay one more byte for the instruction when we usually use that byte anyways...
+The special R/M=5 case, allows the instructions to use an absolute memory address, for example:
+MOV [0x1234567], EBX
+Otherwise it wasn't possible using only ModR/M.
+ 
+-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-64 bits decoding mode + ModR/M-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
+ 
+If that was the same case in 64 bits decoding mode, when the R/M is 5 then the result was:
+MOV [RIP+0x1234567], EBX
+So when R/M is 5, the RIP or Register-IP becomes the base register.
+And if you still want an absolute addressing in 64 bits mode, you will have to use the SIB byte with a couple of tricks.
+Yes, you actually can get the position of the currently being executed code with LEA RAX, [RIP+0] Genius!
+ 
+Back to REX prefix now. This is the most hard part in 64 bits decoding, so pay extra attention:
+so if the REX.R is set, the REG field of the ModR/M becomes a 4 bits variable which indicates a register index.
+And if the REX.B is set, the R/M field of the ModR/M becomes a 4 bits variable...ditto.
+ 
+All the above extreme cases of the EBP/ESP reigsters don't apply to this new variable,
+it means that even if the REX.R is set, a RIP will be used, or a SIB will be read if the REX.R is set and REG is 4...
+Sometimes the REX bits are ignored and the other times they are took into account, it depends what action is being done,
+it is all covered in the AMD64 documentation really well, in the bottom line,
+the REX is ignored when the fields tell the processor to read the SIB byte or in the extreme cases explained earlier.
+ 
+A fourth bit in the REG or R/M field permits access to 16 registers.
+There are new sets of registers for 64 bits.
+ 
+These are the 64 bits registers:
+-------------------------------------------------------------------------------
+|RAX |RCX |RDX |RBX |RSP |RBP |RSI |RDI |R8 |R9 |R10 |R11 |R12 |R13 |R14 |R15 |
+-------------------------------------------------------------------------------
+ 
+Even 32 bits registers can be extended!
+---------------------------------------------------------------------------------------
+|EAX |ECX |EDX |EBX |ESP |EBP |ESI |EDI |R8D |R9D |R10D |R11D |R12D |R13D |R14D |R15D |
+---------------------------------------------------------------------------------------
+ 
+Further 16 bits registers can be extended using the suffix letter 'W' instead.
+ 
+In 64 bits decoding mode, there is a new set of registers accessible, the low bytes of SI, DI, BP and SP!
+I wonder how compilers will use these bytes in the future...
+Anyways, there are two tables now:
+ 
+8 bits registers <b>without</b> REX prefix (nothing special yet):
+-------------------------------------------------------------------------------
+|AL |CL |DL |BL |AH |CH |DH |BH |R8B |R9B |R10B |R11B |R12B |R13B |R14B |R15B |
+-------------------------------------------------------------------------------
+ 
+8 bits registers <b>with</b> REX prefix set (no matter its flags!):
+-----------------------------------------------------------------------------------
+|AL |CL |DL |BL |SPL |BPL |SIL |DIL |R8B |R9B |R10B |R11B |R12B |R13B |R14B |R15B |
+-----------------------------------------------------------------------------------
+This explains why a REX prefix with a value of 0x40 might affect the instruction, even with all bits cleared!
+ 
+Note that the extended 32 bits registers could be used in memory addressing forms!
+For example: INC DWORD [R8D + R15D * 8 + 0x1234].
+ 
+One more comment about 64 bits -
+the default addressing size is 64 bits, wheareas the default operand size is 32!
+----------------------------------------
+|Default   |Default  |With   |Effective|
+|Operating-|Address- |0x67   |Address- |
+|Mode      |Size     |Prefix |Size     |
+|----------+---------------------------|
+|64 Bits   |   64    |  No   |   64    |
+|--------------------------------------|
+|64 Bits   |   64    |  Yes  |   32    |
+----------------------------------------
+ 
+BTW - there are 16 XMM registers (SSE) as well in 64 bits.
+ 
+/---\
+|SIB|
+\---/
+SIB stands for Scale-Index-Base, it is a one byte which embodies these fields.
+It is an optional byte and if used, it must be sequential to the ModR/M byte.
+The SIB might be a part of the instruction only when the operand is in the addressing mode (MOD!=11).
+The SIB makes the effective address more powerful, thus using less instructions in order to calculate complex addresses.
+ 
+It formats as:
+ 
+-7-----6-5-----3-2----0-
+| SCALE | INDEX | BASE |
+------------------------
+ 
+And results in [INDEX * 2**SCALE + BASE].
+ 
+The most significant two bits represent the SCALE field.
+The scale field is used as a multiplication variant for the Index register.
+The Index is multiplied by 2**Scale (powered), the Index register (3 bits long) could be any general-purpose register,
+except the ESP register, makes sense, doesn't it?
+ 
+The Base register is 3 bits long (less significant) and is used as a base address.
+There is a special condition to this register, the base is ignored when it's the EBP register and MOD==00, recall it means
+using a displacement of 32 bits.
+ 
+In the bottom line, the special case comes to our call in 64 bits,
+when we can't use an absolute memory address only (because then RIP is the base register automatically),
+we are left with a special case:
+If the MOD=00 and Base=EBP and Index=ESP, we end up with disp32 only.
+Therefore even in 64 bits you can use absolute addresses!
+ 
+So before we know which registers we are going to use,
+we still have to decode the REX prefix, that is in 64 bits mode, and see how its flags affect the SIB.
+REX.R is ignored when decoding SIB, because in order to read a SIB byte the REG field had to be 4.
+ 
+So we are left with two more flags:
+The REX.X flag is quiet easy to understand, it is only used as the high fourth bit of the Index field.
+And the REX.B flag, which becomes the high fourth bit of the Base field.
+ 
+If you are still confused, you should take a look at the AMD64 data sheets,
+they have nice graphs describing these REX bits things...
+ 
+ 
+/------------\
+|Displacement|
+\------------/
+The displacement is optional, it might be used only if the R/M field defines so (recall the R/M table above).
+The size of the displacement could vary from 1 byte, 2 bytes or 4 bytes, the MOD and R/M field define it too.
+This field must follow the ModR/M byte or SIB byte if exists.
+If this field is used, it will be used as part of the address.
+The address size prefix affects the size of the displacement
+(this is because it tells us to use the non-default addressing table, which has different definitions for the displacement).
+In memory the displacement is stored in Little Endian.
+ 
+/---------\
+|Immediate|
+\---------/
+Instructions could load values into registers or use plain number in order to do other operations.
+Instead of loading those values off the memory, they could be part of the instruction itself, hence their name.
+The immediate could be treated as a signed number, and its size varies from 1 byte, 2 bytes or 4 bytes,
+its size is dependant on the decoding mode and the (possibly set) prefixes.
+The immediate is the last element in the instruction, and is stored in Little Endian.
+</pre>
