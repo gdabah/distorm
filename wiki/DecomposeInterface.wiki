@@ -12,9 +12,10 @@ The _DInst structure is very compact, is it designed to be as minimal as possibl
 
 Again, the following structure was designed specially for the x86 and AMD64 architectures, that's why some fields are global to the instruction although a more appropriate place for them should be inside the Operand structure. This is in order to spare bytes. For example, there's no reason to have an 'immediate' field in every operand, because the x86 defines that an instruction can have at most 1 immediate operand. (This is true except the ENTER instruction, you will find more information below about it).
 
-General note:
-If you want to get the textual representation of either a register or an instruction. You should include 'mnemonics.h' in your project. And use GET_REGISTER_NAME to get the string for a given register index.
+If you wish to get the textual representation of either a register or an instruction. You should include 'mnemonics.h' in your project. And use GET_REGISTER_NAME to get the string for a given register index.
 Also, in the 'mnemonics.h' you will find other enum's that will aid your parsing, like all supported registers (R_EAX, R_DS, R_CR0, etc) and opcodes (I_MOV, I_ADD, I_CALL), etc.
+
+If you wish to convert the _DInst structure, that you got as a result from the Decompose function, into text, there's a new function that does just that, distorm_format. It requires the result and the <i>old</i> structure _DecodedInst which will hold the textual representation of the instruction, including prefixes. This will save you the hassle from converting the operands into text and taking care of the prefixes and other subtle issues. You should use the distorm_format, rather than calling distorm_decode on the same instruction, because it does what it name suggests, just formats the instruction as text.
 
 ===struct _DInst:===
 
