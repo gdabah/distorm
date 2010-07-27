@@ -3,6 +3,7 @@
 This is your number 1 documentation if you wish to tinker with diStorm on your own, it was written for diStorm64, and it is not up to date, but should be good enough to understand how diStorm works.
 
 {{{
+#if 0 // f@#k wiki
 /-------------------\
 |Trie Data Structure|
 \-------------------/
@@ -22,7 +23,7 @@ the minimal fetching timing.
 typedef struct InstNode {
 	unsigned char type;
 	union {
-		_InstInfo* ii;
+		InstInfo* ii;
 		struct InstNode* list;
 	};
 } _InstNode;
@@ -55,13 +56,13 @@ typedef enum {
 	INT_LIST_DIVIDED
 } _InstNodeType;
  
-<u>INT_NOTEXISTS</u> - no instruction information is found, this means we should drop the bytes we read.
-<u>INT_NONE</u> - list or ii aren't set.
-<u>INT_INFO</u> - an instruction was found, ii describes the instruction information for decoding.
-<u>INT_LIST_GROUP</u> - list points to a group table (3 bits, REG field in the ModR/M),
+INT_NOTEXISTS - no instruction information is found, this means we should drop the bytes we read.
+INT_NONE - list or ii aren't set.
+INT_INFO - an instruction was found, ii describes the instruction information for decoding.
+INT_LIST_GROUP - list points to a group table (3 bits, REG field in the ModR/M),
 so when you read the next byte, use only 3 bits as an index.
-<u>INT_LIST_FULL</u> - list points to a full table (256 entries), so read another whole byte.
-<u>INT_LIST_DIVIDED</u> - list points to a special table (72 entries), used for FPU instructions' complexity and some other sets.
+INT_LIST_FULL - list points to a full table (256 entries), so read another whole byte.
+INT_LIST_DIVIDED - list points to a special table (72 entries), used for FPU instructions' complexity and some other sets.
  
 The Trie data structure as used in this project is pre-built, statically initialized in the data segment.
 The main advantages for this behaviour is that initalization time is spared and no memory should be consumed in run time.
@@ -88,13 +89,13 @@ The 72 entries table will be explained later, it's quiet confusing, so let's con
  
 An example of a Trie DB:
 Where FULL = 4 entries and GROUP = 2, for the sake of example.
-<u>ROOT</u>:
+ROOT:
 0 - INT_INFO
 1 - INT_GROUP
 2 - INT_INFO
 3 - INT_NOTEXISTS
  
-<u>Group table for ROOT[1]</u>:
+Group table for ROOT[1]:
 1, 1 - INT_INFO
 1, 2 - INT_NOTEXISTS
  
@@ -118,13 +119,13 @@ and 2 cells in the GROUP table. Every cell in the node will be an index into the
 instructions take only 1 byte instead of a few for an empty InstNode.
  
 So using this technique the new Trie DB appears like this:
-<u>ROOT</u>:
+ROOT:
 [0,1,2,-1]
 0 - INT_INFO
 1 - INT_GROUP
 2 - INT_INFO
  
-<u>Group table for ROOT[1]</u>:
+Group table for ROOT[1]:
 [0,-1]
 1, 1 - INT_INFO
  
@@ -148,7 +149,7 @@ of the dynamic tables everytime I wanted to use the disassembler. Knowing that t
 segment anyways, I found it easier and more comfortable to keep them static tables that way.
 Which means you can just start using the ROOT of the Trie DB, without fretting for anything.
  
-2.Another decision I had to make is to support <i>all</i> 80x86 instructions in my DB, with the exceptional of 3DNow!
+2.Another decision I had to make is to support all 80x86 instructions in my DB, with the exceptional of 3DNow!
 and the WAIT instruction. In 'support' I mean that the code that fetches an instruction won't have to contain if statements
 for searching/looking for a specific instructions or groups. Most of the disassemblers out there mix instruction tables
 with code. I wanted that piece of code, which locates an instruction, to find that instruction according to the Trie DB only.
@@ -162,7 +163,7 @@ defined in the code itself.
 The instruction information has a major role in the disassembler.
 We need the instruction information structure for two important reasons:
 first of all, we know whether we reached an instruction in the Trie DB (from the given stream)
-and we have to get the information about the <i>instruction itself</i>.
+and we have to get the information about the instruction itself.
  
 Information such as:
 typedef struct _PACKED_ {
@@ -171,7 +172,7 @@ typedef struct _PACKED_ {
 	_iflags flags;
 } _InstInfo;
  
-This is the <i>base</i> structure, as you can see it defines a few things about an instruction,
+This is the base structure, as you can see it defines a few things about an instruction,
 its source and destination operand types, its mnemonic and flags describing the behaviour of the instruction.
  
 There are more types of InstInfo structure, they are 'deriving' from the base _InstInfo above.
@@ -301,7 +302,7 @@ or it could be a memory indirection addressing (MOD!=11), loading a 64 bits valu
  
 After encountering two bytes in a row of 0x0F, you know you hit a 3DNow! instruction.
 The next thing you do is telling the decoder you know the operands' types already and feed them in brutally.
-Then when you are <i>done</i> messing with the ModR/M and the other optional elements you get the instruction's name
+Then when you are done messing with the ModR/M and the other optional elements you get the instruction's name
 (its mnemonic) by the last byte in the instruction.
 This happens using another function which will begin seeking the instruction from ROOT[0x0F][0x0F]->[3dNow Opcode Index].
  
@@ -314,13 +315,13 @@ Reading the opcode of an instruction gives us its operands' types, without them 
 The following finite set is taken from the source code, it includes all possible types of the 80x86 instructions.
  
 The legend goes like this:
-OT_<type><size> = Operand Type, its real type by the specs and the size of the type.
+OT_< type>< size> = Operand Type, its real type by the specs and the size of the type.
 It's kinda self explanatory.
 One more thing, that 'FULL' suffix is a special size case, it means that the size of the type is either 16 or 32 bits (or 64...).
 The default size of 'FULL' depends solely on the decoding mode (that is passed in the API), and prefixes such as Operand Size,
 which switch the size to the non-default. It is all explained already in the Operand Size section, but this is how it's practically done.
 Let's have a simple example:
-PKUDA <OT_REG_FULL> 
+PKUDA < OT_REG_FULL> 
 So if we disassemble that instruction (which is named PKUDA) in 16 bits (or prefixed with operand size in 32 bits),
 we can only use the general purpose registers such as: AX, CX, DX, BX, SP, etc...
 But if we disassemble that instruction in 32 bits, or prefix it with operand size in 16 bits,
@@ -525,9 +526,9 @@ A good example might be the MOV REG, IMM32 which becomes MOV REG64, IMM64 ONLY w
  
 It's time to cover the special 5 bits instructions (OT_IB_xxx).
 I decided to call them Instruction-Block because the REG field is extracted from the other 3 (LS) bits, but in the Trie DB they look as follow:
-0x40-0x47: INC <OT_REG_FULL> 
-0x48-0x4f: DEC <OT_REG_FULL> 
-0x50-0x57: PUSH <OT_REG_FULL> 
+0x40-0x47: INC < OT_REG_FULL> 
+0x48-0x4f: DEC < OT_REG_FULL> 
+0x50-0x57: PUSH < OT_REG_FULL> 
 And so on...
 Because the Trie DB works in a byte granularity, the trick I used was to define one instruction per a block which its operand size is OT_IB_xxx,
 where xxx is the operand's size. So when we encounter a byte in the range of 0x40-0x47 for instance, we read from the corresponding instruction's
@@ -597,7 +598,7 @@ The extraction routines are the core of the disassembler, they will analysis the
 and act upon them. If required an immediate will be read, or a displacement will be read too.
 Most of the meat in the disassembler lies within these functions, they also take care of the prefixes set.
 Let's say someone input the disassembler with an operand prefix and a 8bits operation instruction (for instance: 0x66; inc al).
-What I am actually trying to say is that only <i>after</i> extracting the operands we can know whether a prefix was used or not.
+What I am actually trying to say is that only after extracting the operands we can know whether a prefix was used or not.
  
 5) [Text Formatting]
 This is another important step, from all the info we got from the above steps, they are enough to make the instruction representation itself,
@@ -638,8 +639,8 @@ There are three types of prefixes:
 1)Superfluous prefixes -
 These prefixes are dropped automatically.
 The algorithm I used in order to decide which prefixes are categorized in this type is as follows:
-Every prefix can be used once, no matter its order. If that prefix is used <i>again</i> 
-or another prefix from that same prefix's <i>type</i> is used then all prefixes up to that prefixes are
+Every prefix can be used once, no matter its order. If that prefix is used again 
+or another prefix from that same prefix's type is used then all prefixes up to that prefixes are
 dropped and treated as extra prefixes.
  
 Streams and result, by example:
@@ -653,7 +654,7 @@ notice it doesn't matter what happens with the first bytes,
 because the second segment override cancels the first segment override,
 therefore we are left with 0x66 0x67 0x36.
  
-This algorithm isn't so smart and to be honest, I think that the processor <b>does NOT</b> work the same.
+This algorithm isn't so smart and to be honest, I think that the processor does NOT work the same.
 But I thought it's supposed to be enough for a good disassembler.
 In the documentation it's not written what happens if a prefix from the same type appears twice or more.
 It seems the processor simply ignores most of the extra prefixes, except the lock prefix which renders the instruction invalid.
@@ -670,7 +671,7 @@ They are left to be used by the disassembler for the instructions itself.
  
 3)Unused prefixes - 
 These are the valid prefixes which weren't used by the disassembler.
-We only know which prefixes belong to this category only <i>after</i> we disassembled the instruction itself.
+We only know which prefixes belong to this category only after we disassembled the instruction itself.
 For example:
 0x66 0xb0, 0x55 will result in db 0x66; mov al, 0x55
 because mov al is a 8 bit operation the operand size prefix can't affect this instruction.
@@ -685,7 +686,7 @@ we only know that, for instance, only the operand size and segment override pref
 You should pay attention to the way prefixes are dropped, this happens according to their types:
 The first type (Superfluous) of prefixes are dropped as a seperated instruction per se.
 The second type (valid) prefixes are copied to the beginning of the hex dump buffer, before the instruction's hex itself, of course.
-The last type (unused) prefixes are dropped as a seperated instruction, but <i>share</i> the SAME address of the instruction they precede.
+The last type (unused) prefixes are dropped as a seperated instruction, but share the SAME address of the instruction they precede.
  
 7) [Decoded Instruction]
  
@@ -739,4 +740,5 @@ distorm_decode - API - does parameters validations.
 This is the core hierarchy of the kernel of diStorm, this is just so you can quickly start messing with the code,
 and when you see it you won't panic. Kernel Panic.
 For more information you have the code.
+#endif
 }}}
