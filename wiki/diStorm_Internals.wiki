@@ -2,8 +2,7 @@
 
 This is your number 1 documentation if you wish to tinker with diStorm on your own, it was written for diStorm64, and it is not up to date, but should be good enough to understand how diStorm works.
 
-{{{
-#if 0 // f@#k wiki
+<pre>
 /-------------------\
 |Trie Data Structure|
 \-------------------/
@@ -23,15 +22,15 @@ the minimal fetching timing.
 typedef struct InstNode {
 	unsigned char type;
 	union {
-		InstInfo* ii;
-		struct InstNode* list;
+		InstInfo`*` ii;
+		struct InstNode`*` list;
 	};
-} _InstNode;
+} InstNode;
  
 Reading a byte from a stream, you access to the root table with that byte as an index. You will end up reading an InstNode,
 then examining the type, you know whether you found the instruction, or maybe you should read some more.
 If you should read some more, then you read the next byte in the stream and then advance to the next table in the
-Trie data structure, using the _InstInfo pointer, which leads to another table. Reading the next byte as an index within
+Trie data structure, using the InstInfo pointer, which leads to another table. Reading the next byte as an index within
 this table, results in another read of InstNode structure, then you examine the type 'till you get an instruction
 information structure. Or maybe the type says you got to the end of the road, so no instruction exists using the bytes
 you read from the stream. In 3 hops at most you are supposed to find the instruction, if exists. Thus no loops are needed,
@@ -48,21 +47,21 @@ as a ModR/M byte. The type is determined according to the second byte's range. T
  
 There are 6 types of InstNode:
 typedef enum {
-	INT_NOTEXISTS = -1,
-	INT_NONE,
-	INT_INFO,
-	INT_LIST_GROUP,
-	INT_LIST_FULL,
-	INT_LIST_DIVIDED
-} _InstNodeType;
+	INTNOTEXISTS = -1,
+	INTNONE,
+	INTINFO,
+	INTLISTGROUP,
+	INTLISTFULL,
+	INTLISTDIVIDED
+} InstNodeType;
  
-INT_NOTEXISTS - no instruction information is found, this means we should drop the bytes we read.
-INT_NONE - list or ii aren't set.
-INT_INFO - an instruction was found, ii describes the instruction information for decoding.
-INT_LIST_GROUP - list points to a group table (3 bits, REG field in the ModR/M),
+INTNOTEXISTS - no instruction information is found, this means we should drop the bytes we read.
+INTNONE - list or ii aren't set.
+INTINFO - an instruction was found, ii describes the instruction information for decoding.
+INTLISTGROUP - list points to a group table (3 bits, REG field in the ModR/M),
 so when you read the next byte, use only 3 bits as an index.
-INT_LIST_FULL - list points to a full table (256 entries), so read another whole byte.
-INT_LIST_DIVIDED - list points to a special table (72 entries), used for FPU instructions' complexity and some other sets.
+INTLISTFULL - list points to a full table (256 entries), so read another whole byte.
+INTLISTDIVIDED - list points to a special table (72 entries), used for FPU instructions' complexity and some other sets.
  
 The Trie data structure as used in this project is pre-built, statically initialized in the data segment.
 The main advantages for this behaviour is that initalization time is spared and no memory should be consumed in run time.
@@ -73,7 +72,7 @@ Well, to be honest I didn't manage to come up with anything better and I think t
  
 Eventually, we have three types of tables: 256, 72 entries and 8 entries. Reading a whole byte or reading 3 bits (REG field)
 from the next byte, respectively. It might be that some tables will be mostly empty, because not many instructions are
-defined using these bytes. Thus, we end up having gaps in our tables, because not all entries are set to INT_INFO in the last table.
+defined using these bytes. Thus, we end up having gaps in our tables, because not all entries are set to INTINFO in the last table.
 Let's say we have the root table, called Instructions, its size is 256, of course, because all 80x86 instructions are at least 1 byte long.
 People might claim that I am not accurate, because for instance, push instruction is five bits long and the other 3 bits specify the register,
 but it all depends how you represent and use your data, later on I will shed some light about those special cases.
@@ -90,25 +89,25 @@ The 72 entries table will be explained later, it's quiet confusing, so let's con
 An example of a Trie DB:
 Where FULL = 4 entries and GROUP = 2, for the sake of example.
 ROOT:
-0 - INT_INFO
-1 - INT_GROUP
-2 - INT_INFO
-3 - INT_NOTEXISTS
+0 - INTINFO
+1 - INTGROUP
+2 - INTINFO
+3 - INTNOTEXISTS
  
 Group table for ROOT[1]:
-1, 1 - INT_INFO
-1, 2 - INT_NOTEXISTS
+1, 1 - INTINFO
+1, 2 - INTNOTEXISTS
  
 Reading one byte (in the range of 0-3...), you can retrieve the correct entry directly for that index.
 Let's parse this stream according to the ROOT in the example:
 0, 0, 1, 0, 1, 1
  
-Offset 0: ROOT[0] results in INT_INFO, an instruction was found. So decode it and get to the next byte, restarting the whole process.
+Offset 0: ROOT[0] results in INTINFO, an instruction was found. So decode it and get to the next byte, restarting the whole process.
 Offset 1: ROOT[0] ditto.
-Offset 2: ROOT[1] results in INT_GROUP, thus in this table we know we have to read only 2 bits from the second byte of the instruction.
-Offset 2,3: ROOT[1, 0] results in INT_INFO. Start all over.
-Offset 4: ROOT[1] results in INT_GROUP. Get second byte...
-Offset 4,5: ROOT[1,1] results in INT_NOTEXISTS, ah uh, no instruction defined.
+Offset 2: ROOT[1] results in INTGROUP, thus in this table we know we have to read only 2 bits from the second byte of the instruction.
+Offset 2,3: ROOT[1, 0] results in INTINFO. Start all over.
+Offset 4: ROOT[1] results in INTGROUP. Get second byte...
+Offset 4,5: ROOT[1,1] results in INTNOTEXISTS, ah uh, no instruction defined.
  
 As you can see there are two undefined instructions. In this table it's nothing special,
 but when you have 80x86 tables, you will have many undefined instructions, thus wasting space.
@@ -121,15 +120,15 @@ instructions take only 1 byte instead of a few for an empty InstNode.
 So using this technique the new Trie DB appears like this:
 ROOT:
 [0,1,2,-1]
-0 - INT_INFO
-1 - INT_GROUP
-2 - INT_INFO
+0 - INTINFO
+1 - INTGROUP
+2 - INTINFO
  
 Group table for ROOT[1]:
 [0,-1]
-1, 1 - INT_INFO
+1, 1 - INTINFO
  
-This way we eliminate INT_NOTEXISTS InstNodes using the -1 marker for "undefined".
+This way we eliminate INTNOTEXISTS InstNodes using the -1 marker for "undefined".
 You should say by now that -1 is a bit problematic. If you have 256 instructions and the index consists from 1 byte,
 then it will simply direct you to the last entry, and you won't be able to tell the difference from Undefined to an index to the last entry.
 So there are many ways to solve this problem, using a base and limit offsets for the indexing array, making it even smaller.
@@ -166,18 +165,18 @@ first of all, we know whether we reached an instruction in the Trie DB (from the
 and we have to get the information about the instruction itself.
  
 Information such as:
-typedef struct _PACKED_ {
+typedef struct PACKED {
 	unsigned char s, d;
-	char* mnemonic;
-	_iflags flags;
-} _InstInfo;
+	char`*` mnemonic;
+	iflags flags;
+} InstInfo;
  
 This is the base structure, as you can see it defines a few things about an instruction,
 its source and destination operand types, its mnemonic and flags describing the behaviour of the instruction.
  
-There are more types of InstInfo structure, they are 'deriving' from the base _InstInfo above.
+There are more types of InstInfo structure, they are 'deriving' from the base InstInfo above.
 I needed more types in order to define some more attributes to instructions that require so,
-because most of the instructions adequate with the _InstInfo, I decided to spare some space (not defining more variables).
+because most of the instructions adequate with the InstInfo, I decided to spare some space (not defining more variables).
 This is the only place where I think C++ could be great in diStorm, but with a simple 'casting', it wasn't really necessary.
  
 Some instructions require 3 operands defined, for example, the IMUL and other SSE instructions.
@@ -191,11 +190,11 @@ They tell you essential info about the opcode and the operands.
  
 There are many flags out there... I will name a few:
 (Take a look at instructions.h for the full list.)
-INST_INCLUDE_MODRM - A ModR/M byte follows the opcode byte, so read it and decode it as well.
-INST_32BITS - The instruction can't be disassembled in 16 bits!
-INST_PRE_LOCK - The instruction is lockable (means the lock prefix can precede it).
-INST_PRE_REP - The (I/O) instruction is repeatable (means the rep prefix can precede it).
-INST_3DNOW_FETCH - A 3DNow! instruction tells the disassembler to read one more byte to get its mnemonic...
+INSTINCLUDEMODRM - A ModR/M byte follows the opcode byte, so read it and decode it as well.
+INST32BITS - The instruction can't be disassembled in 16 bits!
+INSTPRELOCK - The instruction is lockable (means the lock prefix can precede it).
+INSTPREREP - The (I/O) instruction is repeatable (means the rep prefix can precede it).
+INST3DNOWFETCH - A 3DNow! instruction tells the disassembler to read one more byte to get its mnemonic...
  
 Some of the instruction's flags are treated distinctively when different operand types are decoded,
 you must make sure how that operand type acts upon that specific flag before you just clear it or set it.
@@ -209,16 +208,16 @@ Starting with simplified instructions, then complex (FPU) instructions and at la
 In the 80x86 the length of instructions vary. As it all began as CISC processors, we have to suffer for back compability.
 The Trie DB supports the following type of instructions:
 typedef enum {
-	OCST_1BYTE = 0
-	OCST_13BYTES,
-	OCST_1dBYTES,
-	OCST_2BYTES,
-	OCST_23BYTES,
-	OCST_2dBYTES,
-	OCST_3BYTES,
-	OCST_33BYTES,
-	OCST_4BYTES
-} _OpcodeSize;
+	OCST1BYTE = 0
+	OCST13BYTES,
+	OCST1dBYTES,
+	OCST2BYTES,
+	OCST23BYTES,
+	OCST2dBYTES,
+	OCST3BYTES,
+	OCST33BYTES,
+	OCST4BYTES
+} OpcodeSize;
  
 For every opcode size I will show a real instruction example, hope it will make it easier to follow.
 The notation I use for instructions' sizes are:
@@ -237,21 +236,21 @@ that defines which instruction it is.
 Divided instructions are used for FPU instructions and are covered thoroughly below.
  
 Fixed length instructions:
-OCST_1BYTE - 0x9c: PUSHF
-OCST_2BYTES - 0x0f, 0x06: CLTS
-OCST_3BYTES - 0x9b, 0xdb, 0xe3: FINIT
-OCST_4BYTES - 0x66, 0x0f, 0x3a, 0x0f;0xc0 (MODRM) 0x55 (IMM8) PALIGNR XMM0, XMM0, 0x55
+OCST1BYTE - 0x9c: PUSHF
+OCST2BYTES - 0x0f, 0x06: CLTS
+OCST3BYTES - 0x9b, 0xdb, 0xe3: FINIT
+OCST4BYTES - 0x66, 0x0f, 0x3a, 0x0f;0xc0 (MODRM) 0x55 (IMM8) PALIGNR XMM0, XMM0, 0x55
  
 The REG field from ModR/M byte comes into play:
-OCST_13BYTES - 0xf6, (REG field)4: MUL
-OCST_23BYTES - 0x0f, 0x00, (REG field)4: VERR
-OCST_33BYTES - 0x66, 0x0f, 0x73, (REG field)7: PSLLDQ
+OCST13BYTES - 0xf6, (REG field)4: MUL
+OCST23BYTES - 0x0f, 0x00, (REG field)4: VERR
+OCST33BYTES - 0x66, 0x0f, 0x73, (REG field)7: PSLLDQ
  
 Divided (range) instructions, according to ModR/M byte value:
-OCST_1dBYTES - 0xd8, 0xd9: FCOMP
-OCST_1dBYTES - 0xd9, (REG)0: FLD
-OCST_2dBYTES - 0x0f, 0xae, (REG)1: FXRSTOR
-OCST_2dBYTES - 0x0f, 0xae, 0xe8: LFENCE
+OCST1dBYTES - 0xd8, 0xd9: FCOMP
+OCST1dBYTES - 0xd9, (REG)0: FLD
+OCST2dBYTES - 0x0f, 0xae, (REG)1: FXRSTOR
+OCST2dBYTES - 0x0f, 0xae, 0xe8: LFENCE
  
 As you can see, reading a byte and using it as an index in the ROOT table, then testing the type,
 lets you know whether you are required to read another byte, or another byte for its 3 bits AKA the REG field.
@@ -277,7 +276,7 @@ we use the entry which is read using the index of the second byte's value subtra
 So far so good, if it's the lower range, (remember that we know we are expecting a divided instruction) we isolate the 3 bits of the REG field,
 shift them to the right (making them zero-based) and accessing that entry in the table, this way we get to the low range instructions.
  
-* Note that in diStorm, unlike Intel's specifications, the nubmer of bytes (in OCS types) COUNTS the mandatory byte!
+`*` Note that in diStorm, unlike Intel's specifications, the nubmer of bytes (in OCS types) COUNTS the mandatory byte!
  
 /-------------------\
 |3DNow! Instructions|
@@ -287,9 +286,9 @@ The format of a 3DNow! instruction doesn't follow the normal 80x86 architecture,
 Luckily, it's not magic after all, it goes like:
  
 /-------------------------------------------------------------\
-| 0x0F | 0x0F | ModR/M | *SIB | *DISPLACEMENT | 3DNow! Opcode |
+| 0x0F | 0x0F | ModR/M | `*`SIB | `*`DISPLACEMENT | 3DNow! Opcode |
 \-------------------------------------------------------------/
-* means the element is optional.
+`*` means the element is optional.
  
 The first thing you should be asking yourself is "How the heck will I decode the operands if I don't know their types?".
 Well, no worry, it was truely impossible if that was the problem. The matter is that they are fixed types.
@@ -315,13 +314,13 @@ Reading the opcode of an instruction gives us its operands' types, without them 
 The following finite set is taken from the source code, it includes all possible types of the 80x86 instructions.
  
 The legend goes like this:
-OT_< type>< size> = Operand Type, its real type by the specs and the size of the type.
+OT< type>< size> = Operand Type, its real type by the specs and the size of the type.
 It's kinda self explanatory.
 One more thing, that 'FULL' suffix is a special size case, it means that the size of the type is either 16 or 32 bits (or 64...).
 The default size of 'FULL' depends solely on the decoding mode (that is passed in the API), and prefixes such as Operand Size,
 which switch the size to the non-default. It is all explained already in the Operand Size section, but this is how it's practically done.
 Let's have a simple example:
-PKUDA < OT_REG_FULL> 
+PKUDA < OTREGFULL> 
 So if we disassemble that instruction (which is named PKUDA) in 16 bits (or prefixed with operand size in 32 bits),
 we can only use the general purpose registers such as: AX, CX, DX, BX, SP, etc...
 But if we disassemble that instruction in 32 bits, or prefix it with operand size in 16 bits,
@@ -331,188 +330,17 @@ So 'FULL' tells the operand type decoder function to examine for set prefixes an
 The rationale for naming it 'FULL' isn't so clever, I will just leave it this way.
  
 typedef enum OpType{
-	/* No operand is set */
-	OT_NONE = 0,
- 
-	/* Read a byte(8 bits) immediate */
-	OT_IMM8,
-	/* Force a read of a word(16 bits) immediate, used by ret only */
-	OT_IMM16,
-	/* Read a word/dword immediate */
-	OT_IMM_FULL,
-	/* Read a double-word(32 bits) immediate */
-	OT_IMM32,
- 
-	/* Special immediate for two instructions, AAM, AAD which will output the byte only if it's not 0xa (base 10) */
-	OT_IMM_AADM,
- 
-	/* Read a signed extended byte(8 bits) immediate */
-	OT_SEIMM8,
- 
-	/* Use a 8bit register */
-	OT_REG8,
-	/* Use a 16bit register */
-	OT_REG16,
-	/* Use a 16/32/64bit register */
-	OT_REG_FULL,
-	/* Use a 32bit register */
-	OT_REG32,
-	/* MOVSXD uses 64 bits register */
-	OT_REG64,
-	/*
-	 * If used with REX the reg operand size becomes 64 bits, otherwise 32 bits.
-	 * VMX instructions are promoted automatically without a REX prefix.
-	 */
-	OT_REG32_64,
-	/* Extract a 32bit register from the RM field, used for instructions with register operands only */
-	OT_REG32_RM,
-	/* Used only by MOV CR/DR(n). Promoted with REX onlly. */
-	OT_FREG32_64_RM,
- 
-	/* Use or read (indirection) a 8bit register or immediate byte */
-	OT_RM8,
-	/* Some instructions force 16 bits (mov sreg, rm16) */
-	OT_RM16,
-	/* Use or read a 16/32/64bit register or immediate word/dword/qword */
-	OT_RM_FULL,
-	/* Use or read a 32bit register or immediate dword */
-	OT_RM32,
-	/*
-	 * 32 or 64 bits (with REX) operand size indirection memory operand.
-	 * Some instructions are promoted automatically without a REX prefix.
-	 */
-	OT_RM32_64,
-	/* 16 or 32 bits RM. This is used only with MOVZXD instruction in 64bits. */
-	OT_RM16_32,
-	/* Same as OT_RMXX but POINTS to 16 bits [cannot use GENERAL-PURPOSE REG!] */
-	OT_FPUM16,
-	/* Same as OT_RMXX but POINTS to 32 bits (single precision) [cannot use GENERAL-PURPOSE REG!] */
-	OT_FPUM32,
-	/* Same as OT_RMXX but POINTS to 64 bits (double precision) [cannot use GENERAL-PURPOSE REG!] */
-	OT_FPUM64,
-	/* Same as OT_RMXX but POINTS to 80 bits (extended precision) [cannot use GENERAL-PURPOSE REG!] */
-	OT_FPUM80,
- 
-	/*
-	 * Special ModR/M for PINSRW, which need a 16 bits memory operand or 32 bits register.
-	 * In 16 bits decoding mode R32 becomes R16, operand size cannot affect this.
-	 */
-	OT_R32M16,
- 
-	/*
-	 * Special operand type for MOV reg16/32/64/mem16, segReg 8C /r. and SMSW.
-	 * It supports all decoding modes, but if used as a memory indirection it's a 16 bit ModR/M indirection.
-	 */
-	OT_RFULL_M16,
- 
-	/* Use a control register */
-	OT_CREG,
-	/* Use a debug register */
-	OT_DREG,
-	/* Use a segment register */
-	OT_SREG,
-	/*
-	 * SEG is encoded in the flags of the opcode itself!
-	 * This is used for specific "push SS" where SS is a segment where
-	 * each "push SS" has an absolutely different opcode byte.
-	 * We need this to detect whether an operand size prefix is used.
-	 */
-	OT_SEG,
-	
-	/* Use AL */
-	OT_ACC8,
-	/* Use AX/EAX/RAX */
-	OT_ACC_FULL,
-	/* Use AX/EAX, no REX is possible for RAX, used only with IN/OUT which don't support 64 bit registers */
-	OT_ACC_FULL_NOT64,
- 
-	/*
-	 * Read one word (seg), and a word/dword/qword (depends on operand size) from memory.
-	 * JMP FAR [EBX] means EBX point to 16:32 ptr.
-	 */
-	OT_MEM16_FULL,
-	/* Read one word (seg) and a word/dword/qword (depends on operand size), usually SEG:OFF, JMP 1234:1234 */
-	OT_PTR16_FULL,
-	/* Read one word (limit) and a dword/qword (limit) (depends on operand size), used by SGDT, SIDT, LGDT, LIDT. */
-	OT_MEM16_3264,
- 
-	/* Read a byte(8 bits) immediate and calculate it relatively to the current offset of the instruction being decoded */
-	OT_RELCB,
-	/* Read a word/dword immediate and calculate it relatively to the current offset of the instruction being decoded */
-	OT_RELC_FULL,
- 
-	/* Use general memory indirection, with varying sizes: */
-	OT_MEM,
-	OT_MEM64,
-	OT_MEM128,
-	/* Used for cmpxchg8b/16b. */
-	OT_MEM64_128,
- 
-	/* Read an immediate as an absolute address, size is known by instruction, used by MOV (offset) only */
-	OT_MOFFS,
-	/* Use an immediate of 1, as for SHR R/M, 1 */
-	OT_CONST1,
-	/* Use CL, as for SHR R/M, CL */
-	OT_REGCL,
- 
-	/*
-	 * Instruction-Block for one byte long instructions, used by INC/DEC/PUSH/POP/XCHG,
-	 * REG is extracted from the value of opcode
-	 * Use a 8bit register
-	 */
-	OT_IB_RB,
-	/* Use a 32 or 64bit (with REX) register, used by BSWAP */
-	OT_IB_R_DW_QW,
-	/* Use a 16/32/64bit register */
-	OT_IB_R_FULL,
- 
-	/* Use [(E)SI] as INDIRECTION, for repeatable instructions */
-	OT_REGI_ESI,
-	/* Use [(E)DI] as INDIRECTION, for repeatable instructions */
-	OT_REGI_EDI,
-	/* Use [(e)BX + AL] as INDIRECTIOM, used by XLAT only */
-	OT_REGI_EBXAL,
-	/* Use DX, as for OUTS DX, BYTE [SI] */
-	OT_REGDX,
- 
-	/* FPU registers: */
-	OT_FPU_SI, /* ST(i) */
-	OT_FPU_SSI, /* ST(0), ST(i) */
-	OT_FPU_SIS, /* ST(i), ST(0) */
- 
-	/* MMX registers: */
-	OT_MM,
-	/* Extract the MMX register from the RM bits this time (used when the REG bits are used for opcode extension) */
-	OT_MM_RM,
-	/* ModR/M points to 32 bits MMX variable */
-	OT_MM32,
-	/* ModR/M points to 32 bits MMX variable */
-	OT_MM64,
- 
-	/* SSE registers: */
-	OT_XMM,
-	/* Extract the SSE register from the RM bits this time (used when the REG bits are used for opcode extension) */
-	OT_XMM_RM,
-	/* ModR/M points to 32 bits SSE variable */
-	OT_XMM32,
-	/* ModR/M points to 64 bits SSE variable */
-	OT_XMM64,
-	/* ModR/M points to 128 bits SSE variable */
-	OT_XMM128,
- 
-	/*
-	 * DUMMY for cases like CALL WORD [BX+DI], we would like to omit this "WORD". It's useless,
-	 * because the DWORD/WORD/BYTE mechanism is being done automatically, we need some way to disable it in such cases...
-	 */
-	OT_DUMMY
-} _OpType;
+
+ For the complete updated list take a look at [instructions.h http://code.google.com/p/distorm/source/browse/trunk/src/instructions.h]
+
+} OpType;
  
 The suffix 'RM' means that instead of decoding the register field from the REG bits, it will read it from the R/M bits of the ModR/M byte.
 This is crucial when the REG bits are already used as a part of the opcode itself.
-Except OT_REG types, all types which are suffixed by a size means that they are part of a ModR/M byte.
+Except OTREG types, all types which are suffixed by a size means that they are part of a ModR/M byte.
 For example:
-OT_XMM64, means that XMM register is used as a real register, or that it is stored/loaded to/fro memory.
-ADDPD OT_XMM, OT_XMM128 - ADDPD XMM0, [EBX]
+OTXMM64, means that XMM register is used as a real register, or that it is stored/loaded to/fro memory.
+ADDPD OTXMM, OTXMM128 - ADDPD XMM0, [EBX]
 The memory pointed by EBX is used as an XMM variable with the instruction ADDPD.
  
 The Forced REG/RM types mean that the operand size is set according to the decoding mode and nothing else.
@@ -524,15 +352,15 @@ Let's see a practical example, same stream in both modes.
 On the contrary, there are few instructions which needs the REX prefix in order to be promoted to 64bits.
 A good example might be the MOV REG, IMM32 which becomes MOV REG64, IMM64 ONLY when prefixed with a REX.W.
  
-It's time to cover the special 5 bits instructions (OT_IB_xxx).
+It's time to cover the special 5 bits instructions (OTIBxxx).
 I decided to call them Instruction-Block because the REG field is extracted from the other 3 (LS) bits, but in the Trie DB they look as follow:
-0x40-0x47: INC < OT_REG_FULL> 
-0x48-0x4f: DEC < OT_REG_FULL> 
-0x50-0x57: PUSH < OT_REG_FULL> 
+0x40-0x47: INC < OTREGFULL> 
+0x48-0x4f: DEC < OTREGFULL> 
+0x50-0x57: PUSH < OTREGFULL> 
 And so on...
-Because the Trie DB works in a byte granularity, the trick I used was to define one instruction per a block which its operand size is OT_IB_xxx,
+Because the Trie DB works in a byte granularity, the trick I used was to define one instruction per a block which its operand size is OTIBxxx,
 where xxx is the operand's size. So when we encounter a byte in the range of 0x40-0x47 for instance, we read from the corresponding instruction's
-information structure an operand type of OT_IB_R_FULL, which is interpreted in the operand type decoder function as "read the REG field from
+information structure an operand type of OTIBRFULL, which is interpreted in the operand type decoder function as "read the REG field from
 the lower 3 bits", and of course, because in this case the size is FULL, it means the decoding mode and the prefixes affect the actual register size.
  
  
@@ -565,7 +393,7 @@ And the catch here, is to start fetching the instruction from the real non-prefi
 But you might ask, what about the stream 0x0f, 0x58, where this lead to?
 Well, you can reach an opcode from this stream, ADDPS (SSE).
 Here's how ADDPS is defined by the specs:
-ADDPD OT_XMM, OT_XMM128
+ADDPD OTXMM, OTXMM128
 So you see, there is no need for an operand size prefix no matter what, it won't affect the instruction.
 This means that even if you encounter a mandatory prefix you can be sure it's there for a reason and a collision can't really happen.
  
@@ -678,7 +506,7 @@ because mov al is a 8 bit operation the operand size prefix can't affect this in
 Notice that the prefix itself is valid, but couldn't affect the instruction's behaviour so it wasn't used.
  
 Unused prefixes have to be sorted by their position before we drop them,
-this is because we can't tell their order in advance, that's what the function get_unused_prefixes_list responsible for.
+this is because we can't tell their order in advance, that's what the function getunusedprefixeslist responsible for.
 Because we want to drop prefixes according to their order we have to sort them out, because when a prefix is counted as valid,
 we set a flag which indiciates so (and do some other book keeping), but nothing more. Now, when we know the prefix wasn't used,
 we only know that, for instance, only the operand size and segment override prefixes weren't used, but we don't know which we should output first...
@@ -723,22 +551,21 @@ I thought this will give you a harsh overview of the disassembler's system and h
 (I use herein the real functions' names for simplicity):
 Unfortunately it's not a graphical layout.
  
-distorm_decode - API - does parameters validations.
-  internal_decode - Used by the C library API and by Python's extenstion module, implements Decode-Phase #7.
-    is_prefix - Quick way to tell if the next byte in the stream is a prefix.
-      decode_prefixes - Implements Decode-Phase #6 (the prefixes stuff only).
-    decode_inst - The disassembler's kernel, disassemble a single instruction.
-      locate_inst - Try to find an SSE instruction (checking for mandatory prefixes) or a normal instruction.
-        locate_raw_inst - Finds an instruction(opcode) according to the binary stream itself (doesn't care of prefixes etc).
-      extract_operand dest, source, op3 - Decode the instruction's operands, start with dest, then source and rarely a 3rd operand.
-        extract_modrm - Decode the operand according to the ModR/M byte of the instruction.
-          extract_sib - Decode the operand according to the SIB byte of the instruction.
-      locate_3dnow_inst - 3DNow! instruction are completed only after the whole instruction was disassembled, time to get their mnemonic.
-    get_unused_prefixes_list - Retrieve the unused prefixes, if any.
+distormdecode - API - does parameters validations.
+  internaldecode - Used by the C library API and by Python's extenstion module, implements Decode-Phase #7.
+    isprefix - Quick way to tell if the next byte in the stream is a prefix.
+      decodeprefixes - Implements Decode-Phase #6 (the prefixes stuff only).
+    decodeinst - The disassembler's kernel, disassemble a single instruction.
+      locateinst - Try to find an SSE instruction (checking for mandatory prefixes) or a normal instruction.
+        locaterawinst - Finds an instruction(opcode) according to the binary stream itself (doesn't care of prefixes etc).
+      extractoperand dest, source, op3 - Decode the instruction's operands, start with dest, then source and rarely a 3rd operand.
+        extractmodrm - Decode the operand according to the ModR/M byte of the instruction.
+          extractsib - Decode the operand according to the SIB byte of the instruction.
+      locate3dnowinst - 3DNow! instruction are completed only after the whole instruction was disassembled, time to get their mnemonic.
+    getunusedprefixeslist - Retrieve the unused prefixes, if any.
     ## start all over again, until end of stream
  
 This is the core hierarchy of the kernel of diStorm, this is just so you can quickly start messing with the code,
 and when you see it you won't panic. Kernel Panic.
 For more information you have the code.
-#endif
-}}}
+</pre>
