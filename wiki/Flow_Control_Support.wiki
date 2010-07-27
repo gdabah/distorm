@@ -4,7 +4,7 @@ This page covers the advanced functionality that the new interface of diStorm3 s
 
 The Decompose function requires the caller to pass a CodeInfo structure. In that structure there are all the parameters you pass normally to the Decode function and in addition there's a new parameter (or field) named 'features'. This is a flags parameter, so you can pass along a few flags together to control the way diStorm returns the disassembled instructions.
 
-Let's list the possible decode flags:
+Let's list the possible decode flags (some of them are not related to flow control though):
 Note that you can combine any of the flags below, except DF_MAXIMUM_ADDR16 with DF_MAXIMUM_ADDR32.
 
 <b>DF_NONE</b>
@@ -17,6 +17,7 @@ Note that you can combine any of the flags below, except DF_MAXIMUM_ADDR16 with 
 
 <b>DF_MAXIMUM_ADDR32</b>
  * Nowadays that we got 64 bits decoding as well, we sometimes want to limit addresses to 32 bits. Works like DF_MAXIMUM_ADDR16 but for 32 bits.
+ * The truth is that the decoder will store the instructions using full 64 bit addresses, but only the distorm_format function will cut the addresses.
 
 <b>DF_RETURN_FC_ONLY</b>
  * This is the most important flag IMHO. What it really does is telling the Decompose function that it should return only flow control instructions back to the caller, and filter the rest of them.
