@@ -34,7 +34,7 @@ So except from the defining the macro, or commenting it out, the rest is spared 
 For more info about this naming issue, you can read a blog post I wrote long time a go, [ here http://www.ragestorm.net/blogs/?p=22].
 
 ===Helper Macros for Compilation===
-Two other important macros are: LIBDISTORM and _DLL. Their purpose is to aid the compilation to know whether diStorm is being compiled as a true library file or as a dynamic linked library. It instructs distorm.h whether to export the APIs.
+Two other important macros are: LIBDISTORM and {{{_DLL}}}. Their purpose is to aid the compilation to know whether diStorm is being compiled as a true library file or as a dynamic linked library. It instructs distorm.h whether to export the APIs.
 For example, you don't want to export the APIs as a library file, because then if another project will link against diStorm in compile-time, it will have the diStorm's APIs exported from the resulted executable object. That's not a big deal, but not professional as well.
 
 Just a note that the .dll compilation project for Win32 uses both macros set, for instance.
