@@ -1,6 +1,39 @@
 #summary Things you need to know in order to compile diStorm on your own
 
-TBD
+In this page you can find information on how to compile diStorm for various platforms, and change configurations and some more info.
+
+There are a few files that are related to the compilation of the project: distorm.h, config.h and the makefiles.
+
+distorm.h is both used in the compiled library and for the project which uses the library. Thus, it's the header file that accompanies the distorm.lib file.
+In contains the APIs to the library, all related flags, structures and helper macros. 
+
+config.h has a few important definitions for the library itself, such as the type of the 'offset' field along all the code. That is the virtual address of an instruction. It might be compiled as an 'unsigned long' or as an 'unsigned long long', 32 or 64 bits respectively.
+
+The reason that you can configure the type is because of older compilers support. Or suppose you know that you are going to use diStorm only for disassembling 32 bits code, thus the addressing is 32 bits too, hence there's no reason to use 64 bit offsets. Also, if you were to compile 64 bit integers in a 32 bits compiler, that would require a tiny bit of extra work. In fact, the first versions of diStorm supported some DOS compilers which didn't support 64 bit integers.
+
+By default, the type of the 'offset' field is defined as 64 bits integer. The name of the macro that is responsible for this type change is SUPPORT_64BIT_OFFSET.
+
+You can either uncomment the comment that defines that macro in config.sys, or you can pass a parameter to the command line compiler: -DSUPPORT_64BIT_OFFSET.
+
+In both Linux and Windows compilation it is defined, thus 'offset' is 64 bits long. If you want to remove it, you will either have to remove the macro, or remove the parameter from the command line.
+
+Supporting this changing integer size for the 'offset' field caused a big problem. Because now the library user has to know how the project was compiled and use the same integer size, otherwise, things will be unmatched and go wrong.
+
+The way I decided to solve this issue was to rename the exported APIs of the library. Suppose we use 64 bit integers, then the Decode function will be named as: 'distorm_decode64'.
+
+Now, if you're the library user, and you for some reason try to use the 32 bit integers version of the library, you will try to import a function named "distorm_decode32", which won't be found in the library file, and fail the compilation or dynamic linkage. Then you will know to fix the problem.
+
+For that same reason, I had to declare the APIs with some macros, that will wrap its name and eventually you will be able to use the APIs in their common name: 'distorm_decode'.
+So except from the defining the macro, or commenting it out, the rest is spared from you.
+
+For more info about this naming issue, you can read a blog post I wrote long time a go, [ here http://www.ragestorm.net/blogs/?p=22].
+
+===Python===
+As you can see, Python is no longer supported in the compilation itself. It is now an outer part of diStorm. The way Python is supported nowadays is by binding, using the ctypes module. Therefore, you will have to compile diStorm as a shared object, or as a dynamic linked library file, and the Python wrapper will do the rest for you.
+
+It is important to note that if you use Python for x86 system, you will have to compile diStorm for x86 as well. And if you use Python for x64, you will have to compile diStorm for x64 respectively. This is very important, because otherwise, the ctypes module won't be able to load the dynamic library into the process, because of the difference in code size.
+
+The Python wrapper has its own interface and it is documented in [Python].
 
 Compilation under Windows
 clib
