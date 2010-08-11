@@ -2,11 +2,13 @@
 
 In this page you can find information on how to compile diStorm for various platforms, and change configurations and some more info.
 
+==diStorm Source Code==
 There are a few files that are related to the compilation of the project: distorm.h, config.h and the makefiles.
 
 distorm.h is both used in the compiled library and for the project which uses the library. Thus, it's the header file that accompanies the distorm.lib file.
 In contains the APIs to the library, all related flags, structures and helper macros. 
 
+===The 'Offset' Type Case===
 config.h has a few important definitions for the library itself, such as the type of the 'offset' field along all the code. That is the virtual address of an instruction. It might be compiled as an 'unsigned long' or as an 'unsigned long long', 32 or 64 bits respectively.
 
 The reason that you can configure the type is because of older compilers support. Or suppose you know that you are going to use diStorm only for disassembling 32 bits code, thus the addressing is 32 bits too, hence there's no reason to use 64 bit offsets. Also, if you were to compile 64 bit integers in a 32 bits compiler, that would require a tiny bit of extra work. In fact, the first versions of diStorm supported some DOS compilers which didn't support 64 bit integers.
@@ -16,6 +18,9 @@ By default, the type of the 'offset' field is defined as 64 bits integer. The na
 You can either uncomment the comment that defines that macro in config.sys, or you can pass a parameter to the command line compiler: -DSUPPORT_64BIT_OFFSET.
 
 In both Linux and Windows compilation it is defined, thus 'offset' is 64 bits long. If you want to remove it, you will either have to remove the macro, or remove the parameter from the command line.
+
+===Lib Hell===
+This is a similar problem to DLL hell, that I decided to solve in a specific way using some macro games, keep on reading, then you can check out my blog post which elaborates on the problem.
 
 Supporting this changing integer size for the 'offset' field caused a big problem. Because now the library user has to know how the project was compiled and use the same integer size, otherwise, things will be unmatched and go wrong.
 
@@ -28,24 +33,24 @@ So except from the defining the macro, or commenting it out, the rest is spared 
 
 For more info about this naming issue, you can read a blog post I wrote long time a go, [ here http://www.ragestorm.net/blogs/?p=22].
 
-===Python===
+===Helper Macros for Compilation===
+Two other important macros are: LIBDISTORM and _DLL. Their purpose is to aid the compilation to know whether diStorm is being compiled as a true library file or as a dynamic linked library. It instructs distorm.h whether to export the APIs.
+For example, you don't want to export the APIs as a library file, because then if another project will link against diStorm in compile-time, it will have the diStorm's APIs exported from the resulted executable object. That's not a big deal, but not professional as well.
+
+Just a note that the .dll compilation project for Win32 uses both macros set, for instance.
+
+And why we need to use LIBDISTORM? That's because if we just compile diStorm as a library, we don't want the APIs to be declared twice (redefined), because the library itself has all APIs as part of the source code, obviously. Maybe there's a more elegant way to achieve this goal.
+
+===Endianity Issues===
+diStorm was written in such a way that it supports little and big endian machines. Thus, it can run on PowerPC for example, which is a big endian. In order to do that successfully diStorm uses a few macros that are defined in the config.h file, named: RSHORT, RLONG, RULLONG and others. What they actually do is read a specific sized integer from the binary stream and swap their bytes. The effect is that if you try to read an immediate operand which is 4 bytes long, the code will then know to reverse them, so they will be displayed and returned well to the user. It's a very important issue. So actually, that's the only place we need to deal with the edianity, otherwise it is transparent to us.
+But how does the compiler knows to which target diStorm is compiled? Well, in the config.h file it tries to guess the endianity upon examining some macros like _M_IX86, which means that if the target compilation machine is not x86, then probably it's big endian. This is very fragile, so if you know you want to support ARM or whatever target, that's the way to fix it.
+
+===Aligned Fields in Structures===
+diStorm also supports aligned structures, which means that in some platforms, like ARM, the memory reads/writes of integers must be aligned to an integer size. Therefore all fields in the structures that diStorm uses have to be aligned to an integer size. Therefore structures in distorm.h or instructions.h are not <i>packed</i> as they used to be in early versions of diStorm.
+
+==Python==
 As you can see, Python is no longer supported in the compilation itself. It is now an outer part of diStorm. The way Python is supported nowadays is by binding, using the ctypes module. Therefore, you will have to compile diStorm as a shared object, or as a dynamic linked library file, and the Python wrapper will do the rest for you.
 
 It is important to note that if you use Python for x86 system, you will have to compile diStorm for x86 as well. And if you use Python for x64, you will have to compile diStorm for x64 respectively. This is very important, because otherwise, the ctypes module won't be able to load the dynamic library into the process, because of the difference in code size.
 
 The Python wrapper has its own interface and it is documented in [Python].
-
-Compilation under Windows
-clib
-dll
-
-Compilation under Linux
-.so
-.ar
-
-Compilation macros, SUPPORT_64BIT_OFFSETS, LIBDISTORM.
-
-config.h:
-Little/big endianity
-Cross platform
-32/64 bits support
