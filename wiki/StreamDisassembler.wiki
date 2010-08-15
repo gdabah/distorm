@@ -29,6 +29,7 @@ I'm going to talk about a few problems that you might encounter since you use a 
   Of course, if you are disassembling legitimate code. A target code that you know in advance that was compiled by a real compiler without any tricky instructions, then you're good to go. But otherwise, you will have to do a recursive disassembling, and use the newer interface of diStorm, more about it described in the end of Flow_Control_Support.
 
  # Invalid code that contains only prefixes.
+
   This is really an edge case. If the stream you try to feed diStorm with has more than 15 bytes of prefixes consecutively, then in reality such a code is not an instruction. The processor will try to fetch prefixes until it sees a byte which is a real opcode, but since the stream has only prefixes, it will reach to the limit of 15 bytes per instruction and then generate a fault. This is why diStorm will return all 15 prefixes as a single instruction each.
   However, if you have, say, 14 prefixes and then a NOP, then all the 14 prefixes will be part of the NOP instruction.
   {{{
@@ -43,4 +44,4 @@ I'm going to talk about a few problems that you might encounter since you use a 
 
  Nevertheless, if you ever encounter a prefix as a standalone instruction, you should know that something is wrong with the stream you are trying to decode. It might either be data or a anti-disassembling trick.
 
- # 'Return-flow-control-instructions-only' feature can misbehave
+ # 'Return-flow-control-instructions-only' feature can misbehave.
