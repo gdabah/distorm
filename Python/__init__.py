@@ -86,6 +86,7 @@ class _WString (Structure):
 
 class _CodeInfo (Structure):
     _fields_ = [
+        ('nextOffset',	_OffsetType),
         ('codeOffset',  _OffsetType),
         ('code',        c_char_p),
         ('codeLen',     c_int),
@@ -707,7 +708,7 @@ def DecomposeGenerator(codeOffset, code, dt):
     p_code          = addressof(code)
     result          = (_DInst * MAX_INSTRUCTIONS)()
     p_result        = byref(result)
-    codeInfo = _CodeInfo(_OffsetType(codeOffset), p_code, codeLen, dt, 0)
+    codeInfo = _CodeInfo(_OffsetType(codeOffset), _OffsetType(0), p_code, codeLen, dt, 0)
 
     while codeLen > 0:
 
