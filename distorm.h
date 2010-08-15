@@ -78,7 +78,7 @@ typedef enum {Decode16Bits = 0, Decode32Bits = 1, Decode64Bits = 2} _DecodeType;
 typedef OFFSET_INTEGER _OffsetType;
 
 typedef struct {
-	_OffsetType codeOffset;
+	_OffsetType codeOffset, nextOffset;
 	const uint8_t* code;
 	int codeLen; /* Using signed integer makes it easier to detect an underflow. */
 	_DecodeType dt;
@@ -373,14 +373,14 @@ typedef enum {DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, DE
  *         2)You will have to synchronize the offset,code and length by yourself if you pass code fragments and not a complete code block!
  */
 #ifdef SUPPORT_64BIT_OFFSET
-	_DecodeResult distorm_decompose64(const _CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
+	_DecodeResult distorm_decompose64(_CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
 	_DecodeResult distorm_decode64(_OffsetType codeOffset, const unsigned char* code, int codeLen, _DecodeType dt, _DecodedInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
 	void distorm_format64(const _CodeInfo* ci, const _DInst* di, _DecodedInst* result);
 	#define distorm_decompose distorm_decompose64
 	#define distorm_decode distorm_decode64
 	#define distorm_format distorm_format64
 #else
-	_DecodeResult distorm_decompose32(const _CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
+	_DecodeResult distorm_decompose32(_CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
 	_DecodeResult distorm_decode32(_OffsetType codeOffset, const unsigned char* code, int codeLen, _DecodeType dt, _DecodedInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
 	void distorm_format32(const _CodeInfo* ci, const _DInst* di, _DecodedInst* result);
 	#define distorm_decompose distorm_decompose32
