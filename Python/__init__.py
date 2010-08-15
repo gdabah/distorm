@@ -378,6 +378,7 @@ def DecodeGenerator(codeOffset, code, dt):
         usedInstructionsCount = c_uint(0)
         status = internal_decode(_OffsetType(codeOffset), p_code, codeLen, dt,
                      p_result, MAX_INSTRUCTIONS, byref(usedInstructionsCount))
+
         if status == DECRES_INPUTERR:
             raise ValueError("Invalid arguments passed to distorm_decode()")
 
@@ -387,12 +388,14 @@ def DecodeGenerator(codeOffset, code, dt):
 
         for index in xrange(used):
             di   = result[index]
-            asm  = '%s %s' % (di.mnemonic.p, di.operands.p)
+            asm  = di.mnemonic.p
+            if len(di.operands.p):
+                asm += " " + di.operands.p
             pydi = ( di.offset, di.size, asm, di.instructionHex.p )
             yield pydi
 
         di         = result[used - 1]
-        delta      = di.offset - codeOffset
+        delta      = di.offset - codeOffset + result[used -1].size
         if delta <= 0:
             break
         codeOffset = codeOffset + delta
@@ -499,6 +502,9 @@ FlowControlFlags = [
 "FC_INT",
 ]
 
+def _getOpSize(flags):
+    return ((flags >> 6) & 3)
+
 def _getISC(metaflags):
     realvalue = ((metaflags >> 3) & 0x1f)
     return InstructionSetClasses[realvalue]
@@ -527,52 +533,35 @@ else:
 
 class Operand (object):
     def __init__(self, type, *args):
-        self._type = type
-        self._index = None
-        self._name = ""
-        self._size = 0
-        self._value = 0
-        self._disp = 0
-        self._dispSize = 0
-        self._base = 0
+        self.type = type
+        self.index = None
+        self.name = ""
+        self.size = 0
+        self.value = 0
+        self.disp = 0
+        self.dispSize = 0
+        self.base = 0
         if type == OPERAND_IMMEDIATE:
-            self._value = int(args[0])
-            self._size = args[1]
+            self.value = int(args[0])
+            self.size = args[1]
         elif type == OPERAND_REGISTER:
-            self._index = args[0]
-            self._size = args[1]
-            self._name = Registers[self._index]
+            self.index = args[0]
+            self.size = args[1]
+            self.name = Registers[self.index]
         elif type == OPERAND_MEMORY:
-            self._base = args[0] if args[0] != R_NONE else None
-            self._index = args[1]
-            self._size = args[2]
-            self._scale = args[3] if args[3] > 1 else 1
-            self._disp = int(args[4])
-            self._dispSize = args[5]
+            self.base = args[0] if args[0] != R_NONE else None
+            self.index = args[1]
+            self.size = args[2]
+            self.scale = args[3] if args[3] > 1 else 1
+            self.disp = int(args[4])
+            self.dispSize = args[5]
         elif type == OPERAND_ABSOLUTE_ADDRESS:
-            self._size = args[0]
-            self._disp = int(args[1])
-            self._dispSize = args[2]
+            self.size = args[0]
+            self.disp = int(args[1])
+            self.dispSize = args[2]
         elif type == OPERAND_FAR_MEMORY:
-            self._seg = args[0]
-            self._off = args[1]
-
-    def GetType(self):
-        return self._type
-    def GetValue(self):
-        return self._value
-    def GetIndex(self):
-        return self._index
-    def GetName(self):
-        return self._name
-    def GetSize(self):
-        return self._size
-    def GetDisplacement(self):
-        return self._disp
-    def GetDisplacementSize(self):
-        return self._dispSize
-    def GetExpression(self):
-        return ""
+            self.seg = args[0]
+            self.off = args[1]
 
     def _toText(self):
         if self._type == OPERAND_IMMEDIATE:
@@ -604,8 +593,11 @@ class Operand (object):
 
 
 class Instruction (object):
-    def __init__(self, di):
-        "Expects a filled _DInst structure"
+    def __init__(self, di, instructionBytes):
+        "Expects a filled _DInst structure, and the corresponding byte code of the whole instruction"
+        #self.di = di
+        flags = di.flags
+        self.instructionBytes = instructionBytes
         self.opcode = di.opcode
         self.operands = []
         self.flags = []
@@ -613,9 +605,9 @@ class Instruction (object):
         self.flowControl = _getFC(0)
         self.address = di.addr
         self.size = di.size
-        flags = di.flags
-
+        self.dt = _getOpSize(flags)
         self.valid = False
+
         if flags == FLAG_NOT_DECODABLE:
             self.mnemonic = 'DB 0x%02x' % (di.imm.byte)
             self.flags = ['FLAG_NOT_DECODABLE']
@@ -669,9 +661,8 @@ class Instruction (object):
             raise ValueError("Unknown operand type encountered: %d!" % operand.type)
 
     def _toText(self):
-        opcodeFmt = "%-10s %s"
-        paramsText = ", ".join(["%s" % i for i in self.operands])
-        return opcodeFmt % (self.mnemonic, paramsText)
+        # use the decode which already returns the text formatted well (with prefixes, etc).
+        return Decode(self.address, self.instructionBytes, self.dt)[0][2]
 
     def __str__(self):
         return self._toText()
@@ -733,9 +724,8 @@ def DecomposeGenerator(codeOffset, code, dt):
         delta = 0
         for index in xrange(used):
             di   = result[index]
-
+            yield Instruction(di, code[codeOffset + delta : codeOffset + delta + di.size])
             delta += di.size
-            yield Instruction(di)
 
         if delta <= 0:
             break
