@@ -2,44 +2,45 @@
 
 I'm going to talk about a few problems that you might encounter since you use a stream disassembler. Some of them are general to disassembling and the other are specific to diStorm.
 
- * Keep on disassembling the next instruction correctly, or really "where to find the *next* instruction?"
+===Keep on disassembling the next instruction correctly===
+Or really, "where to find the *next* instruction?"
 
-  Suppose you try to disassemble the following stream in 32 bits:
-  {{{
-  eb 03 b8 00 00 8b ec 55
-  }}}
+Suppose you try to disassemble the following stream in 32 bits:
+{{{
+eb 03 b8 00 00 8b ec 55
+}}}
 
-  What diStorm will return is something like this (in Python):
-  {{{
-  (0L, 2L, 'JMP 0x5', 'eb03'),
-  (2L, 5L, 'MOV EAX, 0xec8b0000', 'b800008bec'),
-  (7L, 1L, 'PUSH EBP', '55')
-  }}}
+What diStorm will return is something like this (in Python):
+{{{
+(0L, 2L, 'JMP 0x5', 'eb03'),
+(2L, 5L, 'MOV EAX, 0xec8b0000', 'b800008bec'),
+(7L, 1L, 'PUSH EBP', '55')
+}}}
 
-  Where the first integer is the address. So what we are looking at is a JMP instruction that will branch to address 5, but that's the middle of the second instruction. Obviously the code is broken if we follow it an instruction by instruction. What we would really want to see is something like this:
+Where the first integer is the address. So what we are looking at is a JMP instruction that will branch to address 5, but that's the middle of the second instruction. Obviously the code is broken if we follow it an instruction by instruction. What we would really want to see is something like this:
 
-  {{{
-  (0L, 2L, 'JMP 0x5', 'eb03'),
-  (5L, 2L, 'MOV EBP, ESP', '8bec'),
-  (7L, 1L, 'PUSH EBP', '55')
-  }}}
+{{{
+(0L, 2L, 'JMP 0x5', 'eb03'),
+(5L, 2L, 'MOV EBP, ESP', '8bec'),
+(7L, 1L, 'PUSH EBP', '55')
+}}}
 
-  Notice the gap between address 3 to 5. Since the JMP instruction skipped them, they are never going to get executed. This is a very basic anti-disassembling/obfuscation technique.
+Notice the gap between address 3 to 5. Since the JMP instruction skipped them, they are never going to get executed. This is a very basic anti-disassembling/obfuscation technique.
 
-  Of course, if you are disassembling legitimate code. A target code that you know in advance that was compiled by a real compiler without any tricky instructions, then you're good to go. But otherwise, you will have to do a recursive disassembling, and use the newer interface of diStorm, more about it described in the end of Flow_Control_Support.
+Of course, if you are disassembling legitimate code. A target code that you know in advance that was compiled by a real compiler without any tricky instructions, then you're good to go. But otherwise, you will have to do a recursive disassembling, and use the newer interface of diStorm, more about it described in the end of Flow_Control_Support.
 
- * Invalid code that contains only prefixes.
+===Invalid code that contains only prefixes===
+This is really an edge case. If the stream you try to feed diStorm with has more than 15 bytes of prefixes consecutively, then in reality such a code is not an instruction. The processor will try to fetch prefixes until it sees a byte which is a real opcode, but since the stream has only prefixes, it will reach to the limit of 15 bytes per instruction and then generate a fault. This is why diStorm will return all 15 prefixes as a single instruction each.
 
-  This is really an edge case. If the stream you try to feed diStorm with has more than 15 bytes of prefixes consecutively, then in reality such a code is not an instruction. The processor will try to fetch prefixes until it sees a byte which is a real opcode, but since the stream has only prefixes, it will reach to the limit of 15 bytes per instruction and then generate a fault. This is why diStorm will return all 15 prefixes as a single instruction each.
-  However, if you have, say, 14 prefixes and then a NOP, then all the 14 prefixes will be part of the NOP instruction.
-  {{{
-  >>> distorm3.Decode(0, "\x66"*15+"\x90", 1)
-  [(0L, 1L, 'DB 0x66', '66'), (1L, 1L, 'DB 0x66', '66'), (2L, 1L, 'DB 0x66', '66'),
+However, if you have, say, 14 prefixes and then a NOP, then all the 14 prefixes will be part of the NOP instruction.
+{{{
+>>> distorm3.Decode(0, "\x66"*15+"\x90", 1)
+[(0L, 1L, 'DB 0x66', '66'), (1L, 1L, 'DB 0x66', '66'), (2L, 1L, 'DB 0x66', '66'),
 (3L, 1L, 'DB 0x66', '66'), (4L, 1L, 'DB 0x66', '66'), (5L, 1L, 'DB 0x66', '66'),
 (6L, 1L, 'DB 0x66', '66'), (7L, 1L, 'DB 0x66', '66'), (8L, 1L, 'DB 0x66', '66'),
 (9L, 1L, 'DB 0x66', '66'), (10L, 1L, 'DB 0x66', '66'), (11L, 1L, 'DB 0x66', '66'),
 (12L, 1L, 'DB 0x66', '66'), (13L, 1L, 'DB 0x66', '66'), (14L, 1L, 'DB 0x66', '66'),
 (15L, 1L, 'NOP', '90')]
-  }}}
+}}}
 
- Nevertheless, if you ever encounter a prefix as a standalone instruction, you should know that something is wrong with the stream you are trying to decode. It might either be data or a anti-disassembling trick.
+Nevertheless, if you ever encounter a prefix as a standalone instruction, you should know that something is wrong with the stream you are trying to decode. It might either be data or a anti-disassembling trick.
