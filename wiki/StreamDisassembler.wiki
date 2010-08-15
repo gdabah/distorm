@@ -2,7 +2,7 @@
 
 I'm going to talk about a few problems that you might encounter since you use a stream disassembler. Some of them are general to disassembling and the other are specific to diStorm.
 
-===Keep on disassembling the next instruction correctly===
+===Disassembling the next instruction correctly===
 Or really, "where to find the *next* instruction?"
 
 Suppose you try to disassemble the following stream in 32 bits:
