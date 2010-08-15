@@ -33,9 +33,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 /* C DLL EXPORTS */
 #ifdef SUPPORT_64BIT_OFFSET
-	_DLLEXPORT_ _DecodeResult distorm_decompose64(const _CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount)
+	_DLLEXPORT_ _DecodeResult distorm_decompose64(_CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount)
 #else
-	_DLLEXPORT_ _DecodeResult distorm_decompose32(const _CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount)
+	_DLLEXPORT_ _DecodeResult distorm_decompose32(_CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount)
 #endif
 {
 	if (usedInstructionsCount == NULL) {

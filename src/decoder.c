@@ -370,7 +370,7 @@ _Undecodable: /* If the instruction couldn't be decoded for some reason, drop th
  *                  This is in order to save memory allocation for conversion between the new and the old structures.
  *                  It really means we can do the conversion in-place now.
  */
-_DecodeResult decode_internal(const _CodeInfo* _ci, int supportOldIntr, _DInst result[], unsigned int maxResultCount, unsigned int* usedInstructionsCount)
+_DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[], unsigned int maxResultCount, unsigned int* usedInstructionsCount)
 {
 	_PrefixState ps;
 	unsigned int prefixSize;
@@ -398,6 +398,7 @@ _DecodeResult decode_internal(const _CodeInfo* _ci, int supportOldIntr, _DInst r
 	/* No entries are used yet. */
 	*usedInstructionsCount = 0;
 	ci.dt = _ci->dt;
+	_ci->nextOffset = codeOffset;
 
 	/* Decode instructions as long as we have what to decode/enough room in entries. */
 	while (codeLen > 0) {
@@ -534,6 +535,8 @@ _DecodeResult decode_internal(const _CodeInfo* _ci, int supportOldIntr, _DInst r
 
 		/* Alright, the caller can read, at least, up to this one. */
 		*usedInstructionsCount = nextPos;
+		/* Fix next offset. */
+		_ci->nextOffset = codeOffset;
 
 		/* Check whether we need to stop on any flow control instruction. */
 		if ((decodeResult == DECRES_SUCCESS) && (_ci->features & DF_STOP_ON_FLOW_CONTROL)) {
