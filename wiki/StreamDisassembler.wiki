@@ -1,7 +1,34 @@
 #summary Potential problems using a stream disassembler the user must know
 
-1) Keep on disassembling the next instruction correctly
-2) 'Return-flow-control-instructions-only' feature can misbehave
-3) Invalid code that contains only prefixes
+I'm going to talk about a few problems that you might encounter since you use a stream disassembler. Some of them are general to disassembling and the other are specific to diStorm.
+
+ # Keep on disassembling the next instruction correctly, or really "where to find the *next* instruction?"
+
+  Suppose you try to disassemble the following stream in 32 bits:
+  {{{
+  eb 03 b8 00 00 8b ec 55
+  }}}
+
+  What diStorm will return is something like this (in Python):
+  {{{
+  (0L, 2L, 'JMP 0x5', 'eb03'),
+  (2L, 5L, 'MOV EAX, 0xec8b0000', 'b800008bec'),
+  (7L, 1L, 'PUSH EBP', '55')
+  }}}
+
+  Where the first integer is the address. So what we are looking at is a JMP instruction that will branch to address 5, but that's the middle of the second instruction. Obviously the code is broken if we follow it an instruction by instruction. What we would really want to see is something like this:
+
+  {{{
+  (0L, 2L, 'JMP 0x5', 'eb03'),
+  (5L, 2L, 'MOV EBP, ESP', '8bec'),
+  (7L, 1L, 'PUSH EBP', '55')
+  }}}
+
+  Notice the gap between address 3 to 5. Since the JMP instruction skipped them, they are never going to get executed. This is a very basic anti-disassembling/obfuscation technique.
+
+  Of course, if you are disassembling legitimate code. A target code that you know in advance that was compiled by a real compiler without any tricky instructions, then you're good to go. But otherwise, you will have to do a recursive disassembling, and use the newer interface of diStorm, more about it described in the end of Flow_Control_Support.
+
+ # 'Return-flow-control-instructions-only' feature can misbehave
+ # Invalid code that contains only prefixes
 
 TBD
