@@ -1,0 +1,5 @@
+#summary How to invoke distorm_decode
+
+Shows the basics of using diStorm in a real life application.
+
+TBD
