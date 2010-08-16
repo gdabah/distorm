@@ -30,3 +30,6 @@ for i in l:
 >>>Decode(0x400000, 'b800000000'.decode('hex'), Decode32Bits)
 [(4194304L, 5L, 'MOV EAX, 0x0', 'b800000000')]
 }}}
+
+===Sample 3:===
+Check out the Python's sample that comes with diStorm: http://code.google.com/p/distorm/source/browse/trunk/Python/sample.py
