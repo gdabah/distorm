@@ -22,6 +22,7 @@ Note that you can combine any of the flags below, except DF_MAXIMUM_ADDR16 with 
 <b>DF_RETURN_FC_ONLY</b>
  * This is the most important flag IMHO. What it really does is telling the Decompose function that it should return only flow control instructions back to the caller, and filter the rest of them.
  * Effectively, you will get only the branch and similar instructions, making it easier to track flow control code.
+ * If you want to use this flag you have to be careful because there is some problem lurking around the corner. You *have* to read this [StreamDisassembler]. Notice that the "instruction-count" that the decompose returns, is _not_ the same as the "decoded-instructions-count" and this is why you can lose synchronization of the stream and decode the code just wrong.
 
 <b>DF_STOP_ON_CALL</b>
  * Makes the Decompose function return to the caller when a CALL/FAR instruction was decoded.
