@@ -218,3 +218,6 @@ Note: in the past, before diStorm3 was official, the 'imm.addr' used to be the a
 
 ----
 Now that you read everything, you should take a look at [Showcases] and you will understand what's going on. You're ready to go, good luck.
+----
+Also a good example of how to use the Decompose API can be found at (look for the distorm_decompose function):
+http://code.google.com/p/distorm/source/browse/trunk/src/distorm.c
