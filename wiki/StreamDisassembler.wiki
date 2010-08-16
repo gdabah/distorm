@@ -43,12 +43,14 @@ now imagine that you really have a whole binary in front of you, for the sake of
 If we were calling the distorm_decode/distorm_decompose function every time with a single entry to hold the output, we would get a single instruction at a time from the stream, in our case: NOP, NOP, NOP, XOR EAX, EAX, RET.
 So there are two things we have to do, we have to know when to stop invoking the disassembler, that is, to know when we reached to the end of the block we wanted to disassemble. And also, we have to know where to continue disassembling the next instruction from. Obviously in a real life application, you will pass an array of, say, 100 entries which will hold the output, but even that is not enough sometimes, depends on the input as well. The point is that you will have to keep the stream synchronized with each call to the API.
 
-The best practice I suggest you should follow is this:
-# Keep a code-length variable which holds the total size of the block you want to disassemble.
-# Keep a pointer to the _next_ instruction.
-# Then after every invocation to the API, you will have to update those variables.
-# If the code-length reached zero, it's an indication you disassembled the whole block, and you can halt.
-# If code-length is above zero, continue with step 1.
+The best practices I suggest you should follow is this:
+ # Keep a code-length variable which holds the total size of the block you want to disassemble.
+ # *Always pass the _rest_ of the block, don't cut the code-object into smaller blocks, unless you accurately know the block size is on an instruction boundary, otherwise you may lose synchronization!*
+ # Keep a pointer to the _next_ instruction.
+ # Invoke API, check error code.
+ # Then after every invocation to the API, you will have to update those variables.
+ # If the code-length reached zero, it's an indication you disassembled the whole block, and you can halt.
+ # If code-length is above zero, continue with step 1.
 
 A very good example of how to do it exactly, can be found in the Linux/Win32 sample projects. Learn how their main-loop works, and notice how it synchronizes the variables after every invocation to the API.
 Notice that in the samples, we feed the decode API with the total block to decode, that makes things much easier to handle.
@@ -64,18 +66,22 @@ Suppose you use the decompose API on the following stream, and specifying DF_RET
 90, eb, 00, 90, eb, 00, 90, 90
 }}}
 
-You will only get the "JMP 03", "JMP 06" instructionz which is good. But again, since the stream is so small there is no problem yet. Let's concentrate on the potential problem here that has good chances to happen in reality. Suppose again that you do the same invocation to the decompose API, but this time you pass only 1 instruction to hold the output. So it will return to you each time with the next flow-control instruction. But now you face a problem, let's try to see what will be the returned output in our case. Probably something like:
+You will only get the "JMP 03", "JMP 06" instructions which is good. But again, since the stream is so small there is no problem yet. Let's concentrate on the potential problem here that has good chances to happen in reality. Suppose again that you do the same invocation to the decompose API, but this time you pass only 1 instruction to hold the output. So it will return to you each time with the next flow-control instruction. But now you face a problem, let's try to see what will be the returned output in our case, at first invocation. Probably something like:
 
 "JMP 03" at address 1.
-The decomposer will continue disassembling the next JMP instruction, but it will see that it has no room for filling another entry in the output (since in our example we only passed 1 entry for output), and it will return to the caller. All we get then is a single instruction at address 1, which takes 2 bytes. So the next thing we would like to do is calling the decompose API once again to continue from address 3 (following the JMP instruction), but that is *wrong*! Remember that the disassembler already scanned that instruction, because it really reached the second JMP only to know that it couldn't return it to us as well. What we have to do then is to continue decomposing from that *last* instruction the previous call stopped at. This avoids a potential problem of losing synchronization of the stream, and also not scanning the same instructions twice.
+But it's not over, the decomposer will continue disassembling 'till the next JMP instruction, but it will see that it has no room for filling another entry in the output (since in our example we only passed 1 entry for output), and it will return to the caller. All we get then is a single instruction at address 1, which takes 2 bytes. So the next thing we would like to do is calling the decompose API once again to continue from address 3 (following the first JMP instruction), but that is *wrong*! Remember that the disassembler already scanned that instruction, because it really reached the second JMP only to know that it couldn't return it to us as well. What we have to do then is to continue decomposing from that *last* instruction the previous call stopped at, rather than the last returned instruction, you see the difference? This avoids a potential problem of losing synchronization of the stream and not scanning the same instructions twice.
 
-In the former problem we saw that in order to keep on synchronization with the stream, we had to calculate the size of all instructions that the previous invocation returned, then adjust the variables/pointers and invoke the disassembler once again. This technique won't work in our case!
+In the former problem we saw that in order to keep on synchronization with the stream, we had to calculate the size of all instructions that the previous invocation returned, then adjust the variables/pointers and invoke the disassembler once again. This technique is not good in our case!
 
 Therefore, another field was added to the CodeInfo structure, which is only used by the decompose API. I'm talking about the 'nextOffset' field. After each invocation to the decompose API this field will be updated to hold the address of the *next* instruction to continue disassembling from, unless it's the end of the stream, which by tracking the code-length you will know so.
 
 So here's a pseudo code snippet of how to use the 'nextOffset' field.
 {{{
 CodeInfo ci = {...};
+ci.features = DF_RETURN_FC_ONLY.
+.
+.
+.
 
 while (1) {
  distorm_decompose(&ci, ..., &numberOfInstructionsReturned, ...)
