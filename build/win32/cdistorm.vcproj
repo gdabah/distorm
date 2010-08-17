@@ -279,7 +279,7 @@
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="false"
 				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN32;NDEBUG;_DLL;_LIB;SUPPORT_64BIT_OFFSET"
+				PreprocessorDefinitions="WIN32;NDEBUG;_DLL;LIBDISTORM;SUPPORT_64BIT_OFFSET"
 				StringPooling="true"
 				MinimalRebuild="true"
 				ExceptionHandling="1"
