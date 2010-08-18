@@ -278,4 +278,5 @@ typedef enum {
 	I_NOT, I_NEG, I_MUL, I_DIV, I_IDIV, I_WAIT, I_MOVSXD, I_PAUSE
 } _InstructionType;
 }}}
-* The above enum list is subject to change in each compilation of disOps.
+
+ * The above enum list is subject to change in each compilation of disOps, since it's auto-generated. Just include the "mnemonics.h" header file.
