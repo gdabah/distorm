@@ -348,6 +348,8 @@ typedef enum OpType {
 #define INST_PRE_VEX (1 << 29)
 /* Indicates that the instruction is encoded with a ModRM byte (REG field specifically). */
 #define INST_MODRM_INCLUDED (1 << 30)
+/* Indicates that the first (/destination) operand of the instruction is writable. */
+#define INST_DST_WR (1 << 31)
 
 #define INST_PRE_REPS (INST_PRE_REPNZ | INST_PRE_REP)
 #define INST_PRE_LOKREP_MASK (INST_PRE_LOCK | INST_PRE_REPNZ | INST_PRE_REP)

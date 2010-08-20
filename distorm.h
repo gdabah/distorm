@@ -166,6 +166,8 @@ typedef struct {
 #define FLAG_HINT_NOT_TAKEN (1 << 4)
 /* The Imm value is signed extended. */
 #define FLAG_IMM_SIGNED (1 << 5)
+/* The destination operand is writable. */
+#define FLAG_DST_WR (1 << 6)
 
 /* No register was defined. */
 #define R_NONE ((uint8_t)-1)
@@ -196,10 +198,10 @@ typedef struct {
  *
  * If you call these macros more than once, you will have to clean the bits before doing so.
  */
-#define FLAG_SET_OPSIZE(di, size) ((di->flags) |= (((size) & 3) << 6))
-#define FLAG_SET_ADDRSIZE(di, size) ((di->flags) |= (((size) & 3) << 8))
-#define FLAG_GET_OPSIZE(flags) (((flags) >> 6) & 3)
-#define FLAG_GET_ADDRSIZE(flags) (((flags) >> 8) & 3)
+#define FLAG_SET_OPSIZE(di, size) ((di->flags) |= (((size) & 3) << 7))
+#define FLAG_SET_ADDRSIZE(di, size) ((di->flags) |= (((size) & 3) << 9))
+#define FLAG_GET_OPSIZE(flags) (((flags) >> 7) & 3)
+#define FLAG_GET_ADDRSIZE(flags) (((flags) >> 9) & 3)
 /* To get the LOCK/REPNZ/REP prefixes. */
 #define FLAG_GET_PREFIX(flags) ((flags) & 7)
 

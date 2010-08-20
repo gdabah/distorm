@@ -35,7 +35,7 @@
 #   7. The IO String instructions don't have explicit form and they don't support segments.
 #      It's up to diStorm to decide what to do with the operands and which segment is default and overrided.
 #
-# To maximize the usage of this DB, one should learn the documenation of diStorm regarding the InstFlag and Operands Types.
+# To maximize the usage of this DB, one should learn the documentation of diStorm regarding the InstFlag and Operands Types.
 #
 
 import time
@@ -312,21 +312,39 @@ def CheckOTCollisions(ii):
 
 # This fucntion for certain flow control related instructions will set their type.
 def CheckForFlowControl(ii):
-	# Should I include SYSCALL ?
-	pairs = [
-	 (["INT", "INT1", "INT 3", "INTO", "UD2"], FlowControl.INT),
-	 (["CALL", "CALL FAR"], FlowControl.CALL),
-	 (["RET", "IRET", "RETF"], FlowControl.RET),
-	 (["SYSCALL", "SYSENTER", "SYSRET", "SYSEXIT"], FlowControl.SYS),
-	 (["JMP", "JMP FAR"], FlowControl.BRANCH),
-	 (["JCXZ", "JO", "JNO", "JB", "JAE", "JZ", "JNZ", "JBE", "JA", "JS", "JNS", "JP", "JNP", "JL", "JGE", "JLE", "JG", "LOOP", "LOOPZ", "LOOPNZ"], FlowControl.COND_BRANCH)
-	]
-	ii.flowControl = 0
-	for p in pairs:
-		if ii.mnemonics[0] in p[0]:
-			ii.flowControl = p[1]
-			return
+    # Should I include SYSCALL ?
+    pairs = [
+        (["INT", "INT1", "INT 3", "INTO", "UD2"], FlowControl.INT),
+        (["CALL", "CALL FAR"], FlowControl.CALL),
+        (["RET", "IRET", "RETF"], FlowControl.RET),
+        (["SYSCALL", "SYSENTER", "SYSRET", "SYSEXIT"], FlowControl.SYS),
+        (["JMP", "JMP FAR"], FlowControl.BRANCH),
+        (["JCXZ", "JO", "JNO", "JB", "JAE", "JZ", "JNZ", "JBE", "JA", "JS", "JNS", "JP", "JNP", "JL", "JGE", "JLE", "JG", "LOOP", "LOOPZ", "LOOPNZ"], FlowControl.COND_BRANCH)
+    ]
+    ii.flowControl = 0
+    for p in pairs:
+        if ii.mnemonics[0] in p[0]:
+            ii.flowControl = p[1]
+            return
 
+def CheckWritableDestinationOperand(ii):
+    prefixes = ["MOV", "SET", "CMOV", "CMPXCHG"]
+    for i in prefixes:
+        if ii.mnemonics[0].find(i) == 0:
+            ii.flags |= InstFlag.DST_WR
+            return
+
+    mnemonics = [
+        "ADD", "OR", "ADC", "SBB", "AND", "SUB", "XOR", "INC", "DEC", "LEA", "XCHG",
+        "ROL", "ROR", "RCL", "RCR", "SHL", "SHR", "SAL", "SAR", "SHLD", "SHRD",
+        "NEG", "NOT", "MUL", "IMUL", "DIV", "IDIV",
+        "POP", "BTR", "BTS", "BTC", "XADD", "BSWAP",
+        "LZCNT", "MOVBE", "POPCNT", "CRC32", "SMSW"
+    ]
+    for i in mnemonics:
+        if ii.mnemonics[0] in i:
+            ii.flags |= InstFlag.DST_WR
+            return
 
 def FormatInstruction(ii):
     """ Formats a string with all information relevant for diStorm InstInfo structure
@@ -349,6 +367,9 @@ def FormatInstruction(ii):
     # Add flags for flow control instructions.
     CheckForFlowControl(ii)
 
+    # Add flags for writable destination operand.
+    CheckWritableDestinationOperand(ii)
+
     # Pad mnemonics to three, in case EXMNEMONIC/2 isn't used (so we don't get an exception).
     mnems = TranslateMnemonics([None, ii.classType][(ii.flags & InstFlag.PSEUDO_OPCODE) == InstFlag.PSEUDO_OPCODE], ii.mnemonics) + ["0", "0"]
 
@@ -357,7 +378,7 @@ def FormatInstruction(ii):
 
     # Is it an extended structure?
     if ii.flags & InstFlag.EXTENDED:
-        # Since there's a second and/or a third mnemonic (or rarely a fourth), use the the InstInfoEx structure.
+        # Since there's a second and/or a third mnemonic, use the the InstInfoEx structure.
         type = "_InstInfoEx"
         flagsEx = 0
         # Fix flagsEx to have the VEX flags, except PRE_VEX.
@@ -372,7 +393,7 @@ def FormatInstruction(ii):
     # Notice we filter out internal bits from flags.
     # The constant '1' implies this is an Inst-Info structure rather than an Inst-Node structure!
     # Also classType and flow control are shared in two nibbles.
-    fields = "1, %d, %d, %d, %s, 0x%x" % ((ii.classType << 3) | ii.flowControl, ops[1], ops[0], mnems[0], ii.flags & ((1 << 31)-1))
+    fields = "1, %d, %d, %d, %s, 0x%x" % ((ii.classType << 3) | ii.flowControl, ops[1], ops[0], mnems[0], ii.flags & ((1 << InstFlag.FLAGS_EX_START_INDEX)-1))
     # "Structure-Name" = II_Bytes-Code {Fields + Optional-Fields}.
     return "static %s II%s = {%s%s};" % (type, ii.tag, fields, optFields)
 

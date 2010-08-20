@@ -135,7 +135,7 @@ class InstFlag:
     
     The GEN_BLOCK is a special flag, it is used in the tables generator only;
     See GenBlock class inside x86db.py. """
-    FLAGS_EX_START_INDEX = 31
+    FLAGS_EX_START_INDEX = 32
     INST_FLAGS_NONE = 0
     (MODRM_REQUIRED,        # 0
     NOT_DIVIDED,            # 1
@@ -168,13 +168,14 @@ class InstFlag:
     FORCE_REG0,             # 28
     PRE_VEX,                # 29
     MODRM_INCLUDED,         # 30
-    VEX_L,                  # 31 From here on: flagsEx.
-    VEX_W,                  # 32
-    MNEMONIC_VEXW_BASED,    # 33
-    MNEMONIC_VEXL_BASED,    # 34
-    FORCE_VEXL,             # 35
-    GEN_BLOCK               # 36
-    ) = [1 << i for i in xrange(37)]
+    DST_WR,                 # 31
+    VEX_L,                  # 32 From here on: flagsEx.
+    VEX_W,                  # 33
+    MNEMONIC_VEXW_BASED,    # 34
+    MNEMONIC_VEXL_BASED,    # 35
+    FORCE_VEXL,             # 36
+    GEN_BLOCK               # 37
+    ) = [1 << i for i in xrange(38)]
     # Nodes are extended if they have any of the following flags:
     EXTENDED = (PRE_VEX | USE_EXMNEMONIC | USE_EXMNEMONIC2 | USE_OP3 | USE_OP4)
     SEGMENTS = (PRE_CS | PRE_SS | PRE_DS | PRE_ES | PRE_FS | PRE_FS)
