@@ -322,6 +322,9 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	 */
 	FLAG_SET_ADDRSIZE(di, effAdrSz);
 
+	/* Copy DST_WR flag. */
+	if (ii->flags & INST_DST_WR) di->flags |= FLAG_DST_WR;
+
 	/* Set the unused prefixes mask. */
 	di->unusedPrefixesMask = prefixes_set_unused_mask(ps);
 

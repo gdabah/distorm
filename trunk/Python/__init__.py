@@ -324,6 +324,8 @@ FLAGS = [
 "FLAG_HINT_NOT_TAKEN",
 # The Imm value is signed extended.
 "FLAG_IMM_SIGNED",
+# The destination operand is writable.
+"FLAG_DST_WR"
 ]
 
 # Instruction could not be disassembled. Special-case handling
@@ -504,7 +506,7 @@ FlowControlFlags = [
 ]
 
 def _getOpSize(flags):
-    return ((flags >> 6) & 3)
+    return ((flags >> 7) & 3)
 
 def _getISC(metaflags):
     realvalue = ((metaflags >> 3) & 0x1f)
