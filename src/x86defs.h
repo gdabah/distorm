@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #ifndef X86DEFS_H
 #define X86DEFS_H
 
-#include "../config.h"
+#include "config.h"
 
 #include "instructions.h"
 

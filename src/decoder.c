@@ -396,7 +396,12 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 	unsigned int nextPos = 0;
 	_DInst *pdi = NULL;
 
+	_OffsetType addrMask = (_OffsetType)-1;
+
 	_DecodeResult decodeResult;
+
+	if (_ci->features & DF_MAXIMUM_ADDR32) addrMask = 0xffffffff;
+	else if (_ci->features & DF_MAXIMUM_ADDR16) addrMask = 0xffff;
 
 	/* No entries are used yet. */
 	*usedInstructionsCount = 0;
@@ -440,7 +445,7 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 						pdi->flags = FLAG_NOT_DECODABLE;
 						pdi->imm.byte = *p;
 						pdi->size = 1;
-						pdi->addr = startInstOffset;
+						pdi->addr = startInstOffset & addrMask;
 					}
 					*usedInstructionsCount = nextPos; /* Include them all. */
 				}
@@ -505,7 +510,8 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 		if ((_ci->features & DF_RETURN_FC_ONLY) && (META_GET_FC(pdi->meta) == FC_NONE)) decodeResult = DECRES_FILTERED;
 
 		/* Set address to the beginning of the instruction. */
-		pdi->addr = startInstOffset;
+		pdi->addr = startInstOffset & addrMask;
+		pdi->disp &= addrMask;
 
 		/* Advance to next instruction. */
 		codeLen -= pdi->size;
@@ -531,7 +537,7 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 					pdi->flags = FLAG_NOT_DECODABLE;
 					pdi->imm.byte = *p;
 					pdi->size = 1;
-					pdi->addr = startInstOffset;
+					pdi->addr = startInstOffset & addrMask;
 				}
 			}
 		} else if (decodeResult == DECRES_FILTERED) nextPos--; /* Return it to pool, since it was filtered. */

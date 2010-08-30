@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 
 #include "../distorm.h"
-#include "../config.h"
+#include "config.h"
 #include "decoder.h"
 #include "x86defs.h"
 #include "textdefs.h"
