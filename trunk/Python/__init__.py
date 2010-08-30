@@ -567,29 +567,29 @@ class Operand (object):
             self.off = args[1]
 
     def _toText(self):
-        if self._type == OPERAND_IMMEDIATE:
-            if self._value >= 0:
-                return "0x%x" % self._value
+        if self.type == OPERAND_IMMEDIATE:
+            if self.value >= 0:
+                return "0x%x" % self.value
             else:
-                return "-0x%x" % abs(self._value)
-        elif self._type == OPERAND_REGISTER:
+                return "-0x%x" % abs(self.value)
+        elif self.type == OPERAND_REGISTER:
             return self.GetName()
-        elif self._type == OPERAND_ABSOLUTE_ADDRESS:
-            return '[0x%x]' % self._disp
-        elif self._type == OPERAND_FAR_MEMORY:
-            return '%s:%s' % (hex(self._seg), hex(self._off))
-        elif (self._type == OPERAND_MEMORY):
+        elif self.type == OPERAND_ABSOLUTE_ADDRESS:
+            return '[0x%x]' % self.disp
+        elif self.type == OPERAND_FAR_MEMORY:
+            return '%s:%s' % (hex(self.seg), hex(self.off))
+        elif (self.type == OPERAND_MEMORY):
             result = "["
-            if self._base != None:
-                result += Registers[self._base] + "+"
-            if self._index != None:
-                result += Registers[self._index]
-                if self._scale > 1:
-                    result += "*%d" % self._scale
-            if self._disp >= 0:
-                result += "+0x%x" % self._disp
+            if self.base != None:
+                result += Registers[self.base] + "+"
+            if self.index != None:
+                result += Registers[self.index]
+                if self.scale > 1:
+                    result += "*%d" % self.scale
+            if self.disp >= 0:
+                result += "+0x%x" % self.disp
             else:
-                result += "-0x%x" % abs(self._disp)
+                result += "-0x%x" % abs(self.disp)
             return result + "]"
     def __str__(self):
         return self._toText()

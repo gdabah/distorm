@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #ifndef INSTRUCTIONS_H
 #define INSTRUCTIONS_H
 
-#include "../config.h"
+#include "config.h"
 
 #include "prefix.h"
 

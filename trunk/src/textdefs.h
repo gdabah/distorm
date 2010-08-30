@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #ifndef TEXTDEFS_H
 #define TEXTDEFS_H
 
-#include "../config.h"
+#include "config.h"
 
 #include "wstring.h"
 

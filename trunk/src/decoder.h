@@ -9,7 +9,7 @@ This file is licensed under the GPL license. See the file COPYING.
 #ifndef DECODER_H
 #define DECODER_H
 
-#include "../config.h"
+#include "config.h"
 
 typedef unsigned int _iflags;
 

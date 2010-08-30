@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #ifndef OPERANDS_H
 #define OPERANDS_H
 
-#include "../config.h"
+#include "config.h"
 
 #include "decoder.h"
 #include "prefix.h"

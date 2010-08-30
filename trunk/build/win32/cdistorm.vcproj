@@ -381,7 +381,7 @@
 			Filter="h;hpp;hxx;hm;inl;inc"
 			>
 			<File
-				RelativePath="..\..\config.h"
+				RelativePath="..\..\src\config.h"
 				>
 			</File>
 			<File

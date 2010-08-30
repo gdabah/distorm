@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #ifndef WSTRING_H
 #define WSTRING_H
 
-#include "../config.h"
+#include "config.h"
 
 void strclear_WS(_WString* s);
 void chrcat_WS(_WString* s, uint8_t ch);
