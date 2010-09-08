@@ -86,8 +86,8 @@ class _WString (Structure):
 
 class _CodeInfo (Structure):
     _fields_ = [
-        ('nextOffset',	_OffsetType),
-        ('codeOffset',  _OffsetType),
+        ('codeOffset',	_OffsetType),
+        ('nextOffset',  _OffsetType),
         ('code',        c_char_p),
         ('codeLen',     c_int),
         ('dt',          c_byte),
@@ -379,8 +379,7 @@ def DecodeGenerator(codeOffset, code, dt):
     while codeLen > 0:
 
         usedInstructionsCount = c_uint(0)
-        status = internal_decode(_OffsetType(codeOffset), p_code, codeLen, dt,
-                     p_result, MAX_INSTRUCTIONS, byref(usedInstructionsCount))
+        status = internal_decode(_OffsetType(codeOffset), p_code, codeLen, dt, p_result, MAX_INSTRUCTIONS, byref(usedInstructionsCount))
 
         if status == DECRES_INPUTERR:
             raise ValueError("Invalid arguments passed to distorm_decode()")
@@ -706,17 +705,16 @@ def DecomposeGenerator(codeOffset, code, dt):
         raise ValueError("Invalid decode type value: %r" % (dt,))
 
     codeLen         = len(code)
-    code            = create_string_buffer(code)
-    p_code          = addressof(code)
+    scode           = create_string_buffer(code)
+    p_code          = addressof(scode)
     result          = (_DInst * MAX_INSTRUCTIONS)()
-    p_result        = byref(result)
-    codeInfo = _CodeInfo(_OffsetType(codeOffset), _OffsetType(0), p_code, codeLen, dt, 0)
+    instruction_off = 0
 
     while codeLen > 0:
 
         usedInstructionsCount = c_uint(0)
-        status = internal_decompose(byref(codeInfo),
-                     p_result, MAX_INSTRUCTIONS, byref(usedInstructionsCount))
+        codeInfo = _CodeInfo(_OffsetType(codeOffset), _OffsetType(0), p_code, codeLen, dt, 0)
+        status = internal_decompose(byref(codeInfo), byref(result), MAX_INSTRUCTIONS, byref(usedInstructionsCount))
         if status == DECRES_INPUTERR:
             raise ValueError("Invalid arguments passed to distorm_decode()")
 
@@ -726,9 +724,10 @@ def DecomposeGenerator(codeOffset, code, dt):
 
         delta = 0
         for index in xrange(used):
-            di   = result[index]
-            yield Instruction(di, code[codeOffset + delta : codeOffset + delta + di.size])
+            di = result[index]
+            yield Instruction(di, code[instruction_off : instruction_off + di.size])
             delta += di.size
+            instruction_off += di.size
 
         if delta <= 0:
             break
