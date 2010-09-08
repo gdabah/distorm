@@ -3,7 +3,7 @@
 
 # Example code
 
-import distorm
+import distorm3
 import sys
 import optparse
 
@@ -11,12 +11,12 @@ import optparse
 usage  = 'Usage: %prog [--b16 | --b32 | --b64] filename [offset]'
 parser = optparse.OptionParser(usage=usage)
 parser.add_option(  '--b16', help='80286 decoding',
-                    action='store_const', dest='dt', const=distorm.Decode16Bits  )
+                    action='store_const', dest='dt', const=distorm3.Decode16Bits  )
 parser.add_option(  '--b32', help='IA-32 decoding [default]',
-                    action='store_const', dest='dt', const=distorm.Decode32Bits  )
+                    action='store_const', dest='dt', const=distorm3.Decode32Bits  )
 parser.add_option(  '--b64', help='AMD64 decoding',
-                    action='store_const', dest='dt', const=distorm.Decode64Bits  )
-parser.set_defaults(dt=distorm.Decode32Bits)
+                    action='store_const', dest='dt', const=distorm3.Decode64Bits  )
+parser.set_defaults(dt=distorm3.Decode32Bits)
 options, args = parser.parse_args(sys.argv)
 if len(args) < 2:
     parser.error('missing parameter: filename')
@@ -41,11 +41,11 @@ except Exception as e:
 
 # Print each decoded instruction
 # This shows how to use the Deocode - Generator
-iterable = distorm.DecodeGenerator(offset, code, options.dt)
+iterable = distorm3.DecodeGenerator(offset, code, options.dt)
 for (offset, size, instruction, hexdump) in iterable:
     print("%.8x: %-32s %s" % (offset, hexdump, instruction))
 
 # It could also be used as a returned list:
-# l = distorm.Decode(offset, code, options.dt)
+# l = distorm3.Decode(offset, code, options.dt)
 # for (offset, size, instruction, hexdump) in l:
 #     print("%.8x: %-32s %s" % (offset, hexdump, instruction))
