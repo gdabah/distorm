@@ -572,7 +572,7 @@ class Operand (object):
             else:
                 return "-0x%x" % abs(self.value)
         elif self.type == OPERAND_REGISTER:
-            return self.GetName()
+            return self.name
         elif self.type == OPERAND_ABSOLUTE_ADDRESS:
             return '[0x%x]' % self.disp
         elif self.type == OPERAND_FAR_MEMORY:
@@ -603,6 +603,7 @@ class Instruction (object):
         self.opcode = di.opcode
         self.operands = []
         self.flags = []
+        self.rawFlags = di.flags
         self.instructionClass = _getISC(0)
         self.flowControl = _getFC(0)
         self.address = di.addr
