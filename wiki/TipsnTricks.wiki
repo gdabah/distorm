@@ -1,4 +1,4 @@
-#summary Practical Tips&Tricks for using diStorm
+#summary Tips&Tricks for using the Decompose API
 
 I'm going to show a few practical ways to use the new Decompose API.
 
@@ -160,7 +160,7 @@ Some instructions like PUSHA or PUSHF don't have any operands, how can we determ
 There we go:
 {{{
 if (result[i].opcode == I_PUSHF) {
- DecodeType d = FLAG_GET_OPSIZE(result[i].flags);
+ _DecodeType d = (_DecodeType)FLAG_GET_OPSIZE(result[i].flags);
  if (d == Deocde16Bits) ...
  else if (d == Decode32Bits) ...
  else /* Decode64Bits */ ...
