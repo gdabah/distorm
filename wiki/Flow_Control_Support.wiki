@@ -33,14 +33,17 @@ Note that you can combine any of the flags below, except DF_MAXIMUM_ADDR16 with 
 <b>DF_STOP_ON_SYS</b>
  * Makes the Decompose function return to the caller when a SYSENTER/SYSEXIT/SYSCALL/SYSRET instruction was decoded.
 
-<b>DF_STOP_ON_BRANCH</b>
+<b>DF_STOP_ON_UNC_BRANCH</b>
  * Makes the Decompose function return to the caller when a JMP/FAR instruction was decoded.
 
-<b>DF_STOP_ON_COND_BRANCH</b>
+<b>DF_STOP_ON_CND_BRANCH</b>
  * Makes the Decompose function return to the caller when a conditional branch (Jxx, JCxx, LoopXX) instruction was decoded.
 
 <b>DF_STOP_ON_INT</b>
  * Makes the Decompose function return to the caller when an interrupt instruction (INT, INTO, INT1, INT3, UD2) was decoded.
+
+<b>DF_STOP_ON_CMOV</b>
+ * Makes the Decompose function return to the caller when any of the CMOVxx instruction was decoded.
 
 <b>DF_STOP_ON_FLOW_CONTROL</b>
  * Makes the Decompose function return to the caller when any of the above instructions are decoded.
@@ -63,8 +66,8 @@ So basically what you can do next, is to check that the <i>last</i> instruction 
 There are two ways to check for that, either by comparing the 'opcode' field to I_CALL, or by checking the 'meta' field with the helper macro META_GET_FC and compare the result to FC_CALL. Then once you're sure it's the instruction you were looking for you can get the target address, by using another helper macro, INSTRUCTION_GET_TARGET. So eventually you will get, by our example, the address of 'some_function'.
 
 That's why also the meta information of the instruction is very important to flow control, so you know whether the instruction you're just examining is flow control related. The META_GET_FC returns one of the following values:
-FC_NONE, FC_CALL, FC_RET, FC_SYS, FC_BRANCH, FC_COND_BRANCH and FC_INT.
-They are self explanatory and notice that there FC_BRANCH and FC_COND_BRANCH, so you can easily distinguish between the two cases of <i>always-branch</i> to <i>conditional-branch</i>.
+FC_NONE, FC_CALL, FC_RET, FC_SYS, FC_UNC_BRANCH, FC_CND_BRANCH, FC_INT and FC_CMOV.
+They are self explanatory and notice that there FC_UNC_BRANCH and FC_CND_BRANCH, so you can easily distinguish between the two cases of <i>always-branch</i> to <i>conditional-branch</i>.
 
 Suppose you want to follow the flow control of a function starting from its start address, you will want to stop on every flow control instruction and examine its type. I'm not going to talk about an algorithm for doing that, it's out of the scoop of this wiki page. But here are a few tips for using diStorm for that goal:
  * When analyzing flow control, we don't care about the data flow, unless it affects a conditional branch.
@@ -74,4 +77,4 @@ Suppose you want to follow the flow control of a function starting from its star
  * Everytime the Decompose function returns, it means you got a flow control related instruction in the result. As a matter of fact, you can supply a single _DInst structure rather than an array, because it will stop on the first flow control instruction it encounters.
  * That's why you should update the address when calling the Decompose again the next time, so it <i>continues</i> from the next instruction that wasn't disassembled yet. Something simple like updating the CodeInfo fields, to start from the returned instruction address + its size.
  * Now you need to decide what to do with the instruction you got returned, you will have to check whether its a conditional branch or not. Actually there's more to it, let's see why. If the instruction you got is a CALL instruction, you want to queue the next instruction's address and continue with its target address. If it's a JMP instruction, you just continue with its target address. And if it's a conditional branch, you will queue the next instruction's address and continue with its target address. Then the logic of the analyzer would be to pop an address from the queue and continue there.
- * Of course instead of testing the opcode field against all conditional branch instruction, just use the meta information for FC_COND_BRANCH.
+ * Of course instead of testing the opcode field against all conditional branch instruction, just use the meta information for FC_CND_BRANCH.
