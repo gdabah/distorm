@@ -312,14 +312,18 @@ def CheckOTCollisions(ii):
 
 # This fucntion for certain flow control related instructions will set their type.
 def CheckForFlowControl(ii):
+    if ii.mnemonics[0].find("CMOV") == 0:
+        ii.flowControl = FlowControl.CMOV
+        return
+
     # Should I include SYSCALL ?
     pairs = [
         (["INT", "INT1", "INT 3", "INTO", "UD2"], FlowControl.INT),
         (["CALL", "CALL FAR"], FlowControl.CALL),
         (["RET", "IRET", "RETF"], FlowControl.RET),
         (["SYSCALL", "SYSENTER", "SYSRET", "SYSEXIT"], FlowControl.SYS),
-        (["JMP", "JMP FAR"], FlowControl.BRANCH),
-        (["JCXZ", "JO", "JNO", "JB", "JAE", "JZ", "JNZ", "JBE", "JA", "JS", "JNS", "JP", "JNP", "JL", "JGE", "JLE", "JG", "LOOP", "LOOPZ", "LOOPNZ"], FlowControl.COND_BRANCH)
+        (["JMP", "JMP FAR"], FlowControl.UNC_BRANCH),
+        (["JCXZ", "JO", "JNO", "JB", "JAE", "JZ", "JNZ", "JBE", "JA", "JS", "JNS", "JP", "JNP", "JL", "JGE", "JLE", "JG", "LOOP", "LOOPZ", "LOOPNZ"], FlowControl.CND_BRANCH)
     ]
     ii.flowControl = 0
     for p in pairs:

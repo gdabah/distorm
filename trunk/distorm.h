@@ -72,6 +72,45 @@ typedef unsigned __int8		uint8_t;
  extern "C" {
 #endif
 
+
+/* ***  Helper Macros  *** */
+
+/* Get the ISC of the instruction, used with the definitions below. */
+#define META_GET_ISC(meta) (((meta) >> 3) & 0x1f)
+#define META_SET_ISC(di, isc) (((di)->meta) |= ((isc) << 3))
+/* Get the flow control flags of the instruction, see 'features for decompose' below. */
+#define META_GET_FC(meta) ((meta) & 0x7)
+
+/* Get the target address of a branching instruction. O_PC operand type. */
+#define INSTRUCTION_GET_TARGET(di) ((_OffsetType)(((di)->addr + (di)->imm.addr + (di)->size)))
+/* Get the target address of a RIP-relative memory indirection. */
+#define INSTRUCTION_GET_RIP_TARGET(di) ((_OffsetType)(((di)->addr + (di)->disp + (di)->size)))
+
+/*
+ * Operand Size or Adderss size are stored inside the flags:
+ * 0 - 16 bits
+ * 1 - 32 bits
+ * 2 - 64 bits
+ * 3 - reserved
+ *
+ * If you call these set-macros more than once, you will have to clean the bits before doing so.
+ */
+#define FLAG_SET_OPSIZE(di, size) ((di->flags) |= (((size) & 3) << 8))
+#define FLAG_SET_ADDRSIZE(di, size) ((di->flags) |= (((size) & 3) << 10))
+#define FLAG_GET_OPSIZE(flags) (((flags) >> 8) & 3)
+#define FLAG_GET_ADDRSIZE(flags) (((flags) >> 10) & 3)
+/* To get the LOCK/REPNZ/REP prefixes. */
+#define FLAG_GET_PREFIX(flags) ((flags) & 7)
+
+/*
+ * Macros to extract segment registers from 'segment':
+ */
+#define SEGMENT_DEFAULT 0x80
+#define SEGMENT_SET(di, seg) ((di->segment) |= seg)
+#define SEGMENT_GET(segment) (((segment) == R_NONE) ? R_NONE : ((segment) & 0x7f))
+#define SEGMENT_IS_DEFAULT(segment) (((segment) & SEGMENT_DEFAULT) == SEGMENT_DEFAULT)
+
+
 /* Decodes modes of the disassembler, 16 bits or 32 bits or 64 bits for AMD64, x86-64. */
 typedef enum {Decode16Bits = 0, Decode32Bits = 1, Decode64Bits = 2} _DecodeType;
 
@@ -168,6 +207,8 @@ typedef struct {
 #define FLAG_IMM_SIGNED (1 << 5)
 /* The destination operand is writable. */
 #define FLAG_DST_WR (1 << 6)
+/* The instruction uses RIP-relative indirection. */
+#define FLAG_RIP_RELATIVE (1 << 7)
 
 /* No register was defined. */
 #define R_NONE ((uint8_t)-1)
@@ -185,33 +226,6 @@ typedef struct {
 #define AVXREGS_BASE (107)
 #define CREGS_BASE (123)
 #define DREGS_BASE (132)
-
-/* A helper macro to get the target address of a branching instruction. */
-#define INSTRUCTION_GET_TARGET(di) ((_OffsetType)(((di)->addr + (di)->imm.addr + (di)->size)))
-
-/*
- * Operand Size or Adderss size are stored inside the flags:
- * 0 - 16 bits
- * 1 - 32 bits
- * 2 - 64 bits
- * 3 - reserved
- *
- * If you call these macros more than once, you will have to clean the bits before doing so.
- */
-#define FLAG_SET_OPSIZE(di, size) ((di->flags) |= (((size) & 3) << 7))
-#define FLAG_SET_ADDRSIZE(di, size) ((di->flags) |= (((size) & 3) << 9))
-#define FLAG_GET_OPSIZE(flags) (((flags) >> 7) & 3)
-#define FLAG_GET_ADDRSIZE(flags) (((flags) >> 9) & 3)
-/* To get the LOCK/REPNZ/REP prefixes. */
-#define FLAG_GET_PREFIX(flags) ((flags) & 7)
-
-/*
- * Macros to extract segment registers from 'segment':
- */
-#define SEGMENT_DEFAULT 0x80
-#define SEGMENT_SET(di, seg) ((di->segment) |= seg)
-#define SEGMENT_GET(segment) (((segment) == R_NONE) ? R_NONE : ((segment) & 0x7f))
-#define SEGMENT_IS_DEFAULT(segment) (((segment) & SEGMENT_DEFAULT) == SEGMENT_DEFAULT)
 
 #define OPERANDS_NO (4)
 
@@ -260,12 +274,6 @@ typedef struct {
 	unsigned int size; /* Size of decoded instruction. */
 	_OffsetType offset; /* Start offset of the decoded instruction. */
 } _DecodedInst;
-
-/* Get the ISC of the instruction, used with the definitions below. */
-#define META_GET_ISC(meta) (((meta) >> 3) & 0x1f)
-#define META_SET_ISC(di, isc) (((di)->meta) |= ((isc) << 3))
-/* Get the flow control flags of the instruction, see 'features for decompose' below. */
-#define META_GET_FC(meta) ((meta) & 0x7)
 
 /*
  * Instructions Set classes:
@@ -325,13 +333,15 @@ typedef struct {
 /* The decoder will stop and return to the caller when the instruction system-call/ret was decoded. */
 #define DF_STOP_ON_SYS 0x20
 /* The decoder will stop and return to the caller when any of the branch 'JMP', (near and far) instructions were decoded. */
-#define DF_STOP_ON_BRANCH 0x40
+#define DF_STOP_ON_UNC_BRANCH 0x40
 /* The decoder will stop and return to the caller when any of the conditional branch instruction were decoded. */
-#define DF_STOP_ON_COND_BRANCH 0x80
+#define DF_STOP_ON_CND_BRANCH 0x80
 /* The decoder will stop and return to the caller when the instruction 'INT' (INT, INT1, INTO, INT 3) was decoded. */
 #define DF_STOP_ON_INT 0x100
+/* The decoder will stop and return to the caller when any of the 'CMOVxx' instruction was decoded. */
+#define DF_STOP_ON_CMOV 0x200
 /* The decoder will stop and return to the caller when any flow control instruction was decoded. */
-#define DF_STOP_ON_FLOW_CONTROL (DF_STOP_ON_CALL | DF_STOP_ON_RET | DF_STOP_ON_SYS | DF_STOP_ON_BRANCH | DF_STOP_ON_COND_BRANCH | DF_STOP_ON_INT)
+#define DF_STOP_ON_FLOW_CONTROL (DF_STOP_ON_CALL | DF_STOP_ON_RET | DF_STOP_ON_SYS | DF_STOP_ON_UNC_BRANCH | DF_STOP_ON_CND_BRANCH | DF_STOP_ON_INT | DF_STOP_ON_CMOV)
 
 /* Indicates the instruction is not a flow-control instruction. */
 #define FC_NONE 0
@@ -342,14 +352,16 @@ typedef struct {
 /* Indicates the instruction is one of: SYSCALL, SYSRET, SYSENTER, SYSEXIT. */
 #define FC_SYS 3
 /* Indicates the instruction is one of: JMP, JMP FAR. */
-#define FC_BRANCH 4
+#define FC_UNC_BRANCH 4
 /*
  * Indicates the instruction is one of:
  * JCXZ, JO, JNO, JB, JAE, JZ, JNZ, JBE, JA, JS, JNS, JP, JNP, JL, JGE, JLE, JG, LOOP, LOOPZ, LOOPNZ.
  */
-#define FC_COND_BRANCH 5
+#define FC_CND_BRANCH 5
 /* Indiciates the instruction is one of: INT, INT1, INT 3, INTO, UD2. */
 #define FC_INT 6
+/* Indicates the instruction is one of: CMOVxx. */
+#define FC_CMOV 7
 
 /* Return code of the decoding function. */
 typedef enum {DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, DECRES_FILTERED} _DecodeResult;

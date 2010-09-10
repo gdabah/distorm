@@ -325,7 +325,9 @@ FLAGS = [
 # The Imm value is signed extended.
 "FLAG_IMM_SIGNED",
 # The destination operand is writable.
-"FLAG_DST_WR"
+"FLAG_DST_WR",
+# The instruction uses the RIP-relative indirection.
+"FLAG_RIP_RELATIVE"
 ]
 
 # Instruction could not be disassembled. Special-case handling
@@ -496,12 +498,14 @@ FlowControlFlags = [
 # Indicates the instruction is one of: SYSCALL, SYSRET, SYSENTER, SYSEXIT.
 "FC_SYS",
 # Indicates the instruction is one of: JMP, JMP FAR.
-"FC_BRANCH",
+"FC_UNC_BRANCH",
 # Indicates the instruction is one of:
 # JCXZ, JO, JNO, JB, JAE, JZ, JNZ, JBE, JA, JS, JNS, JP, JNP, JL, JGE, JLE, JG, LOOP, LOOPZ, LOOPNZ.
-"FC_COND_BRANCH",
-# Indiciates the instruction is one of: INT, INT1, INT 3, INTO, UD2. */
+"FC_CND_BRANCH",
+# Indiciates the instruction is one of: INT, INT1, INT 3, INTO, UD2.
 "FC_INT",
+# Indicates the instruction is one of: CMOVxx.
+"FC_CMOV"
 ]
 
 def _getOpSize(flags):
