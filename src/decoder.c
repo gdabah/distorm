@@ -552,9 +552,10 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 			if (((_ci->features & DF_STOP_ON_CALL) && (META_GET_FC(pdi->meta) == FC_CALL)) ||
 				((_ci->features & DF_STOP_ON_RET) && (META_GET_FC(pdi->meta) == FC_RET)) ||
 				((_ci->features & DF_STOP_ON_SYS) && (META_GET_FC(pdi->meta) == FC_SYS)) ||
-				((_ci->features & DF_STOP_ON_BRANCH) && (META_GET_FC(pdi->meta) == FC_BRANCH)) ||
-				((_ci->features & DF_STOP_ON_COND_BRANCH) && (META_GET_FC(pdi->meta) == FC_COND_BRANCH)) ||
-				((_ci->features & DF_STOP_ON_INT) && (META_GET_FC(pdi->meta) == FC_INT)))
+				((_ci->features & DF_STOP_ON_UNC_BRANCH) && (META_GET_FC(pdi->meta) == FC_UNC_BRANCH)) ||
+				((_ci->features & DF_STOP_ON_CND_BRANCH) && (META_GET_FC(pdi->meta) == FC_CND_BRANCH)) ||
+				((_ci->features & DF_STOP_ON_INT) && (META_GET_FC(pdi->meta) == FC_INT)) ||
+				((_ci->features & DF_STOP_ON_CMOV) && (META_GET_FC(pdi->meta) == FC_CMOV)))
 				return DECRES_SUCCESS;
 		}
 	}

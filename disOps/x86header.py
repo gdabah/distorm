@@ -209,9 +209,10 @@ class FlowControl:
     (CALL,
     RET,
     SYS,
-    BRANCH,
-    COND_BRANCH,
-    INT) = range(1, 7)
+    UNC_BRANCH,
+    CND_BRANCH,
+    INT,
+    CMOV) = range(1, 8)
 
 class NodeType:
     """ A node can really be an object holder for an instruction-info object or

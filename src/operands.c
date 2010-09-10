@@ -426,6 +426,7 @@ static int operands_extract_modrm(_CodeInfo* ci,
 				/* In 64 bits decoding mode depsite of the address size, a RIP-relative address it is. */
 				op->type = O_SMEM;
 				op->index = R_RIP;
+				di->flags |= FLAG_RIP_RELATIVE;
 			} else {
 				/* Absolute address: */
 				op->type = O_DISP;

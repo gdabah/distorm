@@ -434,7 +434,6 @@ typedef struct InstNode {
 	uint8_t* ids;
 	_InstInfo** list; /* The second level might point to _InstNode, this is determined by type in runtime. */
 } _InstNode;
-
 /*
  * Used for letting the extract operand know the type of operands without knowing the
  * instruction itself yet, because of the way those instructions work.
