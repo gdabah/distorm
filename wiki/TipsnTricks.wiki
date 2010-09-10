@@ -88,12 +88,11 @@ Worth to know that the O_PC must be the first operand if it's ever used by the i
 
 It's very sexy in X64 to use the RIP-relative operands. This way you can achieve Position Independent Code, rather than doing the old trick of {{{ CALL $+5; POP EAX }}}. So suppose we want to find where the RIP-relative instruction points to, we will have to first find whether the instruction uses the RIP register and only then we will continue to the calculation.
 
-Since the RIP register can be used in any of the operands, we will have to check for them all. Actually now that I think of it, I don't like it, I think I will have a flag that indicates RIP-relative. Stay tuned :)
+Since the RIP register can be used in any of the operands, we will have to check for them all.
 
 However, as for now, you should do:
 {{{
 _DInst di = &result[i];
-// I belive testing only the first two operands should be enough in 99% of the cases.
 if ( ((di->ops[0].type == O_SMEM) && (di->ops[0].index == R_RIP)) ||
      ((di->ops[1].type == O_SMEM) && (di->ops[1].index == R_RIP)) )
 {
@@ -101,7 +100,13 @@ if ( ((di->ops[0].type == O_SMEM) && (di->ops[0].index == R_RIP)) ||
 }
 }}}
 
-Now you can see why a flag could be handy, because for calculating the target address we don't need to access any of the operands.
+Now you can see why a flag could be handy, because for calculating the target address we don't need to access any of the operands. Therefore I recently added a new flag called FLAG_RIP_RELATIVE. And it should be used in the following way:
+{{{
+if (result[i].flags & FLAG_RIP_RELATIVE)
+{
+ absolute_target_address = INSTRUCTION_GET_RIP_TARGET(&result[i]);
+}
+}}}
 
 Now to another issue, getting a bit of meta information about the displacement. The displacement is the offset which is used when referring to another register, such as [REG + OFF]. Note that it has to be an indirection.
 
@@ -153,7 +158,7 @@ int is_stack_related_instruction(_DInst* di)
 }
 }}}
 
-This also BEGS a 'registersUsed' field in the decomposed instruction structure for quickly checking for a used register. I will do that.
+This also BEGS a 'registersUsed' field in the decomposed instruction structure for quickly checking for a used register. I really wanted to implement this registers-used-mask, but unfortunately the way the registers are an enumeration rather than a bit flags. Which means you can bitwise-or a few registers together. In order to do that feature I would have to change the operand structure to be twice as bigger, and I don't like that option.
 
 Some instructions like PUSHA or PUSHF don't have any operands, how can we determine the size of operation, whether PUSHF, for instance, pushes the 32 bit flags register or the 16 bits flags register? Fortunately, diStorm does this for you, you don't have to look for prefix bytes in the stream of the instruction itself.
 
