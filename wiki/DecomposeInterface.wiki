@@ -100,6 +100,30 @@ for (int i = 0; i < sizeof(uint16_t); i++) {
  * META_GET_FC returns the Flow-Control type of the instruction. I.E: FC_CALL, FC_BRANCH and others. Usually it's FC_NONE. See the rest of them inside distorm.h.
  * The meta-FC is very useful for flow control analysis.
 
+<b>uint16_t usedRegistersMask;</b>
+ * Set when the instruction is valid and uses registers in its operands.
+ * This field is actually a <b>mask</b> for all the registers that are used in the operands.
+ * Practically, instead of scanning for a specific register in the operands, you should use this field.
+ * This field is not a replacement to the operands information! It is just a hint, hence a mask.
+ * The registers are categorized to register-classes such as:
+
+|| AL, AH, AX, EAX, RAX || RM_AX ||
+|| CL, CH, CX, ECX, RCX || RM_CX ||
+|| DL, DH, DX, EDX, RDX || RM_DX ||
+|| BL, BH, BX, EBX, RBX || RM_BX ||
+|| SPL, SP, ESP, RSP || RM_SP ||
+|| BPL, BP, EBP, RBP || RM_BP ||
+|| SIL, SI, ESI, RSI || RM_SI ||
+|| DIL, DI, EDI, RDI || RM_DI ||
+|| ST(0) - ST(7) || RM_FPU ||
+|| MM0 - MM7 || RM_MMX ||
+|| XMM0 - XMM15 || RM_SSE ||
+|| YMM0 - YMM15 || RM_AVX ||
+|| CR0, CR2, CR3, CR4, CR8 || RM_CR ||
+|| DR0, DR1, DR2, DR3, DR6, DR7 || RM_DR ||
+
+*Note that RIP can be checked with the FLAG_RIP_RELATIVE. Segment registers have the 'segment' field. And R8-R15 are not mapped, I might add them in the future.
+
 ----
 
 ===Flags===
