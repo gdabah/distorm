@@ -122,7 +122,7 @@ for (int i = 0; i < sizeof(uint16_t); i++) {
 || CR0, CR2, CR3, CR4, CR8 || RM_CR ||
 || DR0, DR1, DR2, DR3, DR6, DR7 || RM_DR ||
 
-*Note that RIP can be checked with the FLAG_RIP_RELATIVE. Segment registers have the 'segment' field. And R8-R15 are not mapped, I might add them in the future.
+Note that RIP can be checked with the FLAG_RIP_RELATIVE. Segment registers have the 'segment' field. And R8-R15 are not mapped, I might add them in the future.
 
 ----
 
