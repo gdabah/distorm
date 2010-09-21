@@ -27,9 +27,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #include "x86defs.h"
 #include "../mnemonics.h"
 
+/* Maps a register to its register-class mask. */
+uint16_t _REGISTERTORCLASS[] = /* Based on _RegisterType enumeration! */
+{RM_AX, RM_CX, RM_DX, RM_BX, RM_SP, RM_BP, RM_SI, RM_DI, 0, 0, 0, 0, 0, 0, 0, 0,
+ RM_AX, RM_CX, RM_DX, RM_BX, RM_SP, RM_BP, RM_SI, RM_DI, 0, 0, 0, 0, 0, 0, 0, 0,
+ RM_AX, RM_CX, RM_DX, RM_BX, RM_SP, RM_BP, RM_SI, RM_DI, 0, 0, 0, 0, 0, 0, 0, 0,
+ RM_AX, RM_CX, RM_DX, RM_BX, RM_AX, RM_CX, RM_DX, RM_BX, 0, 0, 0, 0, 0, 0, 0, 0,
+ RM_SP, RM_BP, RM_SI, RM_DI,
+ 0, 0, 0, 0, 0, 0,
+ 0,
+ RM_FPU, RM_FPU, RM_FPU, RM_FPU, RM_FPU, RM_FPU, RM_FPU, RM_FPU,
+ RM_MMX, RM_MMX, RM_MMX, RM_MMX, RM_MMX, RM_MMX, RM_MMX, RM_MMX,
+ RM_SSE, RM_SSE, RM_SSE, RM_SSE, RM_SSE, RM_SSE, RM_SSE, RM_SSE, RM_SSE, RM_SSE, RM_SSE, RM_SSE, RM_SSE, RM_SSE, RM_SSE, RM_SSE,
+ RM_AVX, RM_AVX, RM_AVX, RM_AVX, RM_AVX, RM_AVX, RM_AVX, RM_AVX, RM_AVX, RM_AVX, RM_AVX, RM_AVX, RM_AVX, RM_AVX, RM_AVX, RM_AVX,
+ RM_CR, 0, RM_CR, RM_CR, RM_CR, 0, 0, 0, RM_CR,
+ RM_DR, RM_DR, RM_DR, RM_DR, 0, 0, RM_DR, RM_DR
+};
 
 typedef enum {OPERAND_SIZE_NONE = 0, OPERAND_SIZE8, OPERAND_SIZE16, OPERAND_SIZE32, OPERAND_SIZE64, OPERAND_SIZE80, OPERAND_SIZE128, OPERAND_SIZE256} _OperandSizeType;
-uint16_t _OPSIZETOINT[] = {0, 8, 16, 32, 64, 80, 128, 256};
+static uint16_t _OPSIZETOINT[] = {0, 8, 16, 32, 64, 80, 128, 256};
 
 /* A helper function to fix the 8 bits register if REX is used (to support SIL, DIL, etc). */
 static unsigned int _FASTCALL_ operands_fix_8bit_rex_base(unsigned int reg)
@@ -143,7 +159,6 @@ static void operands_extract_sib(_DInst* di, _OperandNumberType opNum,
 		op->type = O_MEM;
 		pIndex = &di->base;
 		/* No base, unless it is updated below. E.G: [EAX*4] has no base reg. */
-		di->base = R_NONE;
 	}
 
 	if (base != 5) {
@@ -489,6 +504,7 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 					 unsigned int modrm, _PrefixState* ps, _DecodeType effOpSz,
                      _DecodeType effAdrSz, int* lockableInstruction)
 {
+	int ret = 0;
 	unsigned int mod = 0, reg = 0, rm = 0, vexV = ps->vexV;
 	unsigned int vrex = ps->vrex, typeHandled = TRUE;
 	_iflags instFlags = ii->flags;
@@ -572,7 +588,11 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 			return FALSE;
 		}
 		op->size = _OPSIZETOINT[opSize];
-		return operands_extract_modrm(ci, di, type, opNum, ps, effOpSz, effAdrSz, lockableInstruction, mod, rm, instFlags);
+		ret = operands_extract_modrm(ci, di, type, opNum, ps, effOpSz, effAdrSz, lockableInstruction, mod, rm, instFlags);
+		if ((op->type == O_REG) || (op->type == O_SMEM) || (op->type == O_MEM)) {
+			di->usedRegistersMask |= _REGISTERTORCLASS[op->index];
+		}
+		return ret;
 	}
 
 	/* -- Memory Indirection Operands (that can be a register) -- */
@@ -669,7 +689,11 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 	if (typeHandled) {
 		/* Fill size of memory dereference for operand. */
 		op->size = _OPSIZETOINT[opSize];
-		return operands_extract_modrm(ci, di, type, opNum, ps, effOpSz, effAdrSz, lockableInstruction, mod, rm, instFlags);
+		ret = operands_extract_modrm(ci, di, type, opNum, ps, effOpSz, effAdrSz, lockableInstruction, mod, rm, instFlags);
+		if ((op->type == O_REG) || (op->type == O_SMEM) || (op->type == O_MEM)) {
+			di->usedRegistersMask |= _REGISTERTORCLASS[op->index];
+		}
+		return ret;
 	}
 
 	/* Simple operand type (no ModRM byte). */
@@ -1265,6 +1289,10 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 			else operands_set_tsi(op, O_REG, 32, REGS32_BASE + reg);
 		break;
 		default: return FALSE;
+	}
+
+	if ((op->type == O_REG) || (op->type == O_SMEM) || (op->type == O_MEM)) {
+		di->usedRegistersMask |= _REGISTERTORCLASS[op->index];
 	}
 
 	return TRUE;
