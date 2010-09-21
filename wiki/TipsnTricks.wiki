@@ -90,7 +90,7 @@ It's very sexy in X64 to use the RIP-relative operands. This way you can achieve
 
 Since the RIP register can be used in any of the operands, we will have to check for them all.
 
-However, as for now, you should do:
+The following snippet is fine:
 {{{
 _DInst di = &result[i];
 if ( ((di->ops[0].type == O_SMEM) && (di->ops[0].index == R_RIP)) ||
@@ -100,13 +100,14 @@ if ( ((di->ops[0].type == O_SMEM) && (di->ops[0].index == R_RIP)) ||
 }
 }}}
 
-Now you can see why a flag could be handy, because for calculating the target address we don't need to access any of the operands. Therefore I recently added a new flag called FLAG_RIP_RELATIVE. And it should be used in the following way:
+Now you can see why a flag could be handy, because for calculating the target address we don't need to access any of the operands directly. Therefore I recently added a new flag called FLAG_RIP_RELATIVE. And it should be used in the following way:
 {{{
 if (result[i].flags & FLAG_RIP_RELATIVE)
 {
  absolute_target_address = INSTRUCTION_GET_RIP_TARGET(&result[i]);
 }
 }}}
+And scanning the operands is eliminated.
 
 Now to another issue, getting a bit of meta information about the displacement. The displacement is the offset which is used when referring to another register, such as [REG + OFF]. Note that it has to be an indirection.
 
@@ -139,7 +140,7 @@ switch (result[i].opcode)
 }
 }}}
 
-Of course it's worth to do another test for all instruction which touch the ESP or the EBP registers as well:
+Of course it's worth to do another test for all instructions which touch the ESP or the EBP registers as well:
 {{{
 int is_stack_related_instruction(_DInst* di)
 {
@@ -158,7 +159,17 @@ int is_stack_related_instruction(_DInst* di)
 }
 }}}
 
-This also BEGS a 'registersUsed' field in the decomposed instruction structure for quickly checking for a used register. I really wanted to implement this registers-used-mask, but unfortunately the way the registers are an enumeration rather than a bit flags. Which means you can bitwise-or a few registers together. In order to do that feature I would have to change the operand structure to be twice as bigger, and I don't like that option.
+This also BEGS a 'registersUsed' field in the decomposed instruction structure for quickly checking for a used register. So I decided added it later on. The new code would be something like this.
+
+{{{
+int is_stack_related_instruction(_DInst* di)
+{
+ return ((di->usedRegistersMask & (RM_SP | RM_BP)) != 0);
+}
+}}}
+Compare for yourself! You see? One comparison operator and you're done. This will work for both 32 and 64 bits at once, unlike the former snippet which supports only 32 bits.
+And note that in order to know whether the instruction is 'stack-related' we don't really want to know what it does, and which operand describe what, or scan its operands.
+We will merely have to check the registers-mask. Splendid. I have to admit that the registers-mask is a bit limited, because it doesn't support <i>all</i> registers, but still, a good start.
 
 Some instructions like PUSHA or PUSHF don't have any operands, how can we determine the size of operation, whether PUSHF, for instance, pushes the 32 bit flags register or the 16 bits flags register? Fortunately, diStorm does this for you, you don't have to look for prefix bytes in the stream of the instruction itself.
 
