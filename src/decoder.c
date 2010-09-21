@@ -332,36 +332,29 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	di->meta = ii->meta;
 	if (di->segment == 0) di->segment = R_NONE;
 
+	/* Take into account the O_MEM base register for the mask. */
+	if (di->base != R_NONE) di->usedRegistersMask |= _REGISTERTORCLASS[di->base];
+
 	/* Calculate the size of the instruction we've just decoded. */
 	di->size = (uint8_t)((ci->code - startCode) & 0xff);
 	return DECRES_SUCCESS;
 
 _Undecodable: /* If the instruction couldn't be decoded for some reason, drop the first byte. */
 	memset(di, 0, sizeof(_DInst));
+	di->base = R_NONE;
 
 	di->size = 1;
-	/* Clean operands just in case... */
+	/* Clean prefixes just in case... */
 	ps->usedPrefixes = 0;
 
 	/* Special case for WAIT instruction: If it's dropped, you have to return a valid instruction! */
 	if (*startCode == INST_WAIT_INDEX) {
-		di->flags = 0;
 		di->opcode = I_WAIT;
 		META_SET_ISC(di, ISC_INTEGER);
 		return DECRES_SUCCESS;
 	}
 
-	/*
-	 * Exclude the first byte, couldn't decode that instruction.
-	 * So just DB(define byte) it and skip it.
-	 * Render instruction as undefined.
-	 */
-	di->flags = FLAG_NOT_DECODABLE;
-	di->opcode = I_UNDEFINED;
-	/* Set its byte. */
-	di->imm.byte = *startCode;
-
-	/* Mark that we didn't manage to decode the instruction well. */
+	/* Mark that we didn't manage to decode the instruction well, caller will drop it. */
 	return DECRES_INPUTERR;
 }
 

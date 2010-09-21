@@ -165,6 +165,7 @@ class _DInst (Structure):
         ('imm', _Value),
         ('unusedPrefixesMask', c_uint16),
         ('meta', c_ubyte), # meta flags - instruction set class, etc. See C headers again...
+        ('usedRegistersMask', c_uint16) # used registers mask.
     ]
 
 

@@ -253,6 +253,8 @@ typedef struct {
 	uint16_t unusedPrefixesMask;
 	/* Meta defines the instruction set class, and the flow control flags. Use META macros. */
 	uint8_t meta;
+	/* Mask of registers that were used in the operands, only used for quick look up, in order to know *some* operand uses that register class. */
+	uint16_t usedRegistersMask;
 } _DInst;
 
 /* Static size of strings. Do not change this value. Keep Python wrapper in sync. */
@@ -274,6 +276,26 @@ typedef struct {
 	unsigned int size; /* Size of decoded instruction. */
 	_OffsetType offset; /* Start offset of the decoded instruction. */
 } _DecodedInst;
+
+/* Register masks for quick look up, each mask indicates one of a register-class that is being used in some operand. */
+#define RM_AX 1     /* AL, AH, AX, EAX, RAX */
+#define RM_CX 2     /* CL, CH, CX, ECX, RCX */
+#define RM_DX 4     /* DL, DH, DX, EDX, RDX */
+#define RM_BX 8     /* BL, BH, BX, EBX, RBX */
+#define RM_SP 0x10  /* SPL, SP, ESP, RSP */ 
+#define RM_BP 0x20  /* BPL, BP, EBP, RBP */
+#define RM_SI 0x40  /* SIL, SI, ESI, RSI */
+#define RM_DI 0x80  /* DIL, DI, EDI, RDI */
+#define RM_FPU 0x100 /* ST(0) - ST(7) */
+#define RM_MMX 0x200 /* MM0 - MM7 */
+#define RM_SSE 0x400 /* XMM0 - XMM15 */
+#define RM_AVX 0x800 /* YMM0 - YMM15 */
+#define RM_CR 0x1000 /* CR0, CR2, CR3, CR4, CR8 */
+#define RM_DR 0x2000 /* DR0, DR1, DR2, DR3, DR6, DR7 */
+/* RIP should be checked using the 'flags' field and FLAG_RIP_RELATIVE.
+ * Segments should be checked using the segment macros.
+ * For now R8 - R15 are not supported and non general purpose registers map into same RM.
+ */
 
 /*
  * Instructions Set classes:
