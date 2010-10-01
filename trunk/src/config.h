@@ -108,7 +108,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #define _INLINE_ __inline
 
 /* Set endianity (supposed to be LE though): */
-#ifndef _M_IX86
+#if !defined(_M_IX86) && !defined(_M_X64)
 	#define BE_SYSTEM
 #endif
 
