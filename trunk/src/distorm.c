@@ -351,6 +351,8 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 	ci.codeLen = codeLen;
 	ci.dt = dt;
 	ci.features = DF_NONE;
+	if (dt == Decode16Bits) ci.features = DF_MAXIMUM_ADDR16;
+	else if (dt == Decode32Bits) ci.features = DF_MAXIMUM_ADDR32;
 
 	res = decode_internal(&ci, TRUE, (_DInst*)result, maxInstructions, &instsCount);
 	for (i = 0; i < instsCount; i++) {
