@@ -61,7 +61,7 @@ def main():
     # Get the filename for the target platform
     if   system in ('windows', 'cygwin'):
         data = 'distorm3.dll'
-    elif system == 'darwin':
+    elif system in ('darwin', 'macosx'):
         data = 'libdistorm3.dylib'
     else:
         data = 'libdistorm3.so'

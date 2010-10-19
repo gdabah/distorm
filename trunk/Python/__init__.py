@@ -374,10 +374,10 @@ def DecodeGenerator(codeOffset, code, dt):
         raise ValueError("Invalid decode type value: %r" % (dt,))
 
     codeLen         = len(code)
-    code            = create_string_buffer(code)
-    p_code          = addressof(code)
+    p_code          = pointer(create_string_buffer(code))
     result          = (_DecodedInst * MAX_INSTRUCTIONS)()
     p_result        = byref(result)
+    instruction_off = 0
 
     while codeLen > 0:
 
@@ -397,6 +397,7 @@ def DecodeGenerator(codeOffset, code, dt):
             if len(di.operands.p):
                 asm += " " + di.operands.p
             pydi = ( di.offset, di.size, asm, di.instructionHex.p )
+            instruction_off += di.size
             yield pydi
 
         di         = result[used - 1]
@@ -404,7 +405,7 @@ def DecodeGenerator(codeOffset, code, dt):
         if delta <= 0:
             break
         codeOffset = codeOffset + delta
-        p_code     = p_code + delta
+        p_code = pointer(create_string_buffer(code[instruction_off:]))
         codeLen    = codeLen - delta
 
 def Decode(offset, code, type = Decode32Bits):
@@ -600,7 +601,7 @@ class Operand (object):
 
 
 class Instruction (object):
-    def __init__(self, di, instructionBytes):
+    def __init__(self, di, instructionBytes, dt):
         "Expects a filled _DInst structure, and the corresponding byte code of the whole instruction"
         #self.di = di
         flags = di.flags
@@ -613,7 +614,7 @@ class Instruction (object):
         self.flowControl = _getFC(0)
         self.address = di.addr
         self.size = di.size
-        self.dt = _getOpSize(flags)
+        self.dt = dt
         self.valid = False
 
         if flags == FLAG_NOT_DECODABLE:
@@ -650,9 +651,9 @@ class Instruction (object):
                 constant = di.imm.qword
             return Operand(OPERAND_IMMEDIATE, constant, operand.size)
         elif operand.type == O_IMM1: # first operand for ENTER
-            return Operand(OPERAND_IMMEDIATE, di.imm.ex.im1, operand.size)
+            return Operand(OPERAND_IMMEDIATE, di.imm.ex.i1, operand.size)
         elif operand.type == O_IMM2: # second operand for ENTER
-            return Operand(OPERAND_IMMEDIATE, di.imm.ex.im2, operand.size)
+            return Operand(OPERAND_IMMEDIATE, di.imm.ex.i2, operand.size)
         elif operand.type == O_REG:
             return Operand(OPERAND_REGISTER, operand.index, operand.size)
         elif operand.type == O_MEM:
@@ -711,15 +712,14 @@ def DecomposeGenerator(codeOffset, code, dt):
         raise ValueError("Invalid decode type value: %r" % (dt,))
 
     codeLen         = len(code)
-    scode           = create_string_buffer(code)
-    p_code          = addressof(scode)
+    p_code          = pointer(create_string_buffer(code))
     result          = (_DInst * MAX_INSTRUCTIONS)()
     instruction_off = 0
 
     while codeLen > 0:
-
+        
         usedInstructionsCount = c_uint(0)
-        codeInfo = _CodeInfo(_OffsetType(codeOffset), _OffsetType(0), p_code, codeLen, dt, 0)
+        codeInfo = _CodeInfo(_OffsetType(codeOffset), _OffsetType(0), cast(p_code, c_char_p), codeLen, dt, 0)
         status = internal_decompose(byref(codeInfo), byref(result), MAX_INSTRUCTIONS, byref(usedInstructionsCount))
         if status == DECRES_INPUTERR:
             raise ValueError("Invalid arguments passed to distorm_decode()")
@@ -731,14 +731,14 @@ def DecomposeGenerator(codeOffset, code, dt):
         delta = 0
         for index in xrange(used):
             di = result[index]
-            yield Instruction(di, code[instruction_off : instruction_off + di.size])
+            yield Instruction(di, code[instruction_off : instruction_off + di.size], dt)
             delta += di.size
             instruction_off += di.size
 
         if delta <= 0:
             break
         codeOffset = codeOffset + delta
-        p_code     = p_code + delta
+        p_code          = pointer(create_string_buffer(code[instruction_off:]))
         codeLen    = codeLen - delta
 
 def Decompose(offset, code, type = Decode32Bits):

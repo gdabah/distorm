@@ -10,7 +10,7 @@ CFLAGS	= -fPIC -O2 -Wall -DSUPPORT_64BIT_OFFSET -DLIBDISTORM
 all: clib
 
 clean:
-	/bin/rm -rf ../../src/*.o ${TARGET} ../../distorm3.a ../../mnemonics.o
+	/bin/rm -rf ../../src/*.o ${TARGET} ../../distorm3.a ../../mnemonics.o ../../*.o
 
 clib: ${COBJS}
 	${CC} ${CFLAGS} ${VERSION} ${COBJS} -shared -o ${TARGET}
