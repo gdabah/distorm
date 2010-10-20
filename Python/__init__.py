@@ -374,7 +374,7 @@ def DecodeGenerator(codeOffset, code, dt):
         raise ValueError("Invalid decode type value: %r" % (dt,))
 
     codeLen         = len(code)
-    p_code          = pointer(create_string_buffer(code))
+    p_code          = byref(create_string_buffer(code))
     result          = (_DecodedInst * MAX_INSTRUCTIONS)()
     p_result        = byref(result)
     instruction_off = 0
@@ -405,7 +405,7 @@ def DecodeGenerator(codeOffset, code, dt):
         if delta <= 0:
             break
         codeOffset = codeOffset + delta
-        p_code = pointer(create_string_buffer(code[instruction_off:]))
+        p_code     = byref(create_string_buffer(code), instruction_off)
         codeLen    = codeLen - delta
 
 def Decode(offset, code, type = Decode32Bits):
@@ -712,7 +712,7 @@ def DecomposeGenerator(codeOffset, code, dt):
         raise ValueError("Invalid decode type value: %r" % (dt,))
 
     codeLen         = len(code)
-    p_code          = pointer(create_string_buffer(code))
+    p_code          = byref(create_string_buffer(code))
     result          = (_DInst * MAX_INSTRUCTIONS)()
     instruction_off = 0
 
@@ -738,7 +738,7 @@ def DecomposeGenerator(codeOffset, code, dt):
         if delta <= 0:
             break
         codeOffset = codeOffset + delta
-        p_code          = pointer(create_string_buffer(code[instruction_off:]))
+        p_code     = byref(create_string_buffer(code), instruction_off)
         codeLen    = codeLen - delta
 
 def Decompose(offset, code, type = Decode32Bits):
