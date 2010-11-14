@@ -1,5 +1,5 @@
 /*
-distorm.c
+	distorm.c
 
 diStorm3 C Library Interface
 diStorm3 - Powerful disassembler for X86/AMD64
@@ -22,13 +22,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
 
-#include "../distorm.h"
+#include "../include/distorm.h"
 #include "config.h"
 #include "decoder.h"
 #include "x86defs.h"
 #include "textdefs.h"
 #include "wstring.h"
-#include "../mnemonics.h"
+#include "../include/mnemonics.h"
 
 
 /* C DLL EXPORTS */

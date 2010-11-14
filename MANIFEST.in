@@ -1,0 +1,3 @@
+include README setup.cfg setup.py
+recursive-include src *.c *.h
+recursive-include *.py

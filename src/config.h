@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 #include <string.h> /* memset, memcpy - can be easily self implemented for libc independency. */
 
-#include "../distorm.h"
+#include "../include/distorm.h"
 
 /*
  * 64 bit offsets support:
