@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 #include "x86defs.h"
 #include "instructions.h"
-#include "../mnemonics.h"
+#include "../include/mnemonics.h"
 
 
 _InstInfo II_arpl = {INT_INFO, ISC_INTEGER << 3, OT_REG16, OT_RM16, I_ARPL, INST_MODRM_REQUIRED};

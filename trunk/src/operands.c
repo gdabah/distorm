@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 #include "operands.h"
 #include "x86defs.h"
-#include "../mnemonics.h"
+#include "../include/mnemonics.h"
 
 /* Maps a register to its register-class mask. */
 uint16_t _REGISTERTORCLASS[] = /* Based on _RegisterType enumeration! */
