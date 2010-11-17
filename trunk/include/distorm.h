@@ -258,7 +258,7 @@ typedef struct {
 } _DInst;
 
 /* Static size of strings. Do not change this value. Keep Python wrapper in sync. */
-#define MAX_TEXT_SIZE (32)
+#define MAX_TEXT_SIZE (48)
 typedef struct {
 	unsigned int length;
 	unsigned char p[MAX_TEXT_SIZE]; /* p is a null terminated string. */

@@ -34,7 +34,7 @@ def get_sources():
     """Returns a list of C source files that should be compiled to 
     create the libdistorm3 library.
     """
-    
+
     return glob('src/*.c') + glob('include/*.c')
 
 

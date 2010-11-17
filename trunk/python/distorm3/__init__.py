@@ -33,22 +33,18 @@ from os.path import split, join
 
 # Guess the DLL filename and load the library.
 _distorm_path = split(__file__)[0]
-try:
-    # Give a try for Windows.
-    _distorm_file = join(_distorm_path, 'distorm3.dll')
-    _distorm = cdll.LoadLibrary(_distorm_file)
-except OSError:
-    try:
-        # Linux
-        _distorm_file = join(_distorm_path, 'libdistorm3.so')
-        _distorm = cdll.LoadLibrary(_distorm_file)
-    except OSError:
-        try:
-            # Mac
-            _distorm_file = join(_distorm_path, 'libdistorm3.dylib')
-            _distorm = cdll.LoadLibrary(_distorm_file)
-        except OSError:
-            raise ImportError("Error loading distorm")
+potential_libs = ['distorm3.dll', 'libdistorm3.dll', 'libdistorm3.so', 'libdistorm3.dylib']
+lib_was_found = False
+for i in potential_libs:
+	try:
+		_distorm_file = join(_distorm_path, i)
+		_distorm = cdll.LoadLibrary(_distorm_file)
+		lib_was_found = True
+	except OSError:
+		pass
+
+if lib_was_found == False:
+	raise ImportError("Error loading the diStorm dynamic library")
 
 # Get the decode C function (try 64 bits version first, only then 32 bits).
 SUPPORT_64BIT_OFFSET = False
@@ -68,7 +64,7 @@ except AttributeError:
 #==============================================================================
 # diStorm C interface
 
-MAX_TEXT_SIZE       = 32 # See distorm.h for this value.
+MAX_TEXT_SIZE       = 48 # See distorm.h for this value.
 MAX_INSTRUCTIONS    = 1000
 
 DECRES_NONE         = 0
