@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 # Copyright (c) 2009, Mario Vilas
+# Rob Ruana 2010
+# Gil Dabah
 # All rights reserved.
 # Licensed under GPLv3.
 #
@@ -220,8 +222,8 @@ def main():
     # Setup instructions
     'requires'          : ['ctypes'],
     'provides'          : ['distorm3'],
-    #'packages'          : ['distorm3'],
-    #'package_dir'       : { '' : '.' },
+    'packages'          : ['distorm3'],
+    'package_dir'       : { '' : 'python' },
     'cmdclass'          : { 'build' : custom_build,
                             'build_clib' : custom_build_clib,
                             'clean' : custom_clean, 
