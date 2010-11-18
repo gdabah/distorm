@@ -1,3 +1,4 @@
-include README setup.cfg setup.py
-recursive-include src include *.c *.h
-recursive-include *.py
+include COPYING setup.cfg setup.py
+recursive-include src *.c *.h
+recursive-include include *.c *.h
+recursive-include . *.py
