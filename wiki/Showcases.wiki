@@ -188,8 +188,7 @@ JMP 0x105:
 		meta	0x0c           ; META_GET_ISC(0x0c): ISC_INTEGER, META_GET_FC(0x0c): FC_BRANCH
 }}}
 
-
----
+----
 {{{
 Original function in C:
 int f(int a, int b)
