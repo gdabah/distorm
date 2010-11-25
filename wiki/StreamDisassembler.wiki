@@ -54,8 +54,8 @@ The best practices I suggest you should follow is this:
 
 A very good example of how to do it exactly, can be found in the Linux/Win32 sample projects. Learn how their main-loop works, and notice how it synchronizes the variables after every invocation to the API.
 Notice that in the samples, we feed the decode API with the total block to decode, that makes things much easier to handle.
-http://code.google.com/p/distorm/source/browse/trunk/win32proj/main.cpp
-http://code.google.com/p/distorm/source/browse/trunk/linuxproj/main.c
+http://code.google.com/p/distorm/source/browse/trunk/examples/win32/main.cpp
+http://code.google.com/p/distorm/source/browse/trunk/examples/linux/main.c
 
 ===Flow control analysis - DF_RETURN_FC_ONLY potential problem===
 To understand this issue please read the former issue first and only then get back here. 
