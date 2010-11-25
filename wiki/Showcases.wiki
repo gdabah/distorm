@@ -190,7 +190,7 @@ JMP 0x105:
 
 
 ---
-
+{{{
 Original function in C:
 int f(int a, int b)
 {
@@ -365,3 +365,4 @@ New API distorm_decompose result:
 		unusedPrefixesMask	0
 		meta	10 - META_GET_ISC(10): ISC_INTEGER, META_GET_FC(10): FC_RET
 		usedRegistersMask	0
+}}}
