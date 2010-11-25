@@ -187,3 +187,181 @@ JMP 0x105:
 		unusedPrefixesMask	0x0000
 		meta	0x0c           ; META_GET_ISC(0x0c): ISC_INTEGER, META_GET_FC(0x0c): FC_BRANCH
 }}}
+
+
+---
+
+Original function in C:
+int f(int a, int b)
+{
+	return a + b;
+}
+
+Compiled and assembled into:
+0x55 0x8b 0xec 0x8b 0x45 0x08 0x03 0x45 0x0c 0xc9 0xc3
+
+Basic API distorm_decode result:
+
+-	disassembled[0]
++		mnemonic	{length=4 p="PUSH" }
++		operands	{length=3 p="EBP" }
++		instructionHex	{length=2 p="55" }
+		size	1
+		offset	0
+
+-	disassemled[1]
++		mnemonic	{length=3 p="MOV" }
++		operands	{length=8 p="EBP, ESP" }
++		instructionHex	{length=4 p="8bec" }
+		size	2
+		offset	1
+
+-	disassembled[2]
++		mnemonic	{length=3 p="MOV" }
++		operands	{length=14 p="EAX, [EBP+0x8]" }
++		instructionHex	{length=6 p="8b4508" }
+		size	3
+		offset	3
+
+-	disassembled[3]
++		mnemonic	{length=3 p="ADD" }
++		operands	{length=14 p="EAX, [EBP+0xc]" }
++		instructionHex	{length=6 p="03450c" }
+		size	3
+		offset	6
+
+-	disassembled[4]
++		mnemonic	{length=5 p="LEAVE" }
++		operands	{length=0 p="" }
++		instructionHex	{length=2 p="c9" }
+		size	1
+		offset	9
+
+-	disassembled[5]
++		mnemonic	{length=3 p="RET" }
++		operands	{length=0 p="" }
++		instructionHex	{length=2 p="c3" }
+		size	1
+		offset	10
+
+New API distorm_decompose result:
+
+- decomposed[0]
+		addr	0
+		size	1
+		flags	1280 - FLAG_GET_OPSIZE(1280): Decode32Bits, FLAG_GET_ADDRSIZE(1280): Decode32Bits
+		segment	R_NONE
+		base	R_NONE
+		scale	0
+		dispSize	0
+		opcode	I_PUSH
+-		ops[0]
+			type	O_REG
+			index	R_EBP
+			size	32
+		disp	0
+		imm	0
+		unusedPrefixesMask	0
+		meta	8 - META_GET_ISC(8): ISC_INTEGER
+		usedRegistersMask	32
+
+- decomposed[1]
+		addr	1
+		size	2
+		flags	1344 - FLAG_DST_WR, FLAG_GET_OPSIZE(1280): Decode32Bits, FLAG_GET_ADDRSIZE(1280): Decode32Bits
+		segment	R_NONE
+		base	R_NONE
+		scale	0
+		dispSize	0
+		opcode	I_MOV
+-		ops[0]
+			type	O_REG
+			index	R_EBP
+			size	32
+-		ops[1]
+			type	O_REG
+			index	R_ESP
+			size	32
+		disp	0
+		imm	0
+		unusedPrefixesMask	0
+		meta	8 - META_GET_ISC(8): ISC_INTEGER
+		usedRegistersMask	48
+
+- decomposed[2]
+		addr	3
+		size	3
+		flags	1344 - FLAG_DST_WR, FLAG_GET_OPSIZE(1280): Decode32Bits, FLAG_GET_ADDRSIZE(1280): Decode32Bits
+		segment	198 - SEGMENT_IS_DEFAULT(198): TRUE, SEGMENT_GET(198): R_SS
+		base	R_NONE
+		scale	0
+		dispSize	8
+		opcode	I_MOV
+-		ops[0]
+			type	O_REG
+			index	R_EAX
+			size	32
+-		ops[1]
+			type	O_SMEM
+			index	R_EBP
+			size	32
+		disp	8
+		imm	0
+		unusedPrefixesMask	0
+		meta	8 - META_GET_ISC(8): ISC_INTEGER
+		usedRegistersMask	33
+
+-decomposed[3]
+		addr	6
+		size	3
+		flags	1344
+		segment	198 - SEGMENT_IS_DEFAULT(198): TRUE, SEGMENT_GET(198): R_SS
+		base	R_NONE
+		scale	0
+		dispSize	8
+		opcode	I_ADD
+-		ops[0]
+			type	O_REG
+			index	R_EAX
+			size	32
+-		ops[1]
+			type	O_SMEM
+			index	R_EBP
+			size	32
+		disp	12
+		imm	0
+		unusedPrefixesMask	0
+		meta	8 - META_GET_ISC(8): ISC_INTEGER
+		usedRegistersMask	33
+
+-decomposed[4]
+		addr	9
+		size	1
+		flags	1280 - FLAG_GET_OPSIZE(1280): Decode32Bits, FLAG_GET_ADDRSIZE(1280): Decode32Bits
+		segment	R_NONE
+		base	R_NONE
+		scale	0
+		dispSize	0
+		opcode	I_LEAVE
+		ops	0
+		disp	0
+		imm	0
+		unusedPrefixesMask	0
+		meta	8 - META_GET_ISC(8): ISC_INTEGER
+		usedRegistersMask	0
+
+-decomposed[5]
+		addr	10
+		size	1
+		flags	1280 - FLAG_GET_OPSIZE(1280): Decode32Bits, FLAG_GET_ADDRSIZE(1280): Decode32Bits
+		segment	R_NONE
+		base	R_NONE
+		scale	0
+		dispSize	0
+		opcode	I_RET
+		ops	0
+		disp	0
+		imm	0
+		unusedPrefixesMask	0
+		meta	10 - META_GET_ISC(10): ISC_INTEGER, META_GET_FC(10): FC_RET
+		usedRegistersMask	0
