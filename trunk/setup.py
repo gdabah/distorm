@@ -35,7 +35,7 @@ def get_sources():
     create the libdistorm3 library.
     """
 
-    return glob('src/*.c') + glob('include/*.c')
+    return glob('src/*.c')
 
 
 class custom_build(build):

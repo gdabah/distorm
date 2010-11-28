@@ -29,7 +29,7 @@
 #define EX_NOPERM      77
 #define EX_CONFIG      78
 
-#include "../include/distorm.h"
+#include "../../include/distorm.h"
 
 // The number of the array of instructions the decoder function will use to return the disassembled instructions.
 // Play with this value for performance...

@@ -3,7 +3,7 @@
 // Sep 2009.
 
 
-#include "../mnemonics.c"
+#include "../src/mnemonics.c"
 #include "../src/wstring.c"
 #include "../src/textdefs.c"
 #include "../src/x86defs.c"
