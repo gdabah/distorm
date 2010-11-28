@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
 
-#include "mnemonics.h"
+#include "../include/mnemonics.h"
 
 const _WMnemonic _MNEMONICS[] = {
 	{9, "UNDEFINED"},

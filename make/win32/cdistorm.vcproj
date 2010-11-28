@@ -352,7 +352,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\include\mnemonics.c"
+				RelativePath="..\..\src\mnemonics.c"
 				>
 			</File>
 			<File

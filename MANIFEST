@@ -2,7 +2,6 @@ COPYING
 setup.cfg
 setup.py
 include\distorm.h
-include\mnemonics.c
 include\mnemonics.h
 python\distorm3\__init__.py
 python\distorm3\sample.py
@@ -14,6 +13,7 @@ src\instructions.c
 src\instructions.h
 src\insts.c
 src\insts.h
+src\mnemonics.c
 src\operands.c
 src\operands.h
 src\prefix.c

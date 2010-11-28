@@ -23,9 +23,9 @@ int main(int argc, char **argv)
 
 	unsigned char rawData[] =
 {
-    0x66, 0x6a, 00, 00, 00, 0xff
+    0x55, 0x8b, 0xec ,0x8b ,0x45 ,0x08 ,0x03 ,0x45 ,0x0c ,0xc9 ,0xc3
 } ;
-	res = distorm_decode(offset, (const unsigned char*)rawData, sizeof(rawData), Decode64Bits, decodedInstructions, MAX_INSTRUCTIONS, &decodedInstructionsCount);
+	res = distorm_decode(offset, (const unsigned char*)rawData, sizeof(rawData), Decode32Bits, decodedInstructions, MAX_INSTRUCTIONS, &decodedInstructionsCount);
 	for (int i = 0; i < decodedInstructionsCount; i++) {
 		printf("%08I64x (%02d) %-24s %s%s%s\r\n", decodedInstructions[i].offset, decodedInstructions[i].size, (char*)decodedInstructions[i].instructionHex.p, (char*)decodedInstructions[i].mnemonic.p, decodedInstructions[i].operands.length != 0 ? " " : "", (char*)decodedInstructions[i].operands.p);
 	}
