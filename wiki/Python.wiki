@@ -32,4 +32,4 @@ for i in l:
 }}}
 
 ===Sample 3:===
-Check out the Python's sample that comes with diStorm: http://code.google.com/p/distorm/source/browse/trunk/Python/sample.py
+Check out the Python's sample that comes with diStorm: http://code.google.com/p/distorm/source/browse/trunk/python/distorm3/sample.py
