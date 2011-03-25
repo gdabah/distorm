@@ -14,7 +14,7 @@ typedef enum {Decode16Bits = 0, Decode32Bits = 1, Decode64Bits = 2} _DecodeType;
 typedef OFFSET_INTEGER _OffsetType;
 
 /* Static size of strings. Do not change this value. */
-#define MAX_TEXT_SIZE (32)
+#define MAX_TEXT_SIZE (48)
 typedef struct {
     unsigned int length;
     unsigned char p[MAX_TEXT_SIZE]; /* p is a null terminated string. */
