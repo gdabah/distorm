@@ -184,7 +184,7 @@ def main():
             sources=get_sources,
             include_dirs=['src', 'include'],
             extra_compile_args=['/Ox', '/Ob1', '/Oy', '"/D WIN32"',
-                                '"/D _DLL"', '"/D LIBDISTORM"', '"/D SUPPORT_64BIT_OFFSET"',
+                                '"/D DISTORM_STATIC"', '"/D SUPPORT_64BIT_OFFSET"',
                                 '"/D _MBCS"', '/GF', '/Gm', '/Zi', '/EHsc',
                                 '/MT', '/Gy', '/W4', '/nologo', '/c', '/TC',
                                 '/Fdbuild\\vc90.pdb'],
@@ -197,7 +197,7 @@ def main():
             include_dirs=['src', 'include'],
             extra_compile_args=['-arch', 'i386', '-arch', 'x86_64', '-O2', 
                                 '-Wall', '-fPIC', '-DSUPPORT_64BIT_OFFSET', 
-                                '-D_DLL']))]
+                                '-DDISTORM_DYNAMIC']))]
     elif 'cygwin' in system:
         libraries = [(
             'distorm3', dict(
@@ -206,7 +206,7 @@ def main():
             include_dirs=['src', 'include'],
             extra_compile_args=['-fPIC', '-O2', '-Wall', 
                                 '-DSUPPORT_64BIT_OFFSET', 
-                                '-DLIBDISTORM']))]
+                                '-DDISTORM_STATIC']))]
     else:
         libraries = [(
             'distorm3', dict(
@@ -215,7 +215,7 @@ def main():
             include_dirs=['src', 'include'],
             extra_compile_args=['-fPIC', '-O2', '-Wall', 
                                 '-DSUPPORT_64BIT_OFFSET', 
-                                '-DLIBDISTORM']))]
+                                '-DDISTORM_STATIC']))]
     
     options = {
 
