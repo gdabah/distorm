@@ -1,6 +1,6 @@
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "disasm", "disasm.vcproj", "{91227BA8-F7EB-43CC-8C4A-A4944C00567B}"
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "disasm", "disasm.vcxproj", "{91227BA8-F7EB-43CC-8C4A-A4944C00567B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

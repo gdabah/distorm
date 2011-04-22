@@ -771,7 +771,6 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 			if (!read_stream_safe_uint(ci, &di->imm.ex.i1, sizeof(int8_t))) return FALSE;
 		break;
 		case OT_IMM8_2:
-
 			operands_set_ts(op, O_IMM2, 8);
 			if (!read_stream_safe_uint(ci, &di->imm.ex.i2, sizeof(int8_t))) return FALSE;
 		break;

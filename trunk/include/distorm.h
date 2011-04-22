@@ -32,14 +32,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  * make sure you compile your own code with the following macro set:
  * SUPPORT_64BIT_OFFSET
  * Otherwise comment it out, or you will get a linker error of an unresolved symbol...
+ * By default it's turned on.
  */
 
 /* TINYC has a problem with some 64bits library functions, so pass. */
 #ifndef __TINYC__
-	#ifndef LIBDISTORM /* Used only for library. */
-		/* Comment out the following line to disable 64 bits support */
-		#define SUPPORT_64BIT_OFFSET
-	#endif
+	/* Comment out the following line to disable 64 bits support. */
+	#define SUPPORT_64BIT_OFFSET
 #endif
 
 /* If your compiler doesn't support stdint.h, define your own 64 bits type. */
@@ -112,12 +111,12 @@ typedef unsigned __int8		uint8_t;
 
 
 /* Decodes modes of the disassembler, 16 bits or 32 bits or 64 bits for AMD64, x86-64. */
-typedef enum {Decode16Bits = 0, Decode32Bits = 1, Decode64Bits = 2} _DecodeType;
+typedef enum { Decode16Bits = 0, Decode32Bits = 1, Decode64Bits = 2 } _DecodeType;
 
 typedef OFFSET_INTEGER _OffsetType;
 
 typedef struct {
-	_OffsetType codeOffset, nextOffset;
+	_OffsetType codeOffset, nextOffset; /* nextOffset is OUT only. */
 	const uint8_t* code;
 	int codeLen; /* Using signed integer makes it easier to detect an underflow. */
 	_DecodeType dt;
@@ -386,9 +385,10 @@ typedef struct {
 #define FC_CMOV 7
 
 /* Return code of the decoding function. */
-typedef enum {DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, DECRES_FILTERED} _DecodeResult;
+typedef enum { DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, DECRES_FILTERED } _DecodeResult;
 
-#ifndef LIBDISTORM /* Don't redefine those exports when compiling the library itself, only for library-user project. */
+/* Define the following interface functions only for outer projects. */
+#if !(defined(DISTORM_STATIC) || defined(DISTORM_DYNAMIC))
 
 /* distorm_decode
  * Input:
@@ -431,9 +431,9 @@ typedef enum {DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, DE
  *
  * Output: unsigned int - version of compiled library.
  */
-extern unsigned int distorm_version();
+unsigned int distorm_version();
 
-#endif /* LIBDISTORM */
+#endif /* DISTORM_STATIC */
 
 #ifdef __cplusplus
 } /* End Of Extern */

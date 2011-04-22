@@ -39,11 +39,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 /* #define SUPPORT_64BIT_OFFSET */
 
 /*
- * If you compile diStorm as a .DLL file, make sure you uncomment the next line.
- * So the interface functions will be exported, otherwise they are useable only as a library.
- * For example, this macro is being set for the Python extension module.
+ * If you compile diStorm as a dynamic library (.dll or .so) file, make sure you uncomment the next line.
+ * So the interface functions will be exported, otherwise they are useable only for static library.
+ * For example, this macro is being set for compiling diStorm as a .dll for Python with CTypes.
  */
-/* #define _DLL */
+/* #define DISTORM_DYNAMIC */
 
 /*
  * diStorm now supports little/big endian CPU's.
@@ -114,8 +114,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 #endif /* #elif _MSC_VER */
 
-/* If the library isn't compiled as a .DLL don't export functions. */
-#ifndef _DLL
+/* If the library isn't compiled as a dynamic library don't export any functions. */
+#ifndef DISTORM_DYNAMIC
 #undef _DLLEXPORT_
 #define _DLLEXPORT_
 #endif
