@@ -175,8 +175,7 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 		 * and no segment is overridden, so add the suffix letter,
 		 * to indicate size of operation and continue to next instruction.
 		 */
-		if ((FLAG_GET_ADDRSIZE(di->flags) == ci->dt) && (SEGMENT_IS_DEFAULT(di->segment)))
-		{
+		if ((FLAG_GET_ADDRSIZE(di->flags) == ci->dt) && (SEGMENT_IS_DEFAULT(di->segment))) {
 			str = &result->mnemonic;
 			switch (di->ops[0].size)
 			{
