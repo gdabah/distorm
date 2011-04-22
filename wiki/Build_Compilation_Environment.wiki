@@ -5,26 +5,26 @@ In this page you can find information on how to compile diStorm for various plat
 =Compiling the Source Code=
 There are a few files that are related to the compilation of the project: distorm.h, config.h and the makefiles.
 
-distorm.h is both used in the compiled library and for the project which uses the library. Thus, it's the header file that accompanies the distorm.lib file.
-In contains the APIs to the library, all related flags, structures and helper macros. 
+distorm.h is both used in the compiled library and for the outer projects which use the library. Thus, it's the header file that accompanies the distorm.lib file (or the dynamic/shared library).
+It contains the definitions to the APIs of the library, all related flags, structures and helper macros. 
 
-The distorm/build has the different supported platforms for diStorm. For now it is, Windows, Linux, Mac. There used to be even DOS and other platforms. It's pretty easy to add support for different platforms. Just play with the makefiles.
+The distorm/make supports various platforms for compiling diStorm easily. For now it is, Windows, Linux and Mac. There used to be even DOS and other platforms. It's pretty easy to add support for different platforms. Just play with the makefiles. And you can always take a look at the existing makefiles.
 
-In Visual Studio, you will have to choose a platform (either Win32 or x64) and choose a compilation config, either dll or clib. Then compile the project, and get the resulting file in the distorm's root.
+In Visual Studio, you will have to choose a platform (either Win32 or x64) and choose a compilation config, either dll or clib. Then compile the project, and get the resulting file in the distorm's root directory.
 
-In Linux/Mac, you will find a makefile for each. It will create a .SO file. Which you will have to install and then you can easily diStorm, or use it in the sample projects. If you really wish you can static link diStorm to your poject using the ar command and specify in your project to link against it. Just the usual stuff.
+In Linux/Mac, you will find a makefile for each. It will create a .SO file. Which you will have to install and then you can easily use diStorm through Python for instance, or use it in the sample projects. If you really wish you can static link diStorm to your poject using the ar command and specify in your project to link against it. Just the usual stuff.
 
 =Important Issues=
 ==The 'Offset' Type Case==
-config.h has a few important definitions for the library itself, such as the type of the 'offset' field along all the code. That is the virtual address of an instruction. It might be compiled as an 'unsigned long' or as an 'unsigned long long', 32 or 64 bits respectively.
+config.h has a few important definitions for the library itself, such as the type of the 'offset' field along all the code. That is the type of the virtual address of an instruction. It might be compiled as an 'unsigned long' or as an 'unsigned long long', 32 or 64 bits respectively.
 
-The reason that you can configure the type is because of older compilers support. Or suppose you know that you are going to use diStorm only for disassembling 32 bits code, thus the addressing is 32 bits too, hence there's no reason to use 64 bit offsets. Also, if you were to compile 64 bit integers in a 32 bits compiler, that would require a tiny bit of extra work. In fact, the first versions of diStorm supported some DOS compilers which didn't support 64 bit integers.
+The reason that you can configure the type is because of older compilers support. Or suppose you know that you are going to use diStorm only for disassembling 32 bits code, thus the addressing is 32 bits too, hence there's no reason to use 64 bit offsets. Also, if you were to compile 64 bit integers in a 32 bits compiler, that would require a tiny bit of extra work (simulating 64 bit integers). In fact, the first versions of diStorm supported some DOS compilers which didn't support 64 bit integers.
 
 By default, the type of the 'offset' field is defined as 64 bits integer. The name of the macro that is responsible for this type change is SUPPORT_64BIT_OFFSET.
 
-You can either uncomment the comment that defines that macro in config.sys, or you can pass a parameter to the command line compiler: -DSUPPORT_64BIT_OFFSET.
+It is turned on by default for Windows, Linux and Mac compilations. However, if you want to compile diStorm for a different platform you will have to pass a macro-define command to the compiler through the command line option using the following: -DSUPPORT_64BIT_OFFSET.
 
-In both Linux and Windows compilation it is defined, thus 'offset' is 64 bits long. If you want to remove it, you will either have to remove the macro, or remove the parameter from the command line.
+If you want to disable 64 bit offset support for some reason, you can either add an #undef preprocessor directive for the macro or just edit the makefile and remove the command line option. Honestly, I don't see any reason to disable it and I urge people to keep the defaults. 
 
 ==Lib Hell==
 This is a similar problem to DLL hell, that I decided to solve in a specific way using some macro games, keep on reading, then you can check out my blog post which elaborates on the problem.
@@ -41,12 +41,15 @@ So except from the defining the macro, or commenting it out, the rest is spared 
 For more info about this naming issue, you can read a blog post I wrote long time a go, [ here http://www.ragestorm.net/blogs/?p=22].
 
 ===Helper Macros for Compilation===
-Two other important macros are: LIBDISTORM and {{{_DLL}}}. Their purpose is to aid the compilation to know whether diStorm is being compiled as a true library file or as a dynamic linked library. It instructs distorm.h whether to export the APIs.
+Two other important macros are: DISTORM_STATIC and DISTORM_DYNAMIC. Their purpose is to aid the compilation to know whether diStorm is being compiled as a static library file or as a dynamic linked library. It instructs distorm.h whether to export the APIs.
 For example, you don't want to export the APIs as a library file, because then if another project will link against diStorm in compile-time, it will have the diStorm's APIs exported from the resulted executable object. That's not a big deal, but not professional as well.
 
-Just a note that the .dll compilation project for Win32 uses both macros set, for instance.
+And why we need to use DISTORM_STATIC? That's because if we just compile diStorm as a library, we don't want the APIs to be declared twice (redefined), because the library itself has all APIs as part of the source code, obviously. Again, both the outer projects and diStorm's source code itself share the same header file, distorm.h. Therefore it has to know whether to export the symbols or not...
 
-And why we need to use LIBDISTORM? That's because if we just compile diStorm as a library, we don't want the APIs to be declared twice (redefined), because the library itself has all APIs as part of the source code, obviously. Maybe there's a more elegant way to achieve this goal.
+Eventually, for compiling diStorm as a static library, make sure DISTORM_STATIC is defined.
+For compiling diStorm as a dynamic library or shared object, make sure DISTORM_DYNAMIC is defined.
+
+Note that these macros are only used for compiling diStorm source code itself, it doesn't have anything to do with the outer projects which use the compiled library!
 
 ==Endianity Issues==
 diStorm was written in such a way that it supports little and big endian machines. Thus, it can run on PowerPC for example, which is a big endian. In order to do that successfully diStorm uses a few macros that are defined in the config.h file, named: RSHORT, RLONG, RULLONG and others. What they actually do is read a specific sized integer from the binary stream and swap their bytes. The effect is that if you try to read an immediate operand which is 4 bytes long, the code will then know to reverse them, so they will be displayed and returned well to the user. It's a very important issue. So actually, that's the only place we need to deal with the edianity, otherwise it is transparent to us.
