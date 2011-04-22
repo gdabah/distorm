@@ -32,13 +32,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  * make sure you compile your own code with the following macro set:
  * SUPPORT_64BIT_OFFSET
  * Otherwise comment it out, or you will get a linker error of an unresolved symbol...
- * By default it's turned on.
+ * Turned on by default!
  */
 
-/* TINYC has a problem with some 64bits library functions, so pass. */
-#ifndef __TINYC__
-	/* Comment out the following line to disable 64 bits support. */
+#if !(defined(DISTORM_STATIC) || defined(DISTORM_DYNAMIC))
+	/* Define this macro for outer projects by default. */
 	#define SUPPORT_64BIT_OFFSET
+#endif
+
+/* TINYC has a problem with some 64bits library functions, so ignore 64 bit offsets. */
+#ifdef __TINYC__
+	#undef SUPPORT_64BIT_OFFSET
 #endif
 
 /* If your compiler doesn't support stdint.h, define your own 64 bits type. */
