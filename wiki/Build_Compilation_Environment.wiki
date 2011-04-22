@@ -2,6 +2,14 @@
 
 In this page you can find information on how to compile diStorm for various platforms, and change configurations and some more info.
 
+=Distutils=
+diStorm can be compiled easily using the distutils of Python.
+Something like:
+python.exe setup.py install
+will compile and install the Python module automatically.
+Alternatively, you could build it doing:
+python.exe setup.py build
+
 =Compiling the Source Code=
 There are a few files that are related to the compilation of the project: distorm.h, config.h and the makefiles.
 
@@ -63,10 +71,8 @@ As you can see, Python is no longer supported in the compilation itself. It is n
 
 It is important to note that if you use Python for x86 system, you will have to compile diStorm for x86 as well. And if you use Python for x64, you will have to compile diStorm for x64 respectively. This is very important, because otherwise, the ctypes module won't be able to load the dynamic library into the process, because of the difference in code size.
 
-I'm still working on the Python installer, which use the *disutils*, and then it's going to be really easy to install the Python package for the various platforms. For now, if you're interested in diStorm for Python, you can either download the Python file from the downloads section.
-
-The other alternative to achieve that manually is:
- # Download the diStorm source code, or using check out using SVN.
+For installing the Python module manually, follow these instructions:
+ # Download the diStorm source code, or check out using SVN.
  # Compile the dynamic library project of diStorm, either .SO or .DLL.
  # Create a directory for diStorm in the Python\Lib\site-packages directory, name it 'distorm3'.
  # Copy the Python/__init__.py and the compiled library to the new directory.
