@@ -184,7 +184,7 @@ def main():
             sources=get_sources,
             include_dirs=['src', 'include'],
             extra_compile_args=['/Ox', '/Ob1', '/Oy', '"/D WIN32"',
-                                '"/D DISTORM_STATIC"', '"/D SUPPORT_64BIT_OFFSET"',
+                                '"/D DISTORM_DYNAMIC"', '"/D SUPPORT_64BIT_OFFSET"',
                                 '"/D _MBCS"', '/GF', '/Gm', '/Zi', '/EHsc',
                                 '/MT', '/Gy', '/W4', '/nologo', '/c', '/TC',
                                 '/Fdbuild\\vc90.pdb'],
