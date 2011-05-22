@@ -44,9 +44,8 @@ import x86sets
 import x86db
 from x86header import *
 
-mnemonicsIds = {}
-idsCounter = 1
-maxLength = -1
+mnemonicsIds = {} # mnemonic : offset to mnemonics table of strings.
+idsCounter = len("undefined") + 2 # Starts immediately after this one.
 
 # Support SSE pseudo compare instructions. We will have to add them manually.
 def FixPseudo(mnems):
@@ -62,7 +61,6 @@ def FixPseudo2(mnems):
 def TranslateMnemonics(pseudoClassType, mnems):
     global mnemonicsIds
     global idsCounter
-    global maxLength
     l = []
     if pseudoClassType == ISetClass.SSE or pseudoClassType == ISetClass.SSE2:
         mnems = FixPseudo(mnems)
@@ -74,11 +72,11 @@ def TranslateMnemonics(pseudoClassType, mnems):
         if mnemonicsIds.has_key(i):
             l.append(str(mnemonicsIds[i]))
         else:
-            if len(i) > maxLength:
-                maxLength = len(i)
             mnemonicsIds[i] = idsCounter
             l.append(str(idsCounter))
-            idsCounter += 1
+            idsCounter += len(i) + 2 # For len/null chars.
+            if idsCounter > 2**16:
+                raise "opcodeId is too big to fit into uint16_t"
     return l
 
 # All VIAL and diStorm3 code are based on the order of this list, do NOT edit!
@@ -99,30 +97,27 @@ REGISTERS = [
 
 def DumpMnemonics():
     global mnemonicsIds
-    global maxLength
 
     # Add the hardcoded instruction which are not found in the DB.
     # Warning: This should be updated synchronously with the code in diStorm.
     map(lambda x: TranslateMnemonics(None, [x]), ["WAIT", "MOVSXD", "PAUSE"])
 
     f = open("defs.txt", "w")
-    t = {}
-    for i in mnemonicsIds:
-        t[mnemonicsIds[i]] = i
-    l = t.keys()
-    l.sort()
 
-    f.write("typedef enum {\n\tI_UNDEFINED, ")
+    f.write("typedef enum {\n\tI_UNDEFINED = 0, ")
     pos = 0
-    for i in l:
-        s = "I_" + t[i].replace(" ", "_").replace(",", "")
-        if i != l[-1]:
+    l = []
+    l2 = sorted(mnemonicsIds.keys())
+    for i in l2:
+        l.append(i)
+        s = "I_%s = %d" % (i.replace(" ", "_").replace(",", ""), mnemonicsIds[i])
+        if i != l2[-1]:
             s += ","
         pos += len(s)
         if pos >= 70:
             s += "\n\t"
             pos = 0
-        elif i != l[-1]:
+        elif i != l2[-1]:
             s += " "
         f.write(s)
     f.write("\n} _InstructionType;\n\n")
@@ -154,37 +149,15 @@ def DumpMnemonics():
 
     f.write(regsEnum + "\n")
 
-    f.write("const _WMnemonic _MNEMONICS[] = {\n\t{9, \"UNDEFINED\"},\n\t")
-    pos = 0
-    l2 = []
+    s = "const unsigned char* _MNEMONICS = \n\"\\x09\" \"UNDEFINED\\0\" "
     for i in l:
-        #f.write("\"%s\", /* %d */\n" % (t[i], i))
-        #s = "\"\\x%02x\" \"%s\"" % (len(t[i]), t[i])
-	s = "{%d, \"%s\"}" % (len(t[i]), t[i])
-	l2.append("\"" + t[i] + "\"")
-        if i != l[-1]:
-            s += ","
-        pos += len(s)
-        if pos >= 70:
-            s += "\n\t"
-            pos = 0
-        elif i != l[-1]:
-            s += " "
-        f.write(s)
-    f.write("\n};\n\n")
+        s += "\"\\x%02x\" \"%s\\0\" " % (len(i), i)
+        if len(s) - s.rfind("\n") >= 76:
+            s += "\\\n"
+    s = s[:-1] + ";\n\n" # Ignore last space.
+    f.write(s)
 
     f.write(regsText + "\n")
-
-    length = 0
-    for i in l2:
-        if (length != 0):
-            f.write(", ")
-        if (length >= 70):
-            f.write("\n")
-            length = 0
-        f.write(i)
-        length += len(i)
-
     f.close()
 
 O_NONE = 0
