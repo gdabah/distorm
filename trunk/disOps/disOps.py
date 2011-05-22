@@ -106,10 +106,8 @@ def DumpMnemonics():
 
     f.write("typedef enum {\n\tI_UNDEFINED = 0, ")
     pos = 0
-    l = []
     l2 = sorted(mnemonicsIds.keys())
     for i in l2:
-        l.append(i)
         s = "I_%s = %d" % (i.replace(" ", "_").replace(",", ""), mnemonicsIds[i])
         if i != l2[-1]:
             s += ","
@@ -150,8 +148,10 @@ def DumpMnemonics():
     f.write(regsEnum + "\n")
 
     s = "const unsigned char* _MNEMONICS = \n\"\\x09\" \"UNDEFINED\\0\" "
+    l = zip(mnemonicsIds.keys(), mnemonicsIds.values())
+    l.sort(lambda x, y: x[1] - y[1])
     for i in l:
-        s += "\"\\x%02x\" \"%s\\0\" " % (len(i), i)
+        s += "\"\\x%02x\" \"%s\\0\" " % (len(i[0]), i[0])
         if len(s) - s.rfind("\n") >= 76:
             s += "\\\n"
     s = s[:-1] + ";\n\n" # Ignore last space.
