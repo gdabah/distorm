@@ -34,7 +34,7 @@ typedef struct WMnemonic {
 } _WMnemonic;
 
 typedef struct WRegister {
-	unsigned char length;
+	unsigned int length;
 	unsigned char p[6]; /* p is a null terminated string. */
 } _WRegister;
 

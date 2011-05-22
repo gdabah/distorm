@@ -114,6 +114,7 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 	int64_t tmpDisp64;
 	uint64_t addrMask = (uint64_t)-1;
 	uint8_t segment;
+	const _WMnemonic* mnemonic;
 
 	/* Set address mask, when default is for 64bits addresses. */
 	if (ci->features & DF_MAXIMUM_ADDR32) addrMask = 0xffffffff;
@@ -156,7 +157,8 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 		break;
 	}
 
-	strcat_WS(str, (const _WString*)&_MNEMONICS[di->opcode]);
+	mnemonic = (const _WMnemonic*)&_MNEMONICS[di->opcode];
+	memcpy((int8_t*)&str->p[str->length], mnemonic->p, mnemonic->length + 1);
 
 	/* Format operands: */
 	str = &result->operands;
