@@ -222,11 +222,11 @@ class NodeType:
     FULL - 256 entries in the table.
     Divided - 72 entries in the table (ranges: 0x0-0x7, 0xc0-0xff).
     Prefixed - 4 entries in the table (none, 0x66, 0xf2, 0xf3). """
-    (NOTEXISTS,   # -1
-    NONE,         # 0
+    (NONE,        # 0
     INFO,         # 1
-    LIST_GROUP,   # 2
-    LIST_FULL,    # 3
-    LIST_DIVIDED, # 4
-    LIST_PREFIXED # 5
-    ) = range(-1, 6)
+	INFOEX,       # 2
+    LIST_GROUP,   # 3
+    LIST_FULL,    # 4
+    LIST_DIVIDED, # 5
+    LIST_PREFIXED # 6
+    ) = range(0, 7)

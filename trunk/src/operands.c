@@ -4,7 +4,7 @@ operands.c
 diStorm3 - Powerful disassembler for X86/AMD64
 http://ragestorm.net/distorm/
 distorm at gmail dot com
-Copyright (C) 2010  Gil Dabah
+Copyright (C) 2011  Gil Dabah
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -729,7 +729,7 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 			op->type = O_IMM;
 			if (ci->dt == Decode64Bits) {
 				/* Imm32 is sign extended to 64 bits! */
-				op->size = 32;
+				op->size = 64;
 				di->flags |= FLAG_IMM_SIGNED;
 				if (!read_stream_safe_sint(ci, &di->imm.sqword, sizeof(int32_t))) return FALSE;
 			} else {
