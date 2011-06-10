@@ -4,7 +4,7 @@ instructions.h
 diStorm3 - Powerful disassembler for X86/AMD64
 http://ragestorm.net/distorm/
 distorm at gmail dot com
-Copyright (C) 2010  Gil Dabah
+Copyright (C) 2011  Gil Dabah
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -334,7 +334,7 @@ typedef enum OpType {
 #define INST_PSEUDO_OPCODE (1 << 22)
 /* Invalid instruction at 64 bits decoding mode. */
 #define INST_INVALID_64BITS (1 << 23)
-/* Specific instruction is can be promoted to 64 bits (without REX it is promoted automatically). */
+/* Specific instruction can be promoted to 64 bits (without REX, it is promoted automatically). */
 #define INST_64BITS (1 << 24)
 /* Indicates the instruction must be REX prefixed in order to use 64 bits operands. */
 #define INST_PRE_REX (1 << 25)
@@ -383,11 +383,10 @@ typedef enum {ONT_NONE = -1, ONT_1 = 0, ONT_2 = 1, ONT_3 = 2, ONT_4 = 3} _Operan
  */
 
 typedef struct {
-	uint8_t type;
+	_iflags flags;
+	uint16_t opcodeId; /* The opcodeId is really a byte-offset into the mnemonics table */
 	uint8_t meta; /* Hi 5 bits = Instruction set class | Lo 3 bits = flow control flags */
 	uint8_t s, d; /* OpType */
-	uint16_t opcodeId;
-	_iflags flags;
 } _InstInfo;
 
 /*
@@ -403,37 +402,34 @@ typedef struct {
  *
  */
 typedef struct {
-	uint8_t type;
+	_iflags flags;
+	uint16_t opcodeId; /* The opcodeId is really a byte-offset into the mnemonics table */
 	uint8_t meta; /* Hi 5 bits = Instruction set class | Lo 3 bits = flow control flags */
 	uint8_t s, d; /* OpType */
-	uint16_t opcodeId;
-	_iflags flags;
-	_iflags flagsEx;
+
+	/* Extended starts here, we copied all fields above exactly as in _InstInfo, so alignment continues smoothly */
+	uint8_t flagsEx; /* 8 bits are enough, in the future we might make it a bigger integer */
 	uint8_t op3, op4; /* OpType */
-	uint16_t opcodeId2;
-	uint16_t opcodeId3;
+	uint16_t opcodeId2, opcodeId3;
 } _InstInfoEx;
 
 /* Trie data structure node type: */
 typedef enum {
-	INT_NOTEXISTS = -1, /* Not exists (this is used for a return code only). */
-	INT_NONE, /* No instruction info or list set. */
-	INT_INFO, /* It's an instruction info. */
+	INT_NOTEXISTS = 0, /* Not exists. */
+	INT_INFO = 1, /* It's an instruction info. */
+	INT_INFOEX,
 	INT_LIST_GROUP,
 	INT_LIST_FULL,
 	INT_LIST_DIVIDED,
 	INT_LIST_PREFIXED
 } _InstNodeType;
 
-/*
- * A node in the instructions DB;
- * Can be both a node or an info, depends on type.
- */
-typedef struct InstNode {
-	uint8_t type;
-	uint8_t* ids;
-	_InstInfo** list; /* The second level might point to _InstNode, this is determined by type in runtime. */
-} _InstNode;
+/* Used to check instType < INT_INFOS, means we got an inst-info. Cause it has to be only one of them. */
+#define INT_INFOS (INT_LIST_GROUP)
+
+/* Instruction node is treated as { int index:15;  int type:3; } */
+typedef uint16_t _InstNode;
+
 /*
  * Used for letting the extract operand know the type of operands without knowing the
  * instruction itself yet, because of the way those instructions work.

@@ -4,7 +4,7 @@ x86defs.h
 diStorm3 - Powerful disassembler for X86/AMD64
 http://ragestorm.net/distorm/
 distorm at gmail dot com
-Copyright (C) 2010  Gil Dabah
+Copyright (C) 2011  Gil Dabah
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -91,7 +91,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 #define INST_ARPL_INDEX (0x63)
 extern _InstInfo II_arpl;
-extern _InstInfoEx II_movsxd;
+extern _InstInfo II_movsxd;
 
 /*
  * The NOP instruction can be prefixed by REX in 64bits, therefore we have to decide in runtime whether it's an XCHG or NOP instruction.
