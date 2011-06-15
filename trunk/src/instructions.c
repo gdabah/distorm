@@ -197,7 +197,7 @@ static _InstInfo* inst_lookup_prefixed(_InstNode in, _PrefixState* ps)
 
 	if (checkOpSize) {
 		/* If the instruction doesn't support operand size prefix, then it's illegal. */
-		if ((ii == NULL) || (~ii->flags & INST_PRE_OP_SIZE)) return NULL;
+		if ((ii == NULL) || (~INST_INFO_FLAGS(ii) & INST_PRE_OP_SIZE)) return NULL;
 	}
 
 	/* If there was a prefix, but the instruction wasn't found. Try to fall back to use the normal instruction. */
@@ -412,7 +412,7 @@ _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps)
 		if (instType < INT_INFOS) {
 			/* If the instruction doesn't support the wait (marked as opsize) as part of the opcode, it's illegal. */
 			ii = instType == INT_INFO ? &InstInfos[INST_NODE_INDEX(in)] : (_InstInfo*)&InstInfosEx[INST_NODE_INDEX(in)];
-			if ((~ii->flags & INST_PRE_OP_SIZE) && (isWaitIncluded)) return NULL;
+			if ((~INST_INFO_FLAGS(ii) & INST_PRE_OP_SIZE) && (isWaitIncluded)) return NULL;
 			return ii;
 		}
 		/*
@@ -486,7 +486,7 @@ _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps)
 		 * Then it means the instruction should be using the REG bits, otherwise give a chance to range 0xc0-0xff.
 		 */
 		/* If we found an instruction only by its REG bits, AND it is not divided, then return it. */
-		if ((ii != NULL) && (ii->flags & INST_NOT_DIVIDED)) return ii;
+		if ((ii != NULL) && (INST_INFO_FLAGS(ii) & INST_NOT_DIVIDED)) return ii;
 		/* Otherwise, if the range is above 0xc0, try the special divided range (range 0x8-0xc0 is omitted). */
 		if (tmpIndex2 >= INST_DIVIDED_MODRM) return inst_get_info(in, tmpIndex2 - INST_DIVIDED_MODRM + 8);
 
@@ -529,8 +529,6 @@ _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps)
 *
 * The id of this opcode should not be used, the following function should change it anyway.
 */
-_InstInfo II_3dnow = {INST_32BITS | INST_MODRM_REQUIRED | INST_3DNOW_FETCH, I_UNDEFINED, ISC_3DNOW << 3, OT_MM64, OT_MM};
-
 _InstInfo* inst_lookup_3dnow(_CodeInfo* ci)
 {
 	/* Start off from the two escape bytes gates... which is 3DNow! table.*/

@@ -26,7 +26,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #include "../include/mnemonics.h"
 
 
-_InstInfo II_arpl = {INST_MODRM_REQUIRED, I_ARPL, ISC_INTEGER << 3, OT_REG16, OT_RM16};
+/*
+ * The first field of an _InstInfo is the flagsInex, which goes into FlagsTable in insts.c
+ * Since this table is auto generated in disOps, we have to make sure that the first 5 entries
+ * are reserved for our use here.
+ * The following defined inst-infos have to be synced manually every time you change insts.c.
+ */
+
+_InstInfo II_arpl = {0 /* INST_MODRM_REQUIRED */, OT_REG16, OT_RM16, ISC_INTEGER << 3, I_ARPL};
 /*
  * MOVSXD:
  * This is the worst defined instruction ever. It has so many variations.
@@ -34,8 +41,10 @@ _InstInfo II_arpl = {INST_MODRM_REQUIRED, I_ARPL, ISC_INTEGER << 3, OT_REG16, OT
  * Otherwise it will be MOVSXD EAX, EAX, which really zero extends to RAX.
  * Completely ignoring DB 0x66, which is possible by the docs, BTW.
  */
-_InstInfo II_movsxd = {INST_MODRM_REQUIRED | INST_PRE_REX | INST_64BITS, I_MOVSXD, ISC_INTEGER << 3, OT_RM32, OT_REG32_64};
+_InstInfo II_movsxd = {1 /* INST_MODRM_REQUIRED | INST_PRE_REX | INST_64BITS */, OT_RM32, OT_REG32_64, ISC_INTEGER << 3, I_MOVSXD};
 
-_InstInfo II_nop = {INST_FLAGS_NONE, I_NOP, ISC_INTEGER << 3, OT_NONE, OT_NONE};
+_InstInfo II_nop = {2 /* INST_FLAGS_NONE */, OT_NONE, OT_NONE, ISC_INTEGER << 3, I_NOP};
 
-_InstInfo II_pause = {INST_FLAGS_NONE, I_PAUSE, ISC_INTEGER << 3, OT_NONE, OT_NONE};
+_InstInfo II_pause = {3 /* INST_FLAGS_NONE */, OT_NONE, OT_NONE, ISC_INTEGER << 3, I_PAUSE};
+
+_InstInfo II_3dnow = {4 /* INST_32BITS | INST_MODRM_REQUIRED | INST_3DNOW_FETCH */, OT_MM64, OT_MM, ISC_3DNOW << 3, I_UNDEFINED};

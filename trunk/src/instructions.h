@@ -383,10 +383,10 @@ typedef enum {ONT_NONE = -1, ONT_1 = 0, ONT_2 = 1, ONT_3 = 2, ONT_4 = 3} _Operan
  */
 
 typedef struct {
-	_iflags flags;
-	uint16_t opcodeId; /* The opcodeId is really a byte-offset into the mnemonics table */
-	uint8_t meta; /* Hi 5 bits = Instruction set class | Lo 3 bits = flow control flags */
-	uint8_t s, d; /* OpType */
+	uint8_t flagsIndex; /* An index into FlagsTables. */
+	uint8_t s, d; /* OpType. */
+	uint8_t meta; /* Hi 5 bits = Instruction set class | Lo 3 bits = flow control flags. */
+	uint16_t opcodeId; /* The opcodeId is really a byte-offset into the mnemonics table. */
 } _InstInfo;
 
 /*
@@ -402,14 +402,12 @@ typedef struct {
  *
  */
 typedef struct {
-	_iflags flags;
-	uint16_t opcodeId; /* The opcodeId is really a byte-offset into the mnemonics table */
-	uint8_t meta; /* Hi 5 bits = Instruction set class | Lo 3 bits = flow control flags */
-	uint8_t s, d; /* OpType */
+	/* Base structure (doesn't get accessed directly from code). */
+	_InstInfo BASE;
 
-	/* Extended starts here, we copied all fields above exactly as in _InstInfo, so alignment continues smoothly */
-	uint8_t flagsEx; /* 8 bits are enough, in the future we might make it a bigger integer */
-	uint8_t op3, op4; /* OpType */
+	/* Extended starts here. */
+	uint8_t flagsEx; /* 8 bits are enough, in the future we might make it a bigger integer. */
+	uint8_t op3, op4; /* OpType. */
 	uint16_t opcodeId2, opcodeId3;
 } _InstInfoEx;
 
@@ -430,11 +428,8 @@ typedef enum {
 /* Instruction node is treated as { int index:15;  int type:3; } */
 typedef uint16_t _InstNode;
 
-/*
- * Used for letting the extract operand know the type of operands without knowing the
- * instruction itself yet, because of the way those instructions work.
- */
-extern _InstInfo II_3dnow;
+/* Helper macro to read the actual flags that are associated with an inst-info. */
+#define INST_INFO_FLAGS(ii) (FlagsTable[(ii)->flagsIndex])
 
 _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps);
 _InstInfo* inst_lookup_3dnow(_CodeInfo* ci);

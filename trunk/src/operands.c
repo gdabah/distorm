@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 #include "operands.h"
 #include "x86defs.h"
+#include "insts.h"
 #include "../include/mnemonics.h"
 
 /* Maps a register to its register-class mask. */
@@ -500,14 +501,14 @@ static int operands_extract_modrm(_CodeInfo* ci,
  */
 
 int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
-					 _OpType type, _OperandNumberType opNum,
-					 unsigned int modrm, _PrefixState* ps, _DecodeType effOpSz,
+                     _OpType type, _OperandNumberType opNum,
+                     unsigned int modrm, _PrefixState* ps, _DecodeType effOpSz,
                      _DecodeType effAdrSz, int* lockableInstruction)
 {
 	int ret = 0;
 	unsigned int mod = 0, reg = 0, rm = 0, vexV = ps->vexV;
 	unsigned int vrex = ps->vrex, typeHandled = TRUE;
-	_iflags instFlags = ii->flags;
+	_iflags instFlags = INST_INFO_FLAGS(ii);
 	_Operand* op = &di->ops[opNum];
 
 	/* Used to indicate the size of the MEMORY INDIRECTION only. */

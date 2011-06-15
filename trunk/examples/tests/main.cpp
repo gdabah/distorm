@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#pragma comment(lib, "../../distorm.lib")
+
 #include "../../include/distorm.h"
 
 // The number of the array of instructions the decoder function will use to return the disassembled instructions.
