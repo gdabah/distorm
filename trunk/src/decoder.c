@@ -508,7 +508,7 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 
 		/* Set address to the beginning of the instruction. */
 		pdi->addr = startInstOffset & addrMask;
-		pdi->disp &= addrMask;
+		/* pdi->disp &= addrMask; */
 
 		/* Advance to next instruction. */
 		codeLen -= pdi->size;
