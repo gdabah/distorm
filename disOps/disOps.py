@@ -44,6 +44,8 @@ import x86sets
 import x86db
 from x86header import *
 
+FLAGS_BASE_INDEX = 5 # Used to reserve the first few flags in the table for manual defined instructions in x86defs.c
+
 mnemonicsIds = {} # mnemonic : offset to mnemonics table of strings.
 idsCounter = len("undefined") + 2 # Starts immediately after this one.
 
@@ -160,12 +162,13 @@ def DumpMnemonics():
 	f.write(regsText + "\n")
 	f.close()
 
+	# Used for Python dictionary of opcodeIds-->mnemonics.
 	s = "\n"
 	for i in mnemonicsIds:
 		s += "0x%x: \"%s\", " % (mnemonicsIds[i], i)
 		if len(s) - s.rfind("\n") >= 76:
 			s = s[:-1] + "\n"
-	print s
+	#print s
 
 O_NONE = 0
 # REG standalone
@@ -341,8 +344,6 @@ def FormatInstruction(ii):
 	Since there are several types of instructions information structures,
 	the tables which point to these non-default InstInfo structures, will have to cast the pointer. """
 
-	global counter
-
 	# There might be optional fields, if there's a 3rd operand or a second/third mnemonic.
 	optFields = ""
 	# Default type of structure is InstInfo.
@@ -380,13 +381,18 @@ def FormatInstruction(ii):
 		optFields = ", 0x%x, %d, %d, %s, %s" % (flagsEx, op3, op4, mnems[1], mnems[2])
 
 	# Notice we filter out internal bits from flags.
-	# Also classType and flow control are shared in two nibbles.
-	fields = "0x%x, %s, %d, %d, %d" % (ii.flags & ((1 << InstFlag.FLAGS_EX_START_INDEX)-1), mnems[0], (ii.classType << 3) | ii.flowControl, ops[1], ops[0])
-	# "Structure-Name" = II_Bytes-Code {Fields + Optional-Fields}.
+	flags = ii.flags & ((1 << InstFlag.FLAGS_EX_START_INDEX)-1)
+	# Allocate a slot for this flag if needed.
+	if not flagsDict.has_key(flags):
+		flagsDict[flags] = len(flagsDict) + FLAGS_BASE_INDEX # Skip a few reserved slots.
+	# Get the flags-index.
+	flagsIndex = flagsDict[flags]
+	if flagsIndex >= 256:
+		raise "FlagsIndex exceeded its 8 bits. Change flags of _InstInfo to be uint16!"
 
-	global flagsDict
-	i = ii.flags & ((1 << InstFlag.FLAGS_EX_START_INDEX)-1)
-	flagsDict[str(i)] = flagsDict.get(str(i), 0) + 1
+	# Also classType and flow control are shared in two nibbles.
+	fields = "0x%x, %d, %d, %d, %s" % (flagsIndex, ops[1], ops[0], (ii.classType << 3) | ii.flowControl,  mnems[0])
+	# "Structure-Name" = II_Bytes-Code {Fields + Optional-Fields}.
 
 	return ("\t/*II%s*/ {%s%s}" % (ii.tag, fields, optFields), (ii.flags & InstFlag.EXTENDED) != 0)
 
@@ -517,12 +523,13 @@ def CreateTables(db):
 			else:
 				# False indicates this entry points nothing.
 				InstructionsTree.append((0, ""))
-	s0 = "\n".join(["_InstNode Table%s = %d;" % (i[0], i[1]) for i in externTables])
-	s1 = "_InstInfo InstInfos[] = {\n%s\n};" % (",\n".join(InstInfos))
-	s2 = "_InstInfoEx InstInfosEx[] = {\n%s\n};" % (",\n".join(InstInfosEx))
-	s3 = "_InstNode InstructionsTree[] = {\n"
-	s3 += ",\n".join(["/* %x - %s */  %s" % (i[0], i[1][1], "0" if i[1][0] == 0 else (lambda x: "%d | 0x%x" % (x >> indexShift, x & ((1 << indexShift) - 1)))(i[1][0])) for i in enumerate(InstructionsTree)])
-	return s0 + "\n\n" + s1 + "\n\n" + s2 + "\n\n" + s3 + "\n};\n"
+	s0 = "/* See x86defs.c if you get an error here. */\n_iflags FlagsTable[%d + %d] = {\n%s\n};" % (len(flagsDict), FLAGS_BASE_INDEX,  ",\n".join(["0x%x" % i[1] for i in sorted(zip(flagsDict.values(), flagsDict.keys()))]))
+	s1 = "\n".join(["_InstNode Table%s = %d;" % (i[0], i[1]) for i in externTables])
+	s2 = "_InstInfo InstInfos[] = {\n%s\n};" % (",\n".join(InstInfos))
+	s3 = "_InstInfoEx InstInfosEx[] = {\n%s\n};" % (",\n".join(InstInfosEx))
+	s4 = "_InstNode InstructionsTree[] = {\n"
+	s4 += ",\n".join(["/* %x - %s */  %s" % (i[0], i[1][1], "0" if i[1][0] == 0 else "0x%x" % i[1][0]) for i in enumerate(InstructionsTree)])
+	return s0 + "\n\n" + s1 + "\n\n" + s2 + "\n\n" + s3 + "\n\n" + s4 + "\n};\n"
 
 def main():
 	# Init the 80x86/x64 instructions sets DB.
@@ -544,12 +551,5 @@ def main():
 	DumpMnemonics()
 
 	print "The file output.txt was written successfully"
-	global flagsDict
-	l = flagsDict.items()
-	l.sort(lambda x, y: x[1] - y[1])
-	for i in l:
-		print i
-		#print hex(int(i[0], 10)), i[1]
-	print "count of distinct flags: %d", len(flagsDict)
 main()
 

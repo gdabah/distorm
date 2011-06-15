@@ -102,4 +102,12 @@ extern _InstInfo II_movsxd;
 extern _InstInfo II_nop;
 extern _InstInfo II_pause;
 
+/*
+ * Used for letting the extract operand know the type of operands without knowing the
+ * instruction itself yet, because of the way those instructions work.
+ * See function instructions.c!inst_lookup_3dnow.
+ */
+extern _InstInfo II_3dnow;
+
+
 #endif /* X86DEFS_H */
