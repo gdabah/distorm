@@ -9,6 +9,7 @@ python.exe setup.py install
 will compile and install the Python module automatically.
 Alternatively, you could build it doing:
 python.exe setup.py build
+Or one step ahead to install it automatically: python.exe setup.py install
 
 =Compiling the Source Code=
 There are a few files that are related to the compilation of the project: distorm.h, config.h and the makefiles.
