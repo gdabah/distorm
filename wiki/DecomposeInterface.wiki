@@ -37,7 +37,7 @@ If you wish to convert the _DInst structure, that you got as a result from the D
 <b>uint8_t segment;</b>
  * Set when one of the operands is of type O_SMEM, O_MEM, O_DISP.
  * Helper macros: SEGMENT_GET, SEGMENT_IS_DEFAULT.
- * SEGMENT_IS_DEFAULT returns TRUE if the segment register is the default one for the operand. For instance: {{{MOV [EBP], AL}}} - the default segment register is SS. However, {{{MOV [FS:EAX], AL}}} - The default segment is DS, but we overrode it with FS, therefore the macro will return TRUE.
+ * SEGMENT_IS_DEFAULT returns TRUE if the segment register is the default one for the operand. For instance: {{{MOV [EBP], AL}}} - the default segment register is SS. However, {{{MOV [FS:EAX], AL}}} - The default segment is DS, but we overrode it with FS, therefore the macro will return FALSE.
  * To extract the segment register index use the SEGMENT_GET macro.
  * R_NONE if not set.
 
