@@ -44,7 +44,7 @@ for i in potential_libs:
         pass
 
 if lib_was_found == False:
-    raise ImportError("Error loading the diStorm dynamic library")
+    raise ImportError("Error loading the diStorm dynamic library (or cannot load library into process).")
 
 # Get the decode C function (try 64 bits version first, only then 32 bits).
 SUPPORT_64BIT_OFFSET = False
