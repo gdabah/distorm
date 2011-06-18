@@ -69,13 +69,9 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='clib|Win32'">$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='clib|Win32'">$(Configuration)\</IntDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='clib|x64'">$(Platform)\$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='clib|x64'">$(Platform)\$(Configuration)\</IntDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='dll|Win32'">$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='dll|Win32'">$(Configuration)\</IntDir>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='dll|x64'">$(Platform)\$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='dll|x64'">$(Platform)\$(Configuration)\</IntDir>
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='clib|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='clib|Win32'" />
@@ -89,6 +85,14 @@
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='dll|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='dll|x64'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='dll|x64'" />
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='dll|Win32'">distorm3</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='dll|x64'">distorm3</TargetName>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='dll|x64'">$(SolutionDir)..\..\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='dll|Win32'">$(SolutionDir)..\..\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='clib|Win32'">$(SolutionDir)..\..\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='clib|x64'">$(SolutionDir)..\..\</OutDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='clib|Win32'">distorm</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='clib|x64'">distorm</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='clib|Win32'">
     <ClCompile>
@@ -102,16 +106,16 @@
       <StringPooling>true</StringPooling>
       <MinimalRebuild>true</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CompileAs>CompileAsC</CompileAs>
+      <ProgramDataBaseFileName>distorm.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Lib>
-      <OutputFile>..\..\distorm.lib</OutputFile>
       <TargetMachine>MachineX86</TargetMachine>
     </Lib>
   </ItemDefinitionGroup>
@@ -130,7 +134,7 @@
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -139,9 +143,9 @@
       <DebugInformationFormat>
       </DebugInformationFormat>
       <CompileAs>CompileAsC</CompileAs>
+      <ProgramDataBaseFileName>distorm.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Lib>
-      <OutputFile>..\..\distorm.lib</OutputFile>
       <TargetMachine>MachineX64</TargetMachine>
     </Lib>
   </ItemDefinitionGroup>
@@ -157,7 +161,6 @@
       <StringPooling>true</StringPooling>
       <MinimalRebuild>true</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -165,12 +168,12 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CompileAs>CompileAsC</CompileAs>
       <BufferSecurityCheck>true</BufferSecurityCheck>
+      <ProgramDataBaseFileName>distorm3.pdb</ProgramDataBaseFileName>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
-    <Link>
-      <OutputFile>..\..\distorm3.dll</OutputFile>
-      <NoEntryPoint>true</NoEntryPoint>
-    </Link>
+    <Link />
     <ProjectReference />
+    <Link />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='dll|x64'">
     <Midl>
@@ -195,13 +198,12 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CompileAs>CompileAsC</CompileAs>
       <BufferSecurityCheck>true</BufferSecurityCheck>
+      <ProgramDataBaseFileName>distorm3.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
       <TargetMachine>MachineX64</TargetMachine>
-      <OutputFile>..\..\distorm3.dll</OutputFile>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
-      <NoEntryPoint>true</NoEntryPoint>
     </Link>
     <ProjectReference />
   </ItemDefinitionGroup>
