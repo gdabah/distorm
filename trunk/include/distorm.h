@@ -233,31 +233,31 @@ typedef struct {
 #define OPERANDS_NO (4)
 
 typedef struct {
+	/* Used by ops[n].type == O_IMM/O_IMM1&O_IMM2/O_PTR/O_PC. Its size is ops[n].size. */
+	_Value imm;
+	/* Used by ops[n].type == O_SMEM/O_MEM/O_DISP. Its size is dispSize. */
+	uint64_t disp;
 	/* Virtual address of first byte of instruction. */
 	_OffsetType addr;
-	/* Size of the whole instruction. */
-	uint8_t size;
 	/* General flags of instruction, holds prefixes and more, if FLAG_NOT_DECODABLE, instruction is invalid. */
 	uint16_t flags;
+	/* Unused prefixes mask, for each bit that is set that prefix is not used (LSB is byte [addr + 0]). */
+	uint16_t unusedPrefixesMask;
+	/* Mask of registers that were used in the operands, only used for quick look up, in order to know *some* operand uses that register class. */
+	uint16_t usedRegistersMask;
+	/* ID of opcode in the global opcode table. Use for mnemonic look up. */
+	uint16_t opcode;
+	/* Up to four operands per instruction, ignored if ops[n].type == O_NONE. */
+	_Operand ops[OPERANDS_NO];
+	/* Size of the whole instruction. */
+	uint8_t size;
 	/* Segment information of memory indirection, default segment, or overriden one, can be -1. Use SEGMENT macros. */
 	uint8_t segment;
 	/* Used by ops[n].type == O_MEM. Base global register index (might be R_NONE), scale size (2/4/8), ignored for 0 or 1. */
 	uint8_t base, scale;
 	uint8_t dispSize;
-	/* ID of opcode in the global opcode table. Use for mnemonic look up. */
-	uint16_t opcode;
-	/* Up to four operands per instruction, ignored if ops[n].type == O_NONE. */
-	_Operand ops[OPERANDS_NO];
-	/* Used by ops[n].type == O_SMEM/O_MEM/O_DISP. Its size is dispSize. */
-	uint64_t disp;
-	/* Used by ops[n].type == O_IMM/O_IMM1&O_IMM2/O_PTR/O_PC. Its size is ops[n].size. */
-	_Value imm;
-	/* Unused prefixes mask, for each bit that is set that prefix is not used (LSB is byte [addr + 0]). */
-	uint16_t unusedPrefixesMask;
 	/* Meta defines the instruction set class, and the flow control flags. Use META macros. */
 	uint8_t meta;
-	/* Mask of registers that were used in the operands, only used for quick look up, in order to know *some* operand uses that register class. */
-	uint16_t usedRegistersMask;
 } _DInst;
 
 /* Static size of strings. Do not change this value. Keep Python wrapper in sync. */
