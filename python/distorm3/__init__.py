@@ -151,20 +151,20 @@ class _Value (Union):
 
 class _DInst (Structure):
     _fields_ = [
+        ('imm', _Value),
+        ('disp', c_uint64),    # displacement. size is according to dispSize
         ('addr',  _OffsetType),
-        ('size', c_ubyte),
         ('flags',  c_uint16), # -1 if invalid. See C headers for more info
+        ('unusedPrefixesMask', c_uint16),
+        ('usedRegistersMask', c_uint16), # used registers mask.
+        ('opcode', c_uint16),  # look up in opcode table
+        ('ops', _Operand*4),
+        ('size', c_ubyte),
         ('segment', c_ubyte), # -1 if unused. See C headers for more info
         ('base', c_ubyte),    # base register for indirections
         ('scale', c_ubyte),   # ignore for values 0, 1 (other valid values - 2,4,8)
         ('dispSize', c_ubyte),
-        ('opcode', c_uint16),  # look up in opcode table
-        ('ops', _Operand*4),
-        ('disp', c_uint64),    # displacement. size is according to dispSize
-        ('imm', _Value),
-        ('unusedPrefixesMask', c_uint16),
-        ('meta', c_ubyte), # meta flags - instruction set class, etc. See C headers again...
-        ('usedRegistersMask', c_uint16) # used registers mask.
+        ('meta', c_ubyte) # meta flags - instruction set class, etc. See C headers again...
     ]
 
 
