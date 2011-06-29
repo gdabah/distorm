@@ -1,4 +1,4 @@
-#summary How to compile diStorm using distutils using a different version of VS.
+#summary How to compile diStorm using distutils using a different version of VS
 When using 'python setup.py build' you might get some trouble.
 Maybe this log can help you:
 
