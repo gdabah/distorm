@@ -159,6 +159,7 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 
 	mnemonic = (const _WMnemonic*)&_MNEMONICS[di->opcode];
 	memcpy((int8_t*)&str->p[str->length], mnemonic->p, mnemonic->length + 1);
+	str->length += mnemonic->length;
 
 	/* Format operands: */
 	str = &result->operands;
