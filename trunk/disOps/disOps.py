@@ -165,7 +165,8 @@ def DumpMnemonics():
 	# Used for Python dictionary of opcodeIds-->mnemonics.
 	s = "\n"
 	for i in mnemonicsIds:
-		s += "0x%x: \"%s\", " % (mnemonicsIds[i], i)
+		#s += "0x%x: \"%s\", " % (mnemonicsIds[i], i) # python
+		s += "%s (0x%x), " % (i.replace(" ", "_").replace(",", ""), mnemonicsIds[i]) # java
 		if len(s) - s.rfind("\n") >= 76:
 			s = s[:-1] + "\n"
 	#print s
