@@ -53,7 +53,7 @@ If you wish to convert the _DInst structure, that you got as a result from the D
 
 <b>uint8_t dispSize;</b>
  * Set when one of the operands is of type O_SMEM, O_MEM, O_DISP and the instruction has a displacement.
- * This is the size of the 'disp' field in bytes.
+ * This is the size of the 'disp' field in bits.
  * If there's no displacement set, this field is 0.
 
 <b>uint16_t opcode;</b>
