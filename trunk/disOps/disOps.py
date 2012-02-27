@@ -14,7 +14,7 @@
 #      Therefore, if you use this DB for x64 instructions, you have to take care of this one.
 #
 #   2. SSE CMP pseudo instructions have the DEFAULT suffix letters of its type in the second mnemonic,
-#      the third operand, Imm8 which is respoinsible for determining the suffix,
+#      the third operand, Imm8 which is responsible for determining the suffix,
 #      doesn't appear in the operands list but rather an InstFlag.PSEUDO_OPCODE implies this behavior.
 #
 #   3. The WAIT instruction is a bit problematic from a static DB point of view, read the comments in init_FPU in x86sets.py.
@@ -35,6 +35,10 @@
 #   7. The IO String instructions don't have explicit form and they don't support segments.
 #      It's up to diStorm to decide what to do with the operands and which segment is default and overrided.
 #
+#   8. Since opcodeId is an offset into the mnemonics table, the psuedo compare mnemonics needs a helper table to fix the offset.
+#      Psuedo compare instructions work in such a way that only the first instruction is defined in the DB.
+#      The rest are found using the third operand (that's why they are psuedo).
+#
 # To maximize the usage of this DB, one should learn the documentation of diStorm regarding the InstFlag and Operands Types.
 #
 
@@ -49,16 +53,19 @@ FLAGS_BASE_INDEX = 5 # Used to reserve the first few flags in the table for manu
 mnemonicsIds = {} # mnemonic : offset to mnemonics table of strings.
 idsCounter = len("undefined") + 2 # Starts immediately after this one.
 
+SSECmpTypes = ["EQ", "LT", "LE", "UNORD", "NEQ", "NLT", "NLE", "ORD"]
+AVXCmpTypes = ["EQ", "LT", "LE", "UNORD", "NEQ", "NLT", "NLE", "ORD",
+				"EQ_UQ", "NGE", "NGT", "FALSE", "EQ_OQ", "GE", "GT", "TRUE",
+				"EQ_OS", "LT_OQ", "LE_OQ", "UNORD_S", "NEQ_US", "NLT_UQ", "NLE_UQ", "ORD_S",
+				"EQ_US", "NGE_UQ", "NGT_UQ", "FALSE_OS", "NEQ_OS", "GE_OQ", "GT_OQ", "TRUE_US"]
+
 # Support SSE pseudo compare instructions. We will have to add them manually.
 def FixPseudo(mnems):
-	return [mnems[0] + i + mnems[1] for i in ["EQ", "LT", "LE", "UNORD", "NEQ", "NLT", "NLE", "ORD"]]
+	return [mnems[0] + i + mnems[1] for i in SSECmpTypes]
 
 # Support AVX pseudo compare instructions. We will have to add them manually.
 def FixPseudo2(mnems):
-  return [mnems[0] + i + mnems[1] for i in ["EQ", "LT", "LE", "UNORD", "NEQ", "NLT", "NLE", "ORD",
-	"EQ_UQ", "NGE", "NGT", "FLASE", "EQ_OQ", "GE", "GT", "TRUE",
-	"EQ_OS", "LT_OQ", "LE_OQ", "UNORD_S", "NEQ_US", "NLT_UQ", "NLE_UQ", "ORD_S",
-	"EQ_US"]]
+	return [mnems[0] + i + mnems[1] for i in AVXCmpTypes]
 
 def TranslateMnemonics(pseudoClassType, mnems):
 	global mnemonicsIds
@@ -67,7 +74,7 @@ def TranslateMnemonics(pseudoClassType, mnems):
 	if pseudoClassType == ISetClass.SSE or pseudoClassType == ISetClass.SSE2:
 		mnems = FixPseudo(mnems)
 	elif pseudoClassType == ISetClass.AVX:
-		mnems = FixPseudo(mnems)
+		mnems = FixPseudo2(mnems)
 	for i in mnems:
 		if len(i) == 0:
 			continue
@@ -77,7 +84,7 @@ def TranslateMnemonics(pseudoClassType, mnems):
 			mnemonicsIds[i] = idsCounter
 			l.append(str(idsCounter))
 			idsCounter += len(i) + 2 # For len/null chars.
-			if idsCounter > 2**16:
+			if idsCounter >= 2**16:
 				raise "opcodeId is too big to fit into uint16_t"
 	return l
 
@@ -149,6 +156,7 @@ def DumpMnemonics():
 
 	f.write(regsEnum + "\n")
 
+	# Mnemonics are sorted by insertion order. (Psuedo mnemonics depends on this!)
 	s = "const unsigned char* _MNEMONICS = \n\"\\x09\" \"UNDEFINED\\0\" "
 	l = zip(mnemonicsIds.keys(), mnemonicsIds.values())
 	l.sort(lambda x, y: x[1] - y[1])
@@ -401,6 +409,21 @@ def FilterTable(table):
 	# All tables must go to output.
 	return True
 
+def GeneratePseudoMnemonicOffsets():
+	"""
+	Generate the static offset tables for psuedo compare instructions both for SSE and AVX.
+	The table is built in such a way that each cell holds the offset from the first pseudo mnemonic
+	to the indexed one.
+	"""
+	# Lengths of pesudo mnemonics (SSE=CMPxxxYY + null + lengthByte)
+	lengths = map(lambda x: 3 + len(x) + 2 + 2, SSECmpTypes)
+	s = "uint16_t CmpMnemonicOffsets[8] = {\n" + ", ".join([str(sum(lengths[:i] or [0])) for i in xrange(len(lengths))]) + "\n};\n";
+
+	# (AVX=VCMPxxxYY + null + lengthByte).
+	lengths = map(lambda x: 4 + len(x) + 2 + 2, AVXCmpTypes)
+	s += "uint16_t VCmpMnemonicOffsets[32] = {\n" + ", ".join([str(sum(lengths[:i] or [0])) for i in xrange(len(lengths))]) + "\n};\n";
+	return s
+
 def CreateTables(db):
 	""" This is the new tables generator code as for May 2011.
 	Its purpose is to return all tables and structures ready to use at once by diStorm.
@@ -530,7 +553,8 @@ def CreateTables(db):
 	s3 = "_InstInfoEx InstInfosEx[] = {\n%s\n};" % (",\n".join(InstInfosEx))
 	s4 = "_InstNode InstructionsTree[] = {\n"
 	s4 += ",\n".join(["/* %x - %s */  %s" % (i[0], i[1][1], "0" if i[1][0] == 0 else "0x%x" % i[1][0]) for i in enumerate(InstructionsTree)])
-	return s0 + "\n\n" + s1 + "\n\n" + s2 + "\n\n" + s3 + "\n\n" + s4 + "\n};\n"
+	s5 = GeneratePseudoMnemonicOffsets()
+	return s0 + "\n\n" + s1 + "\n\n" + s2 + "\n\n" + s3 + "\n\n" + s4 + "\n};\n" + s5 + "\n"
 
 def main():
 	# Init the 80x86/x64 instructions sets DB.

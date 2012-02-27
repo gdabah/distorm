@@ -39,4 +39,8 @@ extern _InstNode Table_0F_0F;
 /* AVX related: */
 extern _InstNode Table_0F, Table_0F_38, Table_0F_3A;
 
+/* Helper tables for pesudo compare mnemonics. */
+extern uint16_t CmpMnemonicOffsets[8]; /* SSE */
+extern uint16_t VCmpMnemonicOffsets[32]; /* AVX */
+
 #endif /* INSTS_H */

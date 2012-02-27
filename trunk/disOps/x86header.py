@@ -224,7 +224,7 @@ class NodeType:
     Prefixed - 4 entries in the table (none, 0x66, 0xf2, 0xf3). """
     (NONE,        # 0
     INFO,         # 1
-	INFOEX,       # 2
+    INFOEX,       # 2
     LIST_GROUP,   # 3
     LIST_FULL,    # 4
     LIST_DIVIDED, # 5
