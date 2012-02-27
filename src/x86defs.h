@@ -35,8 +35,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 /* Maximum instruction size, including prefixes */
 #define INST_MAXIMUM_SIZE (15)
 
-/* Maximum range of imm8 (comparison type) of special SSE instructions. */
+/* Maximum range of imm8 (comparison type) of special SSE CMP instructions. */
 #define INST_CMP_MAX_RANGE (8)
+
+/* Maximum range of imm8 (comparison type) of special AVX VCMP instructions. */
+#define INST_VCMP_MAX_RANGE (32)
 
 /* Wait instruction byte code. */
 #define INST_WAIT_INDEX (0x9b)

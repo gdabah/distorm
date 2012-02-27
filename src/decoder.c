@@ -211,8 +211,13 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 		if (--ci->codeLen < 0) goto _Undecodable;
 		cmpType = *ci->code;
 		ci->code++;
-		/* Comparison type must be between 0 to 8, otherwise Reserved. */
-		if (cmpType >= INST_CMP_MAX_RANGE) goto _Undecodable;
+		if (instFlags & INST_PRE_VEX) {
+			/* AVX Comparison type must be between 0 to 32, otherwise Reserved. */
+			if (cmpType >= INST_VCMP_MAX_RANGE) goto _Undecodable;
+		} else {
+			/* SSE Comparison type must be between 0 to 8, otherwise Reserved. */
+			if (cmpType >= INST_CMP_MAX_RANGE) goto _Undecodable;
+		}
 	}
 
 	/*
@@ -290,10 +295,17 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 			/* Or is it a special CMP instruction which needs a pseudo opcode suffix ? */
 			else if (instFlags & INST_PSEUDO_OPCODE) {
 				/*
-				 * The opcodeId is the base id of the pseudo compare mnemonics,
-				 * thus we can access the next ones from 0 to 7 safely, because they are already allocated.
+				 * The opcodeId is the offset to the FIRST pseudo compare mnemonic,
+				 * we will have to fix it so it offsets into the corrected mnemonic.
+				 * Therefore, we use another table to fix the offset.
 				 */
-				di->opcode = ii->opcodeId + cmpType;
+				if (instFlags & INST_PRE_VEX) {
+					/* Use the AVX pesudo compare mnemonics table. */
+					di->opcode = ii->opcodeId + VCmpMnemonicOffsets[cmpType];
+				} else {
+					/* Use the SSE psuedo compare mnemonics table. */
+					di->opcode = ii->opcodeId + CmpMnemonicOffsets[cmpType];
+				}
 			} else di->opcode = ((_InstInfoEx*)ii)->opcodeId2;
 		} else di->opcode = ii->opcodeId;
 	} else { /* Decode64Bits, note that some instructions might be decoded in Decode32Bits above. */
