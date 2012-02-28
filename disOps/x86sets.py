@@ -1165,8 +1165,8 @@ class Instructions:
         # It's easier to keep them separated, also because some of the promoted instructions have different number of operands, etc.
 
         Set = lambda *args: self.SetCallback(ISetClass.AVX, *args)
-	SetAes = lambda *args: self.SetCallback(ISetClass.AES, *args)
-	SetClmul = lambda *args: self.SetCallback(ISetClass.CLMUL, *args)
+        SetAes = lambda *args: self.SetCallback(ISetClass.AES, *args)
+        SetClmul = lambda *args: self.SetCallback(ISetClass.CLMUL, *args)
 
         Set("66, 0f, 58", ["VADDPD"], [OPT.YXMM, OPT.VYXMM, OPT.YXMM128_256], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.PRE_VEX | IFlag.VEX_L)
         Set("0f, 58", ["VADDPS"], [OPT.YXMM, OPT.VYXMM, OPT.YXMM128_256], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.PRE_VEX | IFlag.VEX_L)

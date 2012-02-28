@@ -291,21 +291,6 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 			if (instFlags & INST_MNEMONIC_MODRM_BASED) {
 				if (modrm >= INST_DIVIDED_MODRM) di->opcode = ii->opcodeId;
 				else di->opcode = ((_InstInfoEx*)ii)->opcodeId2;
-			}
-			/* Or is it a special CMP instruction which needs a pseudo opcode suffix ? */
-			else if (instFlags & INST_PSEUDO_OPCODE) {
-				/*
-				 * The opcodeId is the offset to the FIRST pseudo compare mnemonic,
-				 * we will have to fix it so it offsets into the corrected mnemonic.
-				 * Therefore, we use another table to fix the offset.
-				 */
-				if (instFlags & INST_PRE_VEX) {
-					/* Use the AVX pesudo compare mnemonics table. */
-					di->opcode = ii->opcodeId + VCmpMnemonicOffsets[cmpType];
-				} else {
-					/* Use the SSE psuedo compare mnemonics table. */
-					di->opcode = ii->opcodeId + CmpMnemonicOffsets[cmpType];
-				}
 			} else di->opcode = ((_InstInfoEx*)ii)->opcodeId2;
 		} else di->opcode = ii->opcodeId;
 	} else { /* Decode64Bits, note that some instructions might be decoded in Decode32Bits above. */
@@ -332,6 +317,22 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 		di->opcode = ((_InstInfoEx*)ii)->opcodeId2;
 	}
 
+	/* Or is it a special CMP instruction which needs a pseudo opcode suffix ? */
+	if (instFlags & INST_PSEUDO_OPCODE) {
+		/*
+		 * The opcodeId is the offset to the FIRST pseudo compare mnemonic,
+		 * we will have to fix it so it offsets into the corrected mnemonic.
+		 * Therefore, we use another table to fix the offset.
+		 */
+		if (instFlags & INST_PRE_VEX) {
+			/* Use the AVX pesudo compare mnemonics table. */
+			di->opcode = ii->opcodeId + VCmpMnemonicOffsets[cmpType];
+		} else {
+			/* Use the SSE psuedo compare mnemonics table. */
+			di->opcode = ii->opcodeId + CmpMnemonicOffsets[cmpType];
+		}
+	}
+	 
 	/*
 	 * Store the address size inside the flags.
 	 * This is necessary for the caller to know the size of rSP when using PUSHA for example.
