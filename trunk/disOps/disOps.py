@@ -157,7 +157,7 @@ def DumpMnemonics():
 	f.write(regsEnum + "\n")
 
 	# Mnemonics are sorted by insertion order. (Psuedo mnemonics depends on this!)
-	s = "const unsigned char* _MNEMONICS = \n\"\\x09\" \"UNDEFINED\\0\" "
+	s = "const unsigned char _MNEMONICS[] =\n\"\\x09\" \"UNDEFINED\\0\" "
 	l = zip(mnemonicsIds.keys(), mnemonicsIds.values())
 	l.sort(lambda x, y: x[1] - y[1])
 	for i in l:
@@ -173,8 +173,8 @@ def DumpMnemonics():
 	# Used for Python dictionary of opcodeIds-->mnemonics.
 	s = "\n"
 	for i in mnemonicsIds:
-		#s += "0x%x: \"%s\", " % (mnemonicsIds[i], i) # python
-		s += "%s (0x%x), " % (i.replace(" ", "_").replace(",", ""), mnemonicsIds[i]) # java
+		s += "0x%x: \"%s\", " % (mnemonicsIds[i], i) # python
+		#s += "%s (0x%x), " % (i.replace(" ", "_").replace(",", ""), mnemonicsIds[i]) # java
 		if len(s) - s.rfind("\n") >= 76:
 			s = s[:-1] + "\n"
 	#print s
