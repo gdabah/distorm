@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 #include "../include/mnemonics.h"
 
-const unsigned char _MNEMONICS[] = 
+const unsigned char _MNEMONICS[] =
 "\x09" "UNDEFINED\0" "\x03" "ADD\0" "\x04" "PUSH\0" "\x03" "POP\0" "\x02" "OR\0" \
 "\x03" "ADC\0" "\x03" "SBB\0" "\x03" "AND\0" "\x03" "DAA\0" "\x03" "SUB\0" \
 "\x03" "DAS\0" "\x03" "XOR\0" "\x03" "AAA\0" "\x03" "CMP\0" "\x03" "AAS\0" \
@@ -154,7 +154,7 @@ const unsigned char _MNEMONICS[] =
 "\x08" "CMPNLTSD\0" "\x08" "CMPNLESD\0" "\x08" "CMPORDSD\0" "\x08" "VCMPEQPS\0" \
 "\x08" "VCMPLTPS\0" "\x08" "VCMPLEPS\0" "\x0b" "VCMPUNORDPS\0" "\x09" "VCMPNEQPS\0" \
 "\x09" "VCMPNLTPS\0" "\x09" "VCMPNLEPS\0" "\x09" "VCMPORDPS\0" "\x0b" "VCMPEQ_UQPS\0" \
-"\x09" "VCMPNGEPS\0" "\x09" "VCMPNGTPS\0" "\x0b" "VCMPFALSEPS\0" "\x0b" "VCMPEQ_OQPS\0" \
+"\x09" "VCMPNGEPS\0" "\x09" "VCMPNGTPS\0" "\x0b" "VCMPFALSEPS\0" "\x0c" "VCMPNEQ_OQPS\0" \
 "\x08" "VCMPGEPS\0" "\x08" "VCMPGTPS\0" "\x0a" "VCMPTRUEPS\0" "\x0b" "VCMPEQ_OSPS\0" \
 "\x0b" "VCMPLT_OQPS\0" "\x0b" "VCMPLE_OQPS\0" "\x0d" "VCMPUNORD_SPS\0" "\x0c" "VCMPNEQ_USPS\0" \
 "\x0c" "VCMPNLT_UQPS\0" "\x0c" "VCMPNLE_UQPS\0" "\x0b" "VCMPORD_SPS\0" "\x0b" "VCMPEQ_USPS\0" \
@@ -162,7 +162,7 @@ const unsigned char _MNEMONICS[] =
 "\x0b" "VCMPGE_OQPS\0" "\x0b" "VCMPGT_OQPS\0" "\x0d" "VCMPTRUE_USPS\0" "\x08" "VCMPEQPD\0" \
 "\x08" "VCMPLTPD\0" "\x08" "VCMPLEPD\0" "\x0b" "VCMPUNORDPD\0" "\x09" "VCMPNEQPD\0" \
 "\x09" "VCMPNLTPD\0" "\x09" "VCMPNLEPD\0" "\x09" "VCMPORDPD\0" "\x0b" "VCMPEQ_UQPD\0" \
-"\x09" "VCMPNGEPD\0" "\x09" "VCMPNGTPD\0" "\x0b" "VCMPFALSEPD\0" "\x0b" "VCMPEQ_OQPD\0" \
+"\x09" "VCMPNGEPD\0" "\x09" "VCMPNGTPD\0" "\x0b" "VCMPFALSEPD\0" "\x0c" "VCMPNEQ_OQPD\0" \
 "\x08" "VCMPGEPD\0" "\x08" "VCMPGTPD\0" "\x0a" "VCMPTRUEPD\0" "\x0b" "VCMPEQ_OSPD\0" \
 "\x0b" "VCMPLT_OQPD\0" "\x0b" "VCMPLE_OQPD\0" "\x0d" "VCMPUNORD_SPD\0" "\x0c" "VCMPNEQ_USPD\0" \
 "\x0c" "VCMPNLT_UQPD\0" "\x0c" "VCMPNLE_UQPD\0" "\x0b" "VCMPORD_SPD\0" "\x0b" "VCMPEQ_USPD\0" \
@@ -170,7 +170,7 @@ const unsigned char _MNEMONICS[] =
 "\x0b" "VCMPGE_OQPD\0" "\x0b" "VCMPGT_OQPD\0" "\x0d" "VCMPTRUE_USPD\0" "\x08" "VCMPEQSS\0" \
 "\x08" "VCMPLTSS\0" "\x08" "VCMPLESS\0" "\x0b" "VCMPUNORDSS\0" "\x09" "VCMPNEQSS\0" \
 "\x09" "VCMPNLTSS\0" "\x09" "VCMPNLESS\0" "\x09" "VCMPORDSS\0" "\x0b" "VCMPEQ_UQSS\0" \
-"\x09" "VCMPNGESS\0" "\x09" "VCMPNGTSS\0" "\x0b" "VCMPFALSESS\0" "\x0b" "VCMPEQ_OQSS\0" \
+"\x09" "VCMPNGESS\0" "\x09" "VCMPNGTSS\0" "\x0b" "VCMPFALSESS\0" "\x0c" "VCMPNEQ_OQSS\0" \
 "\x08" "VCMPGESS\0" "\x08" "VCMPGTSS\0" "\x0a" "VCMPTRUESS\0" "\x0b" "VCMPEQ_OSSS\0" \
 "\x0b" "VCMPLT_OQSS\0" "\x0b" "VCMPLE_OQSS\0" "\x0d" "VCMPUNORD_SSS\0" "\x0c" "VCMPNEQ_USSS\0" \
 "\x0c" "VCMPNLT_UQSS\0" "\x0c" "VCMPNLE_UQSS\0" "\x0b" "VCMPORD_SSS\0" "\x0b" "VCMPEQ_USSS\0" \
@@ -178,7 +178,7 @@ const unsigned char _MNEMONICS[] =
 "\x0b" "VCMPGE_OQSS\0" "\x0b" "VCMPGT_OQSS\0" "\x0d" "VCMPTRUE_USSS\0" "\x08" "VCMPEQSD\0" \
 "\x08" "VCMPLTSD\0" "\x08" "VCMPLESD\0" "\x0b" "VCMPUNORDSD\0" "\x09" "VCMPNEQSD\0" \
 "\x09" "VCMPNLTSD\0" "\x09" "VCMPNLESD\0" "\x09" "VCMPORDSD\0" "\x0b" "VCMPEQ_UQSD\0" \
-"\x09" "VCMPNGESD\0" "\x09" "VCMPNGTSD\0" "\x0b" "VCMPFALSESD\0" "\x0b" "VCMPEQ_OQSD\0" \
+"\x09" "VCMPNGESD\0" "\x09" "VCMPNGTSD\0" "\x0b" "VCMPFALSESD\0" "\x0c" "VCMPNEQ_OQSD\0" \
 "\x08" "VCMPGESD\0" "\x08" "VCMPGTSD\0" "\x0a" "VCMPTRUESD\0" "\x0b" "VCMPEQ_OSSD\0" \
 "\x0b" "VCMPLT_OQSD\0" "\x0b" "VCMPLE_OQSD\0" "\x0d" "VCMPUNORD_SSD\0" "\x0c" "VCMPNEQ_USSD\0" \
 "\x0c" "VCMPNLT_UQSD\0" "\x0c" "VCMPNLE_UQSD\0" "\x0b" "VCMPORD_SSD\0" "\x0b" "VCMPEQ_USSD\0" \
