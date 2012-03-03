@@ -177,7 +177,7 @@ def DumpMnemonics():
 		#s += "%s (0x%x), " % (i.replace(" ", "_").replace(",", ""), mnemonicsIds[i]) # java
 		if len(s) - s.rfind("\n") >= 76:
 			s = s[:-1] + "\n"
-	#print s
+	# print s
 
 O_NONE = 0
 # REG standalone
@@ -435,7 +435,7 @@ def CreateTables(db):
 
 	Each array should be flat one defined only once. This means that we need to serialize all instruction-set tables into a single
 	table of pointers, kinda. This pointer is now a InstNode, which is really a 16 bits structure.
-	The low 13 bits are an index. The upper 5 bits are the type of what the index points to.
+	The low 13 bits are an index. The upper 3 bits are the type of what the index points to.
 	So basically, an index can be up to 8192 which is good enough as for now, cause we only have around ~5k entries in the tree.
 	However, it can be an index into the InstInfos or InstInfosEx tables, depends on the type.
 
@@ -531,7 +531,6 @@ def CreateTables(db):
 		# Notice we use GenBlock for the special instructions, this is a must, otherwise we miss instructions from the DB.
 		for i in x86db.GenBlock(x):
 			if isinstance(i, x86db.InstructionInfo):
-				# Store the instructions above each table that references them. Supposed to be better for cache. :)
 				formattedII, isExtended = FormatInstruction(i)
 				if isExtended:
 					InstInfosEx.append(formattedII)

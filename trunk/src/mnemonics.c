@@ -88,7 +88,7 @@ const unsigned char _MNEMONICS[] =
 "\x08" "PFRCPIT1\0" "\x08" "PFRSQIT1\0" "\x06" "PFSUBR\0" "\x05" "PFACC\0" \
 "\x07" "PFCMPEQ\0" "\x05" "PFMUL\0" "\x08" "PFRCPIT2\0" "\x07" "PMULHRW\0" \
 "\x06" "PSWAPD\0" "\x07" "PAVGUSB\0" "\x06" "MOVUPS\0" "\x06" "MOVUPD\0" "\x05" "MOVSS\0" \
-"\x05" "MOVSD\0" "\x06" "VMOVSS\0" "\x06" "VMOVSD\0" "\x07" "VMOVUPS\0" "\x07" "VMOVUPD\0" \
+"\x05" "MOVSD\0" "\x07" "VMOVUPS\0" "\x07" "VMOVUPD\0" "\x06" "VMOVSS\0" "\x06" "VMOVSD\0" \
 "\x07" "MOVHLPS\0" "\x06" "MOVLPS\0" "\x06" "MOVLPD\0" "\x08" "MOVSLDUP\0" \
 "\x07" "MOVDDUP\0" "\x08" "VMOVHLPS\0" "\x07" "VMOVLPS\0" "\x07" "VMOVLPD\0" \
 "\x09" "VMOVSLDUP\0" "\x08" "VMOVDDUP\0" "\x08" "UNPCKLPS\0" "\x08" "UNPCKLPD\0" \
@@ -107,9 +107,9 @@ const unsigned char _MNEMONICS[] =
 "\x08" "VUCOMISS\0" "\x08" "VUCOMISD\0" "\x06" "COMISS\0" "\x06" "COMISD\0" \
 "\x07" "VCOMISS\0" "\x07" "VCOMISD\0" "\x08" "MOVMSKPS\0" "\x08" "MOVMSKPD\0" \
 "\x09" "VMOVMSKPS\0" "\x09" "VMOVMSKPD\0" "\x06" "SQRTPS\0" "\x06" "SQRTPD\0" \
-"\x06" "SQRTSS\0" "\x06" "SQRTSD\0" "\x07" "VSQRTSS\0" "\x07" "VSQRTSD\0" "\x07" "VSQRTPS\0" \
-"\x07" "VSQRTPD\0" "\x07" "RSQRTPS\0" "\x07" "RSQRTSS\0" "\x08" "VRSQRTSS\0" \
-"\x08" "VRSQRTPS\0" "\x05" "RCPPS\0" "\x05" "RCPSS\0" "\x06" "VRCPSS\0" "\x06" "VRCPPS\0" \
+"\x06" "SQRTSS\0" "\x06" "SQRTSD\0" "\x07" "VSQRTPS\0" "\x07" "VSQRTPD\0" "\x07" "VSQRTSS\0" \
+"\x07" "VSQRTSD\0" "\x07" "RSQRTPS\0" "\x07" "RSQRTSS\0" "\x08" "VRSQRTPS\0" \
+"\x08" "VRSQRTSS\0" "\x05" "RCPPS\0" "\x05" "RCPSS\0" "\x06" "VRCPPS\0" "\x06" "VRCPSS\0" \
 "\x05" "ANDPS\0" "\x05" "ANDPD\0" "\x06" "VANDPS\0" "\x06" "VANDPD\0" "\x06" "ANDNPS\0" \
 "\x06" "ANDNPD\0" "\x07" "VANDNPS\0" "\x07" "VANDNPD\0" "\x04" "ORPS\0" "\x04" "ORPD\0" \
 "\x05" "VORPS\0" "\x05" "VORPD\0" "\x05" "XORPS\0" "\x05" "XORPD\0" "\x06" "VXORPS\0" \
@@ -117,8 +117,8 @@ const unsigned char _MNEMONICS[] =
 "\x06" "VADDPS\0" "\x06" "VADDPD\0" "\x06" "VADDSS\0" "\x06" "VADDSD\0" "\x05" "MULPS\0" \
 "\x05" "MULPD\0" "\x05" "MULSS\0" "\x05" "MULSD\0" "\x06" "VMULPS\0" "\x06" "VMULPD\0" \
 "\x06" "VMULSS\0" "\x06" "VMULSD\0" "\x08" "CVTPS2PD\0" "\x08" "CVTPD2PS\0" \
-"\x08" "CVTSS2SD\0" "\x08" "CVTSD2SS\0" "\x09" "VCVTSS2SD\0" "\x09" "VCVTSD2SS\0" \
-"\x09" "VCVTPS2PD\0" "\x09" "VCVTPD2PS\0" "\x08" "CVTDQ2PS\0" "\x08" "CVTPS2DQ\0" \
+"\x08" "CVTSS2SD\0" "\x08" "CVTSD2SS\0" "\x09" "VCVTPS2PD\0" "\x09" "VCVTPD2PS\0" \
+"\x09" "VCVTSS2SD\0" "\x09" "VCVTSD2SS\0" "\x08" "CVTDQ2PS\0" "\x08" "CVTPS2DQ\0" \
 "\x09" "CVTTPS2DQ\0" "\x09" "VCVTDQ2PS\0" "\x09" "VCVTPS2DQ\0" "\x0a" "VCVTTPS2DQ\0" \
 "\x05" "SUBPS\0" "\x05" "SUBPD\0" "\x05" "SUBSS\0" "\x05" "SUBSD\0" "\x06" "VSUBPS\0" \
 "\x06" "VSUBPD\0" "\x06" "VSUBSS\0" "\x06" "VSUBSD\0" "\x05" "MINPS\0" "\x05" "MINPD\0" \
@@ -256,7 +256,7 @@ const unsigned char _MNEMONICS[] =
 "\x07" "ROUNDPS\0" "\x08" "VROUNDPS\0" "\x07" "ROUNDPD\0" "\x08" "VROUNDPD\0" \
 "\x07" "ROUNDSS\0" "\x08" "VROUNDSS\0" "\x07" "ROUNDSD\0" "\x08" "VROUNDSD\0" \
 "\x07" "BLENDPS\0" "\x08" "VBLENDPS\0" "\x07" "BLENDPD\0" "\x08" "VBLENDPD\0" \
-"\x07" "PBLENDW\0" "\x09" "VPBLENDVW\0" "\x07" "PALIGNR\0" "\x08" "VPALIGNR\0" \
+"\x07" "PBLENDW\0" "\x08" "VPBLENDW\0" "\x07" "PALIGNR\0" "\x08" "VPALIGNR\0" \
 "\x06" "PEXTRB\0" "\x07" "VPEXTRB\0" "\x06" "PEXTRD\0" "\x06" "PEXTRQ\0" "\x07" "VPEXTRD\0" \
 "\x09" "EXTRACTPS\0" "\x0a" "VEXTRACTPS\0" "\x0b" "VINSERTF128\0" "\x0c" "VEXTRACTF128\0" \
 "\x06" "PINSRB\0" "\x07" "VPINSRB\0" "\x08" "INSERTPS\0" "\x09" "VINSERTPS\0" \
@@ -264,7 +264,7 @@ const unsigned char _MNEMONICS[] =
 "\x05" "VDPPS\0" "\x04" "DPPD\0" "\x05" "VDPPD\0" "\x07" "MPSADBW\0" "\x08" "VMPSADBW\0" \
 "\x09" "PCLMULQDQ\0" "\x0a" "VPCLMULQDQ\0" "\x09" "VBLENDVPS\0" "\x09" "VBLENDVPD\0" \
 "\x09" "VPBLENDVB\0" "\x09" "PCMPESTRM\0" "\x0a" "VPCMPESTRM\0" "\x09" "PCMPESTRI\0" \
-"\x09" "VCMPESTRI\0" "\x09" "PCMPISTRM\0" "\x0a" "VPCMPISTRM\0" "\x09" "PCMPISTRI\0" \
+"\x0a" "VPCMPESTRI\0" "\x09" "PCMPISTRM\0" "\x0a" "VPCMPISTRM\0" "\x09" "PCMPISTRI\0" \
 "\x0a" "VPCMPISTRI\0" "\x0f" "AESKEYGENASSIST\0" "\x10" "VAESKEYGENASSIST\0" \
 "\x06" "PSRLDQ\0" "\x07" "VPSRLDQ\0" "\x06" "PSLLDQ\0" "\x07" "VPSLLDQ\0" "\x07" "LDMXCSR\0" \
 "\x08" "VLDMXCSR\0" "\x07" "STMXCSR\0" "\x08" "VSTMXCSR\0" "\x07" "VMPTRLD\0" \

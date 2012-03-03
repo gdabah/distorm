@@ -106,7 +106,7 @@ static _InstInfo* inst_get_info(_InstNode in, int index)
 }
 
 /*
- * This function is reponsible to return the instruction information of the first found in code.
+ * This function is responsible to return the instruction information of the first found in code.
  * It returns the _InstInfo of the found instruction, otherwise NULL.
  * code should point to the ModR/M byte upon exit (if used), or after the instruction binary code itself.
  * This function is NOT decoding-type dependant, it is up to the caller to see whether the instruction is valid.
@@ -205,6 +205,28 @@ static _InstInfo* inst_lookup_prefixed(_InstNode in, _PrefixState* ps)
 	return ii;
 }
 
+/* A helper function to look up special VEX instructions.
+ * See if it's a MOD based instruction and fix index if required.
+ * Only after a first lookup (that was done by caller), we can tell if we need to fix the index.
+ * Because these are coupled instructions
+ * (which means that the base instruction hints about the other instruction).
+ * Note that caller should check if it's a MOD dependent instruction before getting in here.
+ */
+static _InstInfo* inst_vex_mod_lookup(_CodeInfo* ci, _InstNode in, unsigned int index)
+{
+	/* Advance to read the MOD from ModRM byte. */
+	ci->code += 1;
+	ci->codeLen -= 1;
+	if (ci->codeLen < 0) return NULL;
+	if (*ci->code < INST_DIVIDED_MODRM) {
+		/* MOD is not 11, therefore change the index to 8 - 12 range in the prefixed table. */
+		index += 4;
+		/* Make a second lookup for this special instruction. */
+		return inst_get_info(in, index);
+	}
+	return NULL;
+}
+
 static _InstInfo* inst_vex_lookup(_CodeInfo* ci, _PrefixState* ps)
 {
 	_InstNode in = 0;
@@ -239,9 +261,6 @@ static _InstInfo* inst_vex_lookup(_CodeInfo* ci, _PrefixState* ps)
 		default: return NULL;
 	}
 
-	/* If the instruction is encoded using the vvvv field, fix the index into the Prefixed table. */
-	if (v == 0) index += 4;
-
 	/* pp is actually the implied mandatory prefix, apply it to the index. */
 	index += pp; /* (None, 0x66, 0xf3, 0xf2) */
 
@@ -261,8 +280,14 @@ static _InstInfo* inst_vex_lookup(_CodeInfo* ci, _PrefixState* ps)
 	 * However, starting with 0f, could also lead immediately to a prefixed table for some bytes.
 	 * it might return NULL, if the index is invalid.
 	 */
-	if (instType == INT_LIST_PREFIXED)
-		return inst_get_info(in, index);
+	if (instType == INT_LIST_PREFIXED) {
+		_InstInfo* ii = inst_get_info(in, index);
+		/* See if the instruction is dependent on MOD. */
+		if ((ii != NULL) && (((_InstInfoEx*)ii)->flagsEx & INST_MODRR_BASED)) {
+			ii = inst_vex_mod_lookup(ci, in, index);
+		}
+		return ii;
+	}
 
 	/*
 	 * If we reached here, obviously we started with 0f. VEXed instructions must be nodes of a prefixed table.
@@ -285,8 +310,14 @@ static _InstInfo* inst_vex_lookup(_CodeInfo* ci, _PrefixState* ps)
 	}
 
 	/* Now that we got to the last table in the trie, check for a prefixed table. */
-	if (INST_NODE_TYPE(in) == INT_LIST_PREFIXED)
-		return inst_get_info(in, index);
+	if (INST_NODE_TYPE(in) == INT_LIST_PREFIXED) {
+		_InstInfo* ii = inst_get_info(in, index);
+		/* See if the instruction is dependent on MOD. */
+		if ((ii != NULL) && (((_InstInfoEx*)ii)->flagsEx & INST_MODRR_BASED)) {
+			ii = inst_vex_mod_lookup(ci, in, index);
+		}
+		return ii;
+	}
 
 	/* No VEXed instruction was found. */
 	return NULL;
@@ -303,8 +334,12 @@ _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps)
 	/* See whether we have to handle a VEX prefixed instruction. */
 	if (ps->decodedPrefixes & INST_PRE_VEX) {
 		ii = inst_vex_lookup(ci, ps);
-		/* Make sure that VEX.L exists when forced. */
-		if ((ii != NULL) && (((_InstInfoEx*)ii)->flagsEx & INST_FORCE_VEXL) && (~ps->vrex & PREFIX_EX_L)) return NULL;
+		if (ii != NULL) {
+			/* Make sure that VEX.L exists when forced. */
+			if ((((_InstInfoEx*)ii)->flagsEx & INST_FORCE_VEXL) && (~ps->vrex & PREFIX_EX_L)) return NULL;
+			/* If the instruction doesn't use VEX.vvvv it must be zero. */
+			if ((((_InstInfoEx*)ii)->flagsEx & INST_VEX_V_UNUSED) && ps->vexV) return NULL;
+		}
 		return ii;
 	}
 

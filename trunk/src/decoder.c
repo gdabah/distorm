@@ -71,7 +71,7 @@ static _DecodeType decode_get_effective_op_size(_DecodeType dt, _iflags decodedP
 		/* Automatically promoted instructions have only INST_64BITS SET! */
 		if (((instFlags & (INST_64BITS | INST_PRE_REX)) == INST_64BITS) ||
 		/* Other instructions in 64 bits can be promoted only with a REX prefix. */
-		    ((decodedPrefixes & INST_PRE_REX) && (rex & PREFIX_EX_W))) dt = Decode64Bits;
+			((decodedPrefixes & INST_PRE_REX) && (rex & PREFIX_EX_W))) dt = Decode64Bits;
 		else dt = Decode32Bits; /* Default. */
 	}
 	return dt;
@@ -160,7 +160,7 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 		/* Some instructions enforce that reg=000, so validate that. (Specifically EXTRQ). */
 		if ((instFlags & INST_FORCE_REG0) && (((modrm >> 3) & 7) != 0)) goto _Undecodable;
 		/* Some instructions enforce that mod=11, so validate that. */
-		if ((instFlags & INST_MODRR) && (modrm < INST_DIVIDED_MODRM)) goto _Undecodable;
+		if ((instFlags & INST_MODRR_REQUIRED) && (modrm < INST_DIVIDED_MODRM)) goto _Undecodable;
 	}
 
 	ci->code++; /* Skip the last byte we just read (either last opcode's byte code or a ModRM). */
