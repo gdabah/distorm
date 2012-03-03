@@ -327,7 +327,7 @@ typedef enum OpType {
 /* The instruction's mnemonic depends on the mod value of the ModR/M byte (mod=11, mod!=11). */
 #define INST_MNEMONIC_MODRM_BASED (1 << 19)
 /* The instruction uses a ModR/M byte which the MOD must be 11 (for registers operands only). */
-#define INST_MODRR (1 << 20)
+#define INST_MODRR_REQUIRED (1 << 20)
 /* The way of 3DNow! instructions are built, we have to handle their locating specially. Suffix imm8 tells which instruction it is. */
 #define INST_3DNOW_FETCH (1 << 21)
 /* The instruction needs two suffixes, one for the comparison type (imm8) and the second for its operation size indication (second mnemonic). */
@@ -368,6 +368,13 @@ typedef enum OpType {
 #define INST_MNEMONIC_VEXL_BASED (1 << 3)
 /* Forces the instruction to be encoded with VEX.L, otherwise it's undefined. */
 #define INST_FORCE_VEXL (1 << 4)
+/*
+ * Indicates that the instruction is based on the MOD field of the ModRM byte.
+ * (MOD==11: got the right instruction, else skip +4 in prefixed table for the correct instruction).
+ */
+#define INST_MODRR_BASED (1 << 5)
+/* Indicates that the instruction doesn't use the VVVV field of the VEX prefix, if it does then it's undecodable. */
+#define INST_VEX_V_UNUSED (1 << 6)
 
 /*
  * Indicates which operand is being decoded.
