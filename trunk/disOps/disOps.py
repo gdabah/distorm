@@ -77,6 +77,9 @@ def TranslateMnemonics(pseudoClassType, mnems):
 		mnems = FixPseudo2(mnems)
 	for i in mnems:
 		if len(i) == 0:
+			# Some mnemonics are empty on purpose because they're not used.
+			# Set them to zero to keep the order of the list.
+			l.append(0) # Undefined instruction.
 			continue
 		if mnemonicsIds.has_key(i):
 			l.append(str(mnemonicsIds[i]))
@@ -553,7 +556,7 @@ def CreateTables(db):
 	s4 = "_InstNode InstructionsTree[] = {\n"
 	s4 += ",\n".join(["/* %x - %s */  %s" % (i[0], i[1][1], "0" if i[1][0] == 0 else "0x%x" % i[1][0]) for i in enumerate(InstructionsTree)])
 	s5 = GeneratePseudoMnemonicOffsets()
-	return s0 + "\n\n" + s1 + "\n\n" + s2 + "\n\n" + s3 + "\n\n" + s4 + "\n};\n" + s5 + "\n"
+	return s0 + "\n\n" + s1 + "\n\n" + s2 + "\n\n" + s3 + "\n\n" + s4 + "\n};\n\n" + s5 + "\n"
 
 def main():
 	# Init the 80x86/x64 instructions sets DB.

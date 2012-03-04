@@ -299,6 +299,13 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 		FLAG_SET_OPSIZE(di, Decode64Bits);
 
 		if (instFlags & (INST_USE_EXMNEMONIC | INST_USE_EXMNEMONIC2)) {
+			/*
+			 * We shouldn't be here for MODRM based mnemonics with a MOD=11,
+			 * because they must not use REX (otherwise it will get to the wrong instruction which share same opcode).
+			 * See XRSTOR and XSAVEOPT.
+			 */
+			if ((instFlags & INST_MNEMONIC_MODRM_BASED) && (modrm >= INST_DIVIDED_MODRM)) goto _Undecodable;
+
 			/* Use third mnemonic, for 64 bits. */
 			if ((instFlags & INST_USE_EXMNEMONIC2) && (vrex & PREFIX_EX_W)) {
 				ps->usedPrefixes |= INST_PRE_REX;
