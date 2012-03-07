@@ -223,10 +223,10 @@ class Instructions:
 		Set("6b", ["IMUL"], [OPT.REG_FULL, OPT.RM_FULL, OPT.SEIMM8], IFlag.MODRM_REQUIRED)
 		# V 1.5.14 - String instructions aren't supposed to be promoted automatically in 64bits, only with a REX prefix.
 		# In 64 bits INS/OUTS still supports only 8/16/32 bits.
-		Set("6c", ["INS"], [OPT.REGI_EDI, OPT.REGDX], IFlag.PRE_REPNZ | IFlag.PRE_REP)
-		Set("6d", ["INS"], [OPT.REGI_EDI, OPT.REGDX], IFlag._16BITS | IFlag.PRE_REPNZ | IFlag.PRE_REP)
-		Set("6e", ["OUTS"], [OPT.REGDX, OPT.REGI_ESI], IFlag.PRE_REPNZ | IFlag.PRE_REP)
-		Set("6f", ["OUTS"], [OPT.REGDX, OPT.REGI_ESI], IFlag._16BITS | IFlag.PRE_REPNZ | IFlag.PRE_REP)
+		Set("6c", ["INS"], [OPT.REGI_EDI, OPT.REGDX], IFlag.PRE_REPNZ | IFlag.PRE_REP) # 8 bit.
+		Set("6d", ["INS"], [OPT.REGI_EDI, OPT.REGDX], IFlag._16BITS | IFlag.PRE_REPNZ | IFlag.PRE_REP) # Full size.
+		Set("6e", ["OUTS"], [OPT.REGDX, OPT.REGI_ESI], IFlag.PRE_REPNZ | IFlag.PRE_REP) # 8 bit.
+		Set("6f", ["OUTS"], [OPT.REGDX, OPT.REGI_ESI], IFlag._16BITS | IFlag.PRE_REPNZ | IFlag.PRE_REP) # Full size.
 		Set("70", ["JO"], [OPT.RELCB], IFlag._64BITS)
 		Set("71", ["JNO"], [OPT.RELCB], IFlag._64BITS)
 		Set("72", ["JB"], [OPT.RELCB], IFlag._64BITS)
@@ -653,8 +653,8 @@ class Instructions:
 		Set = lambda *args: self.SetCallback(ISetClass.P6, *args)
 		Set("0f, 05", ["SYSCALL"], [], IFlag._32BITS)
 		Set("0f, 07", ["SYSRET"], [], IFlag._32BITS)
-		Set("0f, 34", ["SYSENTER"], [], IFlag._32BITS | IFlag.INVALID_64BITS)
-		Set("0f, 35", ["SYSEXIT"], [], IFlag._32BITS | IFlag.INVALID_64BITS)
+		Set("0f, 34", ["SYSENTER"], [], IFlag._32BITS) # Only AMD states invalid in 64 bits.
+		Set("0f, 35", ["SYSEXIT"], [], IFlag._32BITS) # Only AMD states invalid in 64 bits.
 		Set("0f, 40", ["CMOVO"], [OPT.REG_FULL, OPT.RM_FULL], IFlag.MODRM_REQUIRED | IFlag._32BITS)
 		Set("0f, 41", ["CMOVNO"], [OPT.REG_FULL, OPT.RM_FULL], IFlag.MODRM_REQUIRED | IFlag._32BITS)
 		Set("0f, 42", ["CMOVB"], [OPT.REG_FULL, OPT.RM_FULL], IFlag.MODRM_REQUIRED | IFlag._32BITS)
@@ -1144,7 +1144,7 @@ class Instructions:
 		# In 64bits the operands are promoted to 64bits automatically.
 		Set("0f, 78", ["VMREAD"], [OPT.RM32_64, OPT.REG32_64], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag._64BITS)
 		Set("0f, 79", ["VMWRITE"], [OPT.REG32_64, OPT.RM32_64], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag._64BITS)
-		Set("0f, c7 /06", ["VMPTRLD"], [OPT.MEM64], IFlag.MODRM_REQUIRED | IFlag._32BITS)
+		# See RDRAND for VMPTRLD below.
 		Set("0f, c7 /07", ["VMPTRST"], [OPT.MEM64], IFlag.MODRM_REQUIRED | IFlag._32BITS)
 		Set("66, 0f, c7 /06", ["VMCLEAR"], [OPT.MEM64], IFlag.MODRM_REQUIRED | IFlag._32BITS)
 		Set("f3, 0f, c7 /06", ["VMXON"], [OPT.MEM64], IFlag.MODRM_REQUIRED | IFlag._32BITS)
@@ -1152,6 +1152,10 @@ class Instructions:
 		# New VMX instructions from Intel September 2009:
 		Set("66, 0f, 38, 80", ["INVEPT"], [OPT.REG32_64, OPT.MEM128], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag._64BITS)
 		Set("66, 0f, 38, 81", ["INVVPID"], [OPT.REG32_64, OPT.MEM128], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag._64BITS)
+
+		# New VMX instructions from Intel December 2011.
+		Set("0f, 01 //d4", ["VMFUNC"], [], IFlag._32BITS)
+		Set("0f, c7 /06", ["RDRAND", "VMPTRLD"], [OPT.MEM_OPT], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.USE_EXMNEMONIC | IFlag.MNEMONIC_MODRM_BASED)
 
 	def init_SVM(self):
 		Set = lambda *args: self.SetCallback(ISetClass.SVM, *args)
@@ -1279,7 +1283,6 @@ class Instructions:
 		Set("0f, 28", ["VMOVAPS"], [OPT.YXMM, OPT.YXMM128_256], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.PRE_VEX | IFlag.VEX_L)
 		Set("0f, 29", ["VMOVAPS"], [OPT.YXMM128_256, OPT.YXMM], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.PRE_VEX | IFlag.VEX_L)
 
-
 		Set("66, 0f, 6e", ["VMOVD", "VMOVQ"], [OPT.XMM, OPT.WRM32_64], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.PRE_VEX | IFlag.VEX_W | IFlag.MNEMONIC_VEXW_BASED)
 		Set("66, 0f, 7e", ["VMOVD", "VMOVQ"], [OPT.WRM32_64, OPT.XMM], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.PRE_VEX | IFlag.VEX_W | IFlag.MNEMONIC_VEXW_BASED)
 		Set("f3, 0f, 7e", ["VMOVQ"], [OPT.XMM, OPT.XMM64], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.PRE_VEX)
@@ -1290,11 +1293,11 @@ class Instructions:
 		Set("f3, 0f, 6f", ["VMOVDQU"], [OPT.YXMM, OPT.YXMM128_256], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.PRE_VEX | IFlag.VEX_L)
 		Set("f3, 0f, 7f", ["VMOVDQU"], [OPT.YXMM128_256, OPT.YXMM], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.PRE_VEX | IFlag.VEX_L)
 
-		Set("0f, 12", ["VMOVHLPS", "VMOVLPS"], [OPT.XMM, OPT.VXMM, OPT.XMM64], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.PRE_VEX | IFlag.MNEMONIC_MODRM_BASED)
+		Set("0f, 12", ["VMOVHLPS", "VMOVLPS"], [OPT.XMM, OPT.VXMM, OPT.XMM64], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.PRE_VEX | IFlag.MNEMONIC_MODRM_BASED | IFlag.USE_EXMNEMONIC)
 		Set("66, 0f, 12", ["VMOVLPD"], [OPT.XMM, OPT.VXMM, OPT.MEM64], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.PRE_VEX)
 		Set("0f, 13", ["VMOVLPS"], [OPT.MEM64, OPT.XMM], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.PRE_VEX)
 		Set("66, 0f, 13", ["VMOVLPD"], [OPT.MEM64, OPT.XMM], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.PRE_VEX)
-		Set("0f, 16", ["VMOVLHPS", "VMOVHPS"], [OPT.XMM, OPT.VXMM, OPT.XMM64], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.PRE_VEX | IFlag.MNEMONIC_MODRM_BASED)
+		Set("0f, 16", ["VMOVLHPS", "VMOVHPS"], [OPT.XMM, OPT.VXMM, OPT.XMM64], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.PRE_VEX | IFlag.MNEMONIC_MODRM_BASED | IFlag.USE_EXMNEMONIC)
 		Set("66, 0f, 16", ["VMOVHPD"], [OPT.XMM, OPT.VXMM, OPT.MEM64], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.PRE_VEX)
 		Set("0f, 17", ["VMOVHPS"], [OPT.MEM64, OPT.XMM], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.PRE_VEX)
 		Set("66, 0f, 17", ["VMOVHPD"], [OPT.MEM64, OPT.XMM], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.PRE_VEX)
