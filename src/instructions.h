@@ -432,7 +432,7 @@ typedef enum {
 /* Used to check instType < INT_INFOS, means we got an inst-info. Cause it has to be only one of them. */
 #define INT_INFOS (INT_LIST_GROUP)
 
-/* Instruction node is treated as { int index:15;  int type:3; } */
+/* Instruction node is treated as { int index:13;  int type:3; } */
 typedef uint16_t _InstNode;
 
 /* Helper macro to read the actual flags that are associated with an inst-info. */
