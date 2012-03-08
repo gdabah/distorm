@@ -74,7 +74,9 @@ static void distorm_format_size(_WString* str, const _DInst* di, int opNum)
 	 *
 	 * If given operand number is higher than 2, then output the size anyways.
 	 */
-	if ((opNum >= 2) || ((di->ops[0].type != O_REG) && (di->ops[1].type != O_REG))) {
+	if (((opNum >= 2) || ((di->ops[0].type != O_REG) && (di->ops[1].type != O_REG))) ||
+		/* INS/OUTS are exception, because DX is a port specifier and not a real src/dst register. */
+		((di->opcode == I_INS) || (di->opcode == I_OUTS))) {
 		switch (di->ops[opNum].size)
 		{
 			case 0: break; /* OT_MEM's unknown size. */
