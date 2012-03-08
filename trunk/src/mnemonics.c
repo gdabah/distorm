@@ -79,9 +79,9 @@ const unsigned char _MNEMONICS[] =
 "\x04" "VERR\0" "\x04" "VERW\0" "\x04" "SGDT\0" "\x04" "SIDT\0" "\x04" "LGDT\0" \
 "\x04" "LIDT\0" "\x04" "SMSW\0" "\x04" "LMSW\0" "\x06" "INVLPG\0" "\x06" "VMCALL\0" \
 "\x08" "VMLAUNCH\0" "\x08" "VMRESUME\0" "\x06" "VMXOFF\0" "\x07" "MONITOR\0" \
-"\x05" "MWAIT\0" "\x06" "XGETBV\0" "\x06" "XSETBV\0" "\x05" "VMRUN\0" "\x07" "VMMCALL\0" \
-"\x06" "VMLOAD\0" "\x06" "VMSAVE\0" "\x04" "STGI\0" "\x04" "CLGI\0" "\x06" "SKINIT\0" \
-"\x07" "INVLPGA\0" "\x06" "SWAPGS\0" "\x06" "RDTSCP\0" "\x08" "PREFETCH\0" \
+"\x05" "MWAIT\0" "\x06" "XGETBV\0" "\x06" "XSETBV\0" "\x06" "VMFUNC\0" "\x05" "VMRUN\0" \
+"\x07" "VMMCALL\0" "\x06" "VMLOAD\0" "\x06" "VMSAVE\0" "\x04" "STGI\0" "\x04" "CLGI\0" \
+"\x06" "SKINIT\0" "\x07" "INVLPGA\0" "\x06" "SWAPGS\0" "\x06" "RDTSCP\0" "\x08" "PREFETCH\0" \
 "\x09" "PREFETCHW\0" "\x05" "PI2FW\0" "\x05" "PI2FD\0" "\x05" "PF2IW\0" "\x05" "PF2ID\0" \
 "\x06" "PFNACC\0" "\x07" "PFPNACC\0" "\x07" "PFCMPGE\0" "\x05" "PFMIN\0" "\x05" "PFRCP\0" \
 "\x07" "PFRSQRT\0" "\x05" "PFSUB\0" "\x05" "PFADD\0" "\x07" "PFCMPGT\0" "\x05" "PFMAX\0" \
@@ -259,7 +259,7 @@ const unsigned char _MNEMONICS[] =
 "\x07" "ROUNDSD\0" "\x08" "VROUNDSD\0" "\x07" "BLENDPS\0" "\x08" "VBLENDPS\0" \
 "\x07" "BLENDPD\0" "\x08" "VBLENDPD\0" "\x07" "PBLENDW\0" "\x08" "VPBLENDW\0" \
 "\x07" "PALIGNR\0" "\x08" "VPALIGNR\0" "\x06" "PEXTRB\0" "\x07" "VPEXTRB\0" \
-"\x06" "PEXTRD\0" "\x06" "PEXTRQ\0" "\x07" "VPEXTRD\0" "\x09" "EXTRACTPS\0" \
+"\x06" "PEXTRD\0" "\x06" "PEXTRQ\0" "\x07" "VPEXTRD\0" "\x07" "VPEXTRQ\0" "\x09" "EXTRACTPS\0" \
 "\x0a" "VEXTRACTPS\0" "\x0b" "VINSERTF128\0" "\x0c" "VEXTRACTF128\0" "\x06" "PINSRB\0" \
 "\x07" "VPINSRB\0" "\x08" "INSERTPS\0" "\x09" "VINSERTPS\0" "\x06" "PINSRD\0" \
 "\x06" "PINSRQ\0" "\x07" "VPINSRD\0" "\x07" "VPINSRQ\0" "\x04" "DPPS\0" "\x05" "VDPPS\0" \
@@ -269,8 +269,8 @@ const unsigned char _MNEMONICS[] =
 "\x09" "PCMPISTRM\0" "\x0a" "VPCMPISTRM\0" "\x09" "PCMPISTRI\0" "\x0a" "VPCMPISTRI\0" \
 "\x0f" "AESKEYGENASSIST\0" "\x10" "VAESKEYGENASSIST\0" "\x06" "PSRLDQ\0" "\x07" "VPSRLDQ\0" \
 "\x06" "PSLLDQ\0" "\x07" "VPSLLDQ\0" "\x07" "LDMXCSR\0" "\x08" "VLDMXCSR\0" \
-"\x07" "STMXCSR\0" "\x08" "VSTMXCSR\0" "\x07" "VMPTRLD\0" "\x07" "VMCLEAR\0" \
-"\x05" "VMXON\0" "\x04" "WAIT\0" "\x06" "MOVSXD\0" "\x05" "PAUSE\0";
+"\x07" "STMXCSR\0" "\x08" "VSTMXCSR\0" "\x06" "RDRAND\0" "\x07" "VMPTRLD\0" \
+"\x07" "VMCLEAR\0" "\x05" "VMXON\0" "\x04" "WAIT\0" "\x06" "MOVSXD\0" "\x05" "PAUSE\0";
 
 const _WRegister _REGISTERS[] = {
 	{3, "RAX"}, {3, "RCX"}, {3, "RDX"}, {3, "RBX"}, {3, "RSP"}, {3, "RBP"}, {3, "RSI"}, {3, "RDI"}, {2, "R8"}, {2, "R9"}, {3, "R10"}, {3, "R11"}, {3, "R12"}, {3, "R13"}, {3, "R14"}, {3, "R15"},
