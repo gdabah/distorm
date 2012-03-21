@@ -285,7 +285,7 @@ class Instructions:
 		Set("8b", ["MOV"], [OPT.REG_FULL, OPT.RM_FULL], IFlag.MODRM_REQUIRED)
 		Set("8c", ["MOV"], [OPT.RFULL_M16, OPT.SREG], IFlag.MODRM_REQUIRED)
 		Set("8d", ["LEA"], [OPT.REG_FULL, OPT.MEM], IFlag.MODRM_REQUIRED)
-		Set("8e", ["MOV"], [OPT.SREG, OPT.RM16], IFlag.MODRM_REQUIRED)
+		Set("8e", ["MOV"], [OPT.SREG, OPT.RFULL_M16], IFlag.MODRM_REQUIRED)
 		Set("8f /00", ["POP"], [OPT.RM_FULL], IFlag.MODRM_REQUIRED | IFlag._64BITS)
 		# V 1.7.28 - NOP in 64bits can be prefixed by REX -
 		# Therefore 0x90 in 16/32 bits is NOP. 0x90 with REX base is an XCHG. All else are NOP.
