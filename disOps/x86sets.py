@@ -1166,7 +1166,7 @@ class Instructions:
 		Set("f3, 0f, ae /2", ["WRFSBASE"], [OPT.REG32_64], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag._64BITS)
 		Set("f3, 0f, ae /3", ["WRGSBASE"], [OPT.REG32_64], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag._64BITS)
 
-		# SSE5
+		# SSE5.
 		Set("0f, 7a, 31", ["CVTPS2PH"], [OPT.XMM64, OPT.XMM], IFlag._32BITS, IFlag._64BITS)
 		Set("0f, 7a, 30", ["CVTPH2PS"], [OPT.XMM, OPT.XMM64], IFlag._32BITS, IFlag._64BITS)
 
