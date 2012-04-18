@@ -1153,9 +1153,22 @@ class Instructions:
 		Set("66, 0f, 38, 80", ["INVEPT"], [OPT.REG32_64, OPT.MEM128], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag._64BITS)
 		Set("66, 0f, 38, 81", ["INVVPID"], [OPT.REG32_64, OPT.MEM128], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag._64BITS)
 
-		# New VMX instructions from Intel December 2011.
+		# New instructions from Intel December 2011.
 		Set("0f, 01 //d4", ["VMFUNC"], [], IFlag._32BITS)
 		Set("0f, c7 /06", ["RDRAND", "VMPTRLD"], [OPT.MEM_OPT], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.USE_EXMNEMONIC | IFlag.MNEMONIC_MODRM_BASED)
+
+		Set("66, 0f, 38, 82", ["INVPCID"], [OPT.REG32_64, OPT.MEM128], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag._64BITS)
+		# Can be prefixed with 0x66, see LZCNT.
+		Set("f3, 0f, bc", ["TZCNT"], [OPT.REG_FULL, OPT.RM_FULL], IFlag.MODRM_REQUIRED | IFlag.PRE_OP_SIZE)
+
+		Set("f3, 0f, ae /0", ["RDFSBASE"], [OPT.REG32_64], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag._64BITS)
+		Set("f3, 0f, ae /1", ["RDGSBASE"], [OPT.REG32_64], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag._64BITS)
+		Set("f3, 0f, ae /2", ["WRFSBASE"], [OPT.REG32_64], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag._64BITS)
+		Set("f3, 0f, ae /3", ["WRGSBASE"], [OPT.REG32_64], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag._64BITS)
+
+		# SSE5
+		Set("0f, 7a, 31", ["CVTPS2PH"], [OPT.XMM64, OPT.XMM], IFlag._32BITS, IFlag._64BITS)
+		Set("0f, 7a, 30", ["CVTPH2PS"], [OPT.XMM, OPT.XMM64], IFlag._32BITS, IFlag._64BITS)
 
 	def init_SVM(self):
 		Set = lambda *args: self.SetCallback(ISetClass.SVM, *args)

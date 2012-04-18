@@ -251,7 +251,7 @@ static int operands_extract_modrm(_CodeInfo* ci,
 						if (type == OT_RFULL_M16) ps->usedPrefixes |= INST_PRE_REX;
 						/* CALL NEAR/PUSH/POP defaults to 64 bits. --> INST_64BITS, REX isn't required, thus ignored anyways. */
 						if (instFlags & INST_PRE_REX) ps->usedPrefixes |= INST_PRE_REX;
-						/* Include REX is used for REX.B. */
+						/* Include REX if used for REX.B. */
 						if (vrex & PREFIX_EX_B) {
 							ps->usedPrefixes |= INST_PRE_REX;
 							rm += EX_GPR_BASE;
