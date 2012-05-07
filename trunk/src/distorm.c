@@ -5,7 +5,7 @@ diStorm3 C Library Interface
 diStorm3 - Powerful disassembler for X86/AMD64
 http://ragestorm.net/distorm/
 distorm at gmail dot com
-Copyright (C) 2011  Gil Dabah
+Copyright (C) 2003-2012 Gil Dabah
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #include "wstring.h"
 #include "../include/mnemonics.h"
 
+#ifndef DISTORM_LIGHT
 
 /* C DLL EXPORTS */
 #ifdef SUPPORT_64BIT_OFFSET
@@ -374,6 +375,8 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 	*usedInstructionsCount = instsCount;
 	return res;
 }
+
+#endif /* DISTORM_LIGHT */
 
 _DLLEXPORT_ unsigned int distorm_version()
 {

@@ -4,7 +4,7 @@ config.h
 diStorm3 - Powerful disassembler for X86/AMD64
 http://ragestorm.net/distorm/
 distorm at gmail dot com
-Copyright (C) 2011  Gil Dabah
+Copyright (C) 2003-2012 Gil Dabah
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -25,11 +25,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #define CONFIG_H
 
 /* diStorm version number. */
-#define __DISTORMV__ 0x030100
+#define __DISTORMV__ 0x030200
 
 #include <string.h> /* memset, memcpy - can be easily self implemented for libc independency. */
 
 #include "../include/distorm.h"
+
 
 /*
  * 64 bit offsets support:
@@ -44,6 +45,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  * For example, this macro is being set for compiling diStorm as a .dll for Python with CTypes.
  */
 /* #define DISTORM_DYNAMIC */
+
+/*
+ * If DISTORM_LIGHT is defined, everything involved in formatting the instructions
+ * as text will be excluded from compilation.
+ * distorm_decode(..) and distorm_format(..) will not be available.
+ * This will decrease the size of the executable and leave you with decomposition functionality only.
+ */
+/* #define DISTORM_LIGHT */
 
 /*
  * diStorm now supports little/big endian CPU's.

@@ -1,7 +1,7 @@
 #
 # disOps.py v 1.0.0
 #
-# Copyright (C) 2011 Gil Dabah, http://ragestorm.net/disops/
+# Copyright (C) 2003-2012 Gil Dabah, http://ragestorm.net/distorm/
 #
 # disOps is a part of the diStorm project, but can be used for anything.
 # The generated output is tightly coupled with diStorm data structures which can be found at instructions.h.
@@ -176,8 +176,8 @@ def DumpMnemonics():
 	# Used for Python dictionary of opcodeIds-->mnemonics.
 	s = "\n"
 	for i in mnemonicsIds:
-		s += "0x%x: \"%s\", " % (mnemonicsIds[i], i) # python
-		#s += "%s (0x%x), " % (i.replace(" ", "_").replace(",", ""), mnemonicsIds[i]) # java
+		#s += "0x%x: \"%s\", " % (mnemonicsIds[i], i) # python
+		s += "%s (0x%x), " % (i.replace(" ", "_").replace(",", ""), mnemonicsIds[i]) # java
 		if len(s) - s.rfind("\n") >= 76:
 			s = s[:-1] + "\n"
 	# print s
