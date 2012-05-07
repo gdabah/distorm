@@ -1,4 +1,4 @@
-/* diStorm3 1.0.0 */
+/* diStorm3 3.2 */
 
 /*
 distorm.h
@@ -6,7 +6,7 @@ distorm.h
 diStorm3 - Powerful disassembler for X86/AMD64
 http://ragestorm.net/distorm/
 distorm at gmail dot com
-Copyright (C) 2011  Gil Dabah
+Copyright (C) 2003-2012 Gil Dabah
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -260,6 +260,8 @@ typedef struct {
 	uint8_t meta;
 } _DInst;
 
+#ifndef DISTORM_LIGHT
+
 /* Static size of strings. Do not change this value. Keep Python wrapper in sync. */
 #define MAX_TEXT_SIZE (48)
 typedef struct {
@@ -279,6 +281,8 @@ typedef struct {
 	unsigned int size; /* Size of decoded instruction. */
 	_OffsetType offset; /* Start offset of the decoded instruction. */
 } _DecodedInst;
+
+#endif /* DISTORM_LIGHT */
 
 /* Register masks for quick look up, each mask indicates one of a register-class that is being used in some operand. */
 #define RM_AX 1     /* AL, AH, AX, EAX, RAX */
@@ -394,6 +398,9 @@ typedef enum { DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, D
 /* Define the following interface functions only for outer projects. */
 #if !(defined(DISTORM_STATIC) || defined(DISTORM_DYNAMIC))
 
+/* If distorm-light is defined, we won't export these text-formatting functionality. */
+#ifndef DISTORM_LIGHT
+
 /* distorm_decode
  * Input:
  *         offset - Origin of the given code (virtual address that is), NOT an offset in code.
@@ -436,6 +443,8 @@ typedef enum { DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, D
  * Output: unsigned int - version of compiled library.
  */
 unsigned int distorm_version();
+
+#endif /* DISTORM_LIGHT */
 
 #endif /* DISTORM_STATIC */
 

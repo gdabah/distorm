@@ -4,7 +4,7 @@ x86defs.h
 diStorm3 - Powerful disassembler for X86/AMD64
 http://ragestorm.net/distorm/
 distorm at gmail dot com
-Copyright (C) 2011  Gil Dabah
+Copyright (C) 2003-2012 Gil Dabah
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -25,8 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #define X86DEFS_H
 
 #include "config.h"
-
 #include "instructions.h"
+
 
 #define SEG_REGS_MAX (6)
 #define CREGS_MAX (9)
@@ -111,6 +111,5 @@ extern _InstInfo II_pause;
  * See function instructions.c!inst_lookup_3dnow.
  */
 extern _InstInfo II_3dnow;
-
 
 #endif /* X86DEFS_H */

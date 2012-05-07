@@ -4,7 +4,7 @@ operands.c
 diStorm3 - Powerful disassembler for X86/AMD64
 http://ragestorm.net/distorm/
 distorm at gmail dot com
-Copyright (C) 2011  Gil Dabah
+Copyright (C) 2003-2012 Gil Dabah
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,11 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 
 #include "config.h"
-
 #include "operands.h"
 #include "x86defs.h"
 #include "insts.h"
 #include "../include/mnemonics.h"
+
 
 /* Maps a register to its register-class mask. */
 uint16_t _REGISTERTORCLASS[] = /* Based on _RegisterType enumeration! */

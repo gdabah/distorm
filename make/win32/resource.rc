@@ -51,8 +51,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,1,0,0
- PRODUCTVERSION 3,1,0,0
+ FILEVERSION 3,2,0,0
+ PRODUCTVERSION 3,2,0,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -68,12 +68,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "diStorm3 module"
-            VALUE "FileVersion", "3.1.0.0"
+            VALUE "FileVersion", "3.2.0.0"
             VALUE "InternalName", "diStorm3"
-            VALUE "LegalCopyright", "Copyright (C) 2003-2011 Gil Dabah"
+            VALUE "LegalCopyright", "Copyright (C) 2003-2012 Gil Dabah"
             VALUE "OriginalFilename", "distorm3.dll"
             VALUE "ProductName", "diStorm3 Disassembler Library"
-            VALUE "ProductVersion", "3.1.0.0"
+            VALUE "ProductVersion", "3.2.0.0"
         END
     END
     BLOCK "VarFileInfo"
