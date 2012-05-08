@@ -58,6 +58,8 @@ And why we need to use DISTORM_STATIC? That's because if we just compile diStorm
 Eventually, for compiling diStorm as a static library, make sure DISTORM_STATIC is defined.
 For compiling diStorm as a dynamic library or shared object, make sure DISTORM_DYNAMIC is defined.
 
+Another new macro is DISTORM_LIGHT, if it is defined, it will _exclude_ all text formatting code from diStorm (the distorm_decode exports) and leave only the decomposer functionality. This might be useful when one wants to reduce size of the compiled binary. So all menmonics strings are not compiled, etc.
+
 Note that these macros are only used for compiling diStorm source code itself, it doesn't have anything to do with the outer projects which use the compiled library!
 
 ==Endianity Issues==
