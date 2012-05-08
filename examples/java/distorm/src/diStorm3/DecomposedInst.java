@@ -1,7 +1,7 @@
 package diStorm3;
 
 import diStorm3.Operand;
-import diStorm3.OpcodeEnum;
+import diStorm3.Opcodes;
 
 public class DecomposedInst {
 	private class ImmVariant {
@@ -51,7 +51,7 @@ public class DecomposedInst {
 		return mSize;
 	}
 	public OpcodeEnum getOpcode() {
-		return OpcodeEnum.values()[mOpcode];
+		return Opcodes.lookup(mOpcode);
 	}
 	public int getSegment() {
 		return mSegment & 0x7f;
