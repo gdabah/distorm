@@ -3,11 +3,11 @@ import java.nio.ByteBuffer;
 import diStorm3.distorm3.*;
 import diStorm3.CodeInfo;
 import diStorm3.DecodedInst;
+import diStorm3.OpcodeEnum;
 import diStorm3.distorm3;
 import diStorm3.DecodedResult;
 import diStorm3.DecomposedResult;
 import diStorm3.DecomposedInst;
-import diStorm3.OpcodeEnum;
 
 public class Main {
 

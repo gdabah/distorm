@@ -7,6 +7,7 @@ package diStorm3;
 import diStorm3.CodeInfo;
 import diStorm3.DecodedResult;
 import diStorm3.DecomposedResult;
+import diStorm3.Opcodes;
 
 public class distorm3 {
 
@@ -35,6 +36,6 @@ public class distorm3 {
 	};
 
 	static {
-		System.loadLibrary("distorm3");
+		System.loadLibrary("jdistorm");
 	}
 }
