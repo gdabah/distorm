@@ -213,7 +213,7 @@ static _InstInfo* inst_lookup_prefixed(_InstNode in, _PrefixState* ps)
  * (which means that the base instruction hints about the other instruction).
  * Note that caller should check if it's a MOD dependent instruction before getting in here.
  */
-static _InstInfo* inst_vex_mod_lookup(_CodeInfo* ci, _InstNode in, unsigned int index)
+static _InstInfo* inst_vex_mod_lookup(_CodeInfo* ci, _InstNode in, _InstInfo* ii, unsigned int index)
 {
 	/* Advance to read the MOD from ModRM byte. */
 	ci->code += 1;
@@ -225,7 +225,8 @@ static _InstInfo* inst_vex_mod_lookup(_CodeInfo* ci, _InstNode in, unsigned int 
 		/* Make a second lookup for this special instruction. */
 		return inst_get_info(in, index);
 	}
-	return NULL;
+	/* Return the original one, in case we didn't find a stuited instruction. */
+	return ii;
 }
 
 static _InstInfo* inst_vex_lookup(_CodeInfo* ci, _PrefixState* ps)
@@ -285,7 +286,7 @@ static _InstInfo* inst_vex_lookup(_CodeInfo* ci, _PrefixState* ps)
 		_InstInfo* ii = inst_get_info(in, index);
 		/* See if the instruction is dependent on MOD. */
 		if ((ii != NULL) && (((_InstInfoEx*)ii)->flagsEx & INST_MODRR_BASED)) {
-			ii = inst_vex_mod_lookup(ci, in, index);
+			ii = inst_vex_mod_lookup(ci, in, ii, index);
 		}
 		return ii;
 	}
@@ -315,7 +316,7 @@ static _InstInfo* inst_vex_lookup(_CodeInfo* ci, _PrefixState* ps)
 		_InstInfo* ii = inst_get_info(in, index);
 		/* See if the instruction is dependent on MOD. */
 		if ((ii != NULL) && (((_InstInfoEx*)ii)->flagsEx & INST_MODRR_BASED)) {
-			ii = inst_vex_mod_lookup(ci, in, index);
+			ii = inst_vex_mod_lookup(ci, in, ii, index);
 		}
 		return ii;
 	}
