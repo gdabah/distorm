@@ -398,9 +398,6 @@ typedef enum { DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, D
 /* Define the following interface functions only for outer projects. */
 #if !(defined(DISTORM_STATIC) || defined(DISTORM_DYNAMIC))
 
-/* If distorm-light is defined, we won't export these text-formatting functionality. */
-#ifndef DISTORM_LIGHT
-
 /* distorm_decode
  * Input:
  *         offset - Origin of the given code (virtual address that is), NOT an offset in code.
@@ -420,19 +417,31 @@ typedef enum { DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, D
  *         2)You will have to synchronize the offset,code and length by yourself if you pass code fragments and not a complete code block!
  */
 #ifdef SUPPORT_64BIT_OFFSET
+
 	_DecodeResult distorm_decompose64(_CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
+	#define distorm_decompose distorm_decompose64
+
+#ifndef DISTORM_LIGHT
+	/* If distorm-light is defined, we won't export these text-formatting functionality. */
 	_DecodeResult distorm_decode64(_OffsetType codeOffset, const unsigned char* code, int codeLen, _DecodeType dt, _DecodedInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
 	void distorm_format64(const _CodeInfo* ci, const _DInst* di, _DecodedInst* result);
-	#define distorm_decompose distorm_decompose64
 	#define distorm_decode distorm_decode64
 	#define distorm_format distorm_format64
-#else
+#endif /*DISTORM_LIGHT*/
+
+#else /*SUPPORT_64BIT_OFFSET*/
+
 	_DecodeResult distorm_decompose32(_CodeInfo* ci, _DInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
+	#define distorm_decompose distorm_decompose32
+
+#ifndef DISTORM_LIGHT
+	/* If distorm-light is defined, we won't export these text-formatting functionality. */
 	_DecodeResult distorm_decode32(_OffsetType codeOffset, const unsigned char* code, int codeLen, _DecodeType dt, _DecodedInst result[], unsigned int maxInstructions, unsigned int* usedInstructionsCount);
 	void distorm_format32(const _CodeInfo* ci, const _DInst* di, _DecodedInst* result);
-	#define distorm_decompose distorm_decompose32
 	#define distorm_decode distorm_decode32
 	#define distorm_format distorm_format32
+#endif /*DISTORM_LIGHT*/
+
 #endif
 
 /*
@@ -443,8 +452,6 @@ typedef enum { DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, D
  * Output: unsigned int - version of compiled library.
  */
 unsigned int distorm_version();
-
-#endif /* DISTORM_LIGHT */
 
 #endif /* DISTORM_STATIC */
 

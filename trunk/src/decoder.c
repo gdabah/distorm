@@ -417,6 +417,10 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 
 	_DecodeResult decodeResult;
 
+#ifdef DISTORM_LIGHT
+	supportOldIntr; /* Unreferenced. */
+#endif
+
 	if (_ci->features & DF_MAXIMUM_ADDR32) addrMask = 0xffffffff;
 	else if (_ci->features & DF_MAXIMUM_ADDR16) addrMask = 0xffff;
 
@@ -454,8 +458,15 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 
 					for (p = code; p < ps.last; p++, startInstOffset++) {
 						/* Use next entry. */
-						if (supportOldIntr) pdi = (_DInst*)((char*)result + nextPos * sizeof(_DecodedInst));
-						else pdi = &result[nextPos];
+#ifndef DISTORM_LIGHT
+						if (supportOldIntr) {
+							pdi = (_DInst*)((char*)result + nextPos * sizeof(_DecodedInst));
+						}
+						else
+#endif /* DISTORM_LIGHT */
+						{
+							pdi = &result[nextPos];
+						}
 						nextPos++;
 						memset(pdi, 0, sizeof(_DInst));
 
@@ -506,8 +517,15 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 
 		/* Make sure there is at least one more entry to use, for the upcoming instruction. */
 		if (nextPos + 1 > maxResultCount) return DECRES_MEMORYERR;
-		if (supportOldIntr) pdi = (_DInst*)((char*)result + nextPos * sizeof(_DecodedInst));
-		else pdi = &result[nextPos];
+#ifndef DISTORM_LIGHT
+		if (supportOldIntr) {
+			pdi = (_DInst*)((char*)result + nextPos * sizeof(_DecodedInst));
+		}
+		else
+#endif /* DISTORM_LIGHT */
+		{
+			pdi = &result[nextPos];
+		}
 		nextPos++;
 
 		/*
@@ -546,8 +564,15 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 
 				for (p = ps.start; p < ps.last + 1; p++, startInstOffset++) {
 					/* Use next entry. */
-					if (supportOldIntr) pdi = (_DInst*)((char*)result + nextPos * sizeof(_DecodedInst));
-					else pdi = &result[nextPos];
+#ifndef DISTORM_LIGHT
+					if (supportOldIntr) {
+						pdi = (_DInst*)((char*)result + nextPos * sizeof(_DecodedInst));
+					}
+					else
+#endif /* DISTORM_LIGHT */
+					{
+						pdi = &result[nextPos];
+					}
 					nextPos++;
 
 					memset(pdi, 0, sizeof(_DInst));

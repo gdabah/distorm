@@ -51,8 +51,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
  * as text will be excluded from compilation.
  * distorm_decode(..) and distorm_format(..) will not be available.
  * This will decrease the size of the executable and leave you with decomposition functionality only.
+ *
+ * Note: it should be either set in the preprocessor definitions manually or in command line -D switch.
+ * #define DISTORM_LIGHT
  */
-/* #define DISTORM_LIGHT */
 
 /*
  * diStorm now supports little/big endian CPU's.

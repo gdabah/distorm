@@ -1,5 +1,5 @@
 /*
-	distorm.c
+distorm.c
 
 diStorm3 C Library Interface
 diStorm3 - Powerful disassembler for X86/AMD64
@@ -29,8 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #include "textdefs.h"
 #include "wstring.h"
 #include "../include/mnemonics.h"
-
-#ifndef DISTORM_LIGHT
 
 /* C DLL EXPORTS */
 #ifdef SUPPORT_64BIT_OFFSET
@@ -63,6 +61,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 	return decode_internal(ci, FALSE, result, maxInstructions, usedInstructionsCount);
 }
+
+#ifndef DISTORM_LIGHT
 
 /* Helper function to concat an explicit size when it's unknown from the operands. */
 static void distorm_format_size(_WString* str, const _DInst* di, int opNum)
