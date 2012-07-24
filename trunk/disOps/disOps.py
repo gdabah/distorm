@@ -191,7 +191,7 @@ def DumpMnemonics():
 	f.close()
 
 	# Used for Python/Java dictionary of opcodeIds-->mnemonics.
-	CreatePythonDict(mnemonicsIds)
+	#CreatePythonDict(mnemonicsIds)
 	#CreateJavaDict(mnemonicsIds)
 
 O_NONE = 0
