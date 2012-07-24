@@ -58,9 +58,9 @@ typedef enum OpType {
 	/* 16 bits immediate using the first imm-slot */
 	OT_IMM16_1,
 	/* 8 bits immediate using the first imm-slot */
-    OT_IMM8_1,
+	OT_IMM8_1,
 	/* 8 bits immediate using the second imm-slot */
-    OT_IMM8_2,
+	OT_IMM8_2,
 
 	/* Use a 8bit register */
 	OT_REG8,
@@ -240,39 +240,39 @@ typedef enum OpType {
 	/* ModR/M for 32 bits. */
 	OT_RM32,
 	/* Reg32/Reg64 (prefix width) or Mem8. */
-    OT_REG32_64_M8,
+	OT_REG32_64_M8,
 	/* Reg32/Reg64 (prefix width) or Mem16. */
-    OT_REG32_64_M16,
+	OT_REG32_64_M16,
 	/* Reg32/Reg 64 depends on prefix width only. */
-    OT_WREG32_64,
+	OT_WREG32_64,
 	/* RM32/RM64 depends on prefix width only. */
-    OT_WRM32_64,
+	OT_WRM32_64,
 	/* XMM or Mem32/Mem64 depends on perfix width only. */
-    OT_WXMM32_64,
+	OT_WXMM32_64,
 	/* XMM is encoded in VEX.VVVV. */
-    OT_VXMM,
+	OT_VXMM,
 	/* XMM is encoded in the high nibble of an immediate byte. */
-    OT_XMM_IMM,
+	OT_XMM_IMM,
 	/* YMM/XMM is dependent on VEX.L. */
-    OT_YXMM,
+	OT_YXMM,
 	/* YMM/XMM (depends on prefix length) is encoded in the high nibble of an immediate byte. */
-    OT_YXMM_IMM,
+	OT_YXMM_IMM,
 	/* YMM is encoded in reg. */
-    OT_YMM,
+	OT_YMM,
 	/* YMM or Mem256. */
-    OT_YMM256,
+	OT_YMM256,
 	/* YMM is encoded in VEX.VVVV. */
-    OT_VYMM,
+	OT_VYMM,
 	/* YMM/XMM is dependent on VEX.L, and encoded in VEX.VVVV. */
-    OT_VYXMM,
+	OT_VYXMM,
 	/* YMM/XMM or Mem64/Mem256 is dependent on VEX.L. */
-    OT_YXMM64_256,
+	OT_YXMM64_256,
 	/* YMM/XMM or Mem128/Mem256 is dependent on VEX.L. */
-    OT_YXMM128_256,
+	OT_YXMM128_256,
 	/* XMM or Mem64/Mem256 is dependent on VEX.L. */
-    OT_LXMM64_128,
+	OT_LXMM64_128,
 	/* Mem128/Mem256 is dependent on VEX.L. */
-    OT_LMEM128_256
+	OT_LMEM128_256
 } _OpType;
 
 /* Flags for instruction: */
@@ -384,15 +384,29 @@ typedef enum OpType {
 typedef enum {ONT_NONE = -1, ONT_1 = 0, ONT_2 = 1, ONT_3 = 2, ONT_4 = 3} _OperandNumberType;
 
 /*
- * Info about the instruction, source/dest types, its name in text and flags.
+ * In order to save more space for storing the DB statically,
+ * I came up with another level of shared info.
+ * Because I saw that most of the information that instructions use repeats itself.
+ *
+ * Info about the instruction, source/dest types, meta and flags.
+ * _InstInfo points to a table of _InstSharedInfo.
+ */
+typedef struct {
+	uint8_t flagsIndex; /* An index into FlagsTables */
+	uint8_t s, d; /* OpType. */
+	uint8_t meta; /* Hi 5 bits = Instruction set class | Lo 3 bits = flow control flags. */
+	/* The following are CPU flag masks that the instruction changes. */
+	uint8_t modifiedFlags;
+	uint8_t testedFlags;
+	uint8_t undefinedFlags;
+} _InstSharedInfo;
+
+/*
  * This structure is used for the instructions DB and NOT for the disassembled result code!
  * This is the BASE structure, there are extentions to this structure below.
  */
-
 typedef struct {
-	uint8_t flagsIndex; /* An index into FlagsTables. */
-	uint8_t s, d; /* OpType. */
-	uint8_t meta; /* Hi 5 bits = Instruction set class | Lo 3 bits = flow control flags. */
+	uint16_t sharedIndex; /* An index into the SharedInfoTable. */
 	uint16_t opcodeId; /* The opcodeId is really a byte-offset into the mnemonics table. */
 } _InstInfo;
 
@@ -406,7 +420,6 @@ typedef struct {
  * therefore, I decided to make the extended structure contain all extra info in the same structure.
  * There are a few instructions (SHLD/SHRD/IMUL and SSE too) which use third operand (or a fourth).
  * A flag will indicate it uses a third/fourth operand.
- *
  */
 typedef struct {
 	/* Base structure (doesn't get accessed directly from code). */
@@ -434,9 +447,6 @@ typedef enum {
 
 /* Instruction node is treated as { int index:13;  int type:3; } */
 typedef uint16_t _InstNode;
-
-/* Helper macro to read the actual flags that are associated with an inst-info. */
-#define INST_INFO_FLAGS(ii) (FlagsTable[(ii)->flagsIndex])
 
 _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps);
 _InstInfo* inst_lookup_3dnow(_CodeInfo* ci);

@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #include "prefix.h"
 #include "x86defs.h"
 #include "operands.h"
+#include "insts.h"
 #include "../include/mnemonics.h"
 
 
@@ -93,6 +94,7 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 
 	/* Holds the info about the current found instruction. */
 	_InstInfo* ii = NULL;
+	_InstSharedInfo* isi = NULL;
 
 	/* Used only for special CMP instructions which have pseudo opcodes suffix. */
 	unsigned char cmpType = 0;
@@ -110,7 +112,8 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 
 	ii = inst_lookup(ci, ps);
 	if (ii == NULL) goto _Undecodable;
-	instFlags = INST_INFO_FLAGS(ii);
+	isi = &InstSharedInfoTable[ii->sharedIndex];
+	instFlags = FlagsTable[isi->flagsIndex];
 
 	/*
 	 * If both REX and OpSize are available we will have to disable the OpSize, because REX has precedence.
@@ -179,22 +182,22 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	 * Note: do-while with a constant 0 makes the compiler warning about it.
 	 */
 	for (;;) {
-		if (ii->d != OT_NONE) {
-			if (!operands_extract(ci, di, ii, (_OpType)ii->d, ONT_1, modrm, ps, effOpSz, effAdrSz, &lockable)) goto _Undecodable;
+		if (isi->d != OT_NONE) {
+			if (!operands_extract(ci, di, ii, instFlags, (_OpType)isi->d, ONT_1, modrm, ps, effOpSz, effAdrSz, &lockable)) goto _Undecodable;
 		} else break;
 
-		if (ii->s != OT_NONE) {
-			if (!operands_extract(ci, di, ii, (_OpType)ii->s, ONT_2, modrm, ps, effOpSz, effAdrSz, NULL)) goto _Undecodable;
+		if (isi->s != OT_NONE) {
+			if (!operands_extract(ci, di, ii, instFlags, (_OpType)isi->s, ONT_2, modrm, ps, effOpSz, effAdrSz, NULL)) goto _Undecodable;
 		} else break;
 
 		/* Use third operand, only if the flags says this InstInfo requires it. */
 		if (instFlags & INST_USE_OP3) {
-			if (!operands_extract(ci, di, ii, (_OpType)((_InstInfoEx*)ii)->op3, ONT_3, modrm, ps, effOpSz, effAdrSz, NULL)) goto _Undecodable;
+			if (!operands_extract(ci, di, ii, instFlags, (_OpType)((_InstInfoEx*)ii)->op3, ONT_3, modrm, ps, effOpSz, effAdrSz, NULL)) goto _Undecodable;
 		} else break;
 		
 		/* Support for a fourth operand is added for (i.e:) INSERTQ instruction. */
 		if (instFlags & INST_USE_OP4) {
-			if (!operands_extract(ci, di, ii, (_OpType)((_InstInfoEx*)ii)->op4, ONT_4, modrm, ps, effOpSz, effAdrSz, NULL)) goto _Undecodable;
+			if (!operands_extract(ci, di, ii, instFlags, (_OpType)((_InstInfoEx*)ii)->op4, ONT_4, modrm, ps, effOpSz, effAdrSz, NULL)) goto _Undecodable;
 		}
 		break;
 	} /* Continue here after all operands were extracted. */
@@ -203,7 +206,8 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	if (instFlags & INST_3DNOW_FETCH) {
 		ii = inst_lookup_3dnow(ci);
 		if (ii == NULL) goto _Undecodable;
-		instFlags = INST_INFO_FLAGS(ii);
+		isi = &InstSharedInfoTable[ii->sharedIndex];
+		instFlags = FlagsTable[isi->flagsIndex];
 	}
 
 	/* Check whether pseudo opcode is needed, only for CMP instructions: */
@@ -339,7 +343,7 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 			di->opcode = ii->opcodeId + CmpMnemonicOffsets[cmpType];
 		}
 	}
-	 
+
 	/*
 	 * Store the address size inside the flags.
 	 * This is necessary for the caller to know the size of rSP when using PUSHA for example.
@@ -353,11 +357,16 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	di->unusedPrefixesMask = prefixes_set_unused_mask(ps);
 
 	/* Copy instruction meta. */
-	di->meta = ii->meta;
+	di->meta = isi->meta;
 	if (di->segment == 0) di->segment = R_NONE;
 
 	/* Take into account the O_MEM base register for the mask. */
 	if (di->base != R_NONE) di->usedRegistersMask |= _REGISTERTORCLASS[di->base];
+
+	/* Copy CPU affected flags. */
+	di->modifiedFlagsMask = isi->modifiedFlags;
+	di->testedFlagsMask = isi->testedFlags;
+	di->undefinedFlagsMask = isi->undefinedFlags;
 
 	/* Calculate the size of the instruction we've just decoded. */
 	di->size = (uint8_t)((ci->code - startCode) & 0xff);

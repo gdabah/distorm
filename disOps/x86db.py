@@ -1,7 +1,7 @@
 #
 # x86db.py
 #
-# Copyright (C) 2009 Gil Dabah, http://ragestorm.net/disops/
+# Copyright (C) 2012 Gil Dabah, http://ragestorm.net/disops/
 #
 
 from x86header import *
@@ -37,6 +37,7 @@ class InstructionInfo:
 	""" Instruction Info holds all information relevant for an instruction.
 	another string member, self.tag, will be initialized in runtime to have the bytes of the opcode (I.E: 0f_0f_a7). """
 	def __init__(self, classType, OL, pos, isModRMIncluded, mnemonics, operands, flags):
+		self.tag = ""
 		self.classType = classType
 		# Check for special mandatory-prefixed instruction.
 		if pos[0] in _MandatoryPrefixesList:
@@ -54,6 +55,10 @@ class InstructionInfo:
 		self.mnemonics = mnemonics
 		self.operands = operands
 		self.flags = flags
+		# CPU affected flags by instruction:
+		self.modifiedFlags = 0
+		self.testedFlags = 0
+		self.undefinedFlags = 0
 		if len(self.operands) == 3:
 			self.flags |= InstFlag.USE_OP3
 		elif len(self.operands) == 4:
@@ -199,6 +204,11 @@ class InstructionsDB:
 	def __init__(self):
 		# Root contains a Full InstructionsTable with 256 entries.
 		self.root = InstructionsTable(InstructionsTable.Full, "", [])
+		# Special instructions that diStorm has to use manually and can look them up using the tables.
+		self.exportedInstructions = []
+
+	def getExportedInstructions(self):
+		return self.exportedInstructions
 
 	def HandleMandatoryPrefix(self, type, o, pos, ii, tag):
 		if ii.prefixed:
@@ -331,6 +341,10 @@ class InstructionsDB:
 
 	def SetInstruction(self, *args):
 		""" This function is used in order to insert an instruction info into the DB. """
+		if (args[4] & InstFlag.EXPORTED) != 0:
+			ii = InstructionInfo(args[0], OpcodeLength.OL_1, [0], False, args[2], args[3], args[4])
+			self.exportedInstructions.append(ii)
+			return
 		# *args = ISetClass, OL, pos, mnemonics, operands, flags
 		# Construct an Instruction Info object with the info given in args.
 		opcode = args[1].replace(" ", "").split(",")

@@ -33,6 +33,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #define INST_NODE_INDEX(n) ((n) & 0x1fff)
 #define INST_NODE_TYPE(n) ((n) >> 13)
 
+/* Helper macro to read the actual flags that are associated with an inst-info. */
+#define INST_INFO_FLAGS(ii) (FlagsTable[InstSharedInfoTable[(ii)->sharedIndex].flagsIndex])
+
 /*
 I use the trie data structure as I found it most fitting to a disassembler mechanism.
 When you read a byte and have to decide if it's enough or you should read more bytes, 'till you get to the instruction information.
@@ -383,14 +386,17 @@ _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps)
 				 * And since the DB can't be patched dynamically, because the DB has to be multi-threaded compliant,
 				 * I have no choice but to check for ARPL/MOVSXD right here - "right about now, the funk soul brother, check it out now, the funk soul brother...", fatboy slim
 				 */
-			return ci->dt == Decode64Bits ? &II_movsxd : &II_arpl;
+				if (ci->dt == Decode64Bits) {
+					return &II_MOVSXD;
+				} /* else ARPL will be returned because its defined in the DB already. */
+			break;
 
 			case INST_NOP_INDEX: /* Nopnopnop */
 				/* Check for Pause, since it's prefixed with 0xf3, which is not a real mandatory prefix. */
 				if (ps->decodedPrefixes & INST_PRE_REP) {
 					/* Flag this prefix as used. */
 					ps->usedPrefixes |= INST_PRE_REP;
-					return &II_pause;
+					return &II_PAUSE;
 				}
 
 				/*
@@ -402,7 +408,7 @@ _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps)
 				 * Note that if the REX.B is used, then the register is not RAX anymore but R8, which means it's not a NOP.
 				 */
 				if (rex & PREFIX_EX_W) ps->usedPrefixes |= INST_PRE_REX;
-				if ((ci->dt != Decode64Bits) || (~rex & PREFIX_EX_B)) return &II_nop;
+				if ((ci->dt != Decode64Bits) || (~rex & PREFIX_EX_B)) return &II_NOP;
 			break;
 			
 			case INST_LEA_INDEX:
@@ -471,7 +477,7 @@ _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps)
 		instType = INST_NODE_TYPE(in);
 
 		/* This is where we check if we just read two escape bytes in a row, which means it is a 3DNow! instruction. */
-		if ((tmpIndex0 == _3DNOW_ESCAPE_BYTE) && (tmpIndex1 == _3DNOW_ESCAPE_BYTE)) return &II_3dnow;
+		if ((tmpIndex0 == _3DNOW_ESCAPE_BYTE) && (tmpIndex1 == _3DNOW_ESCAPE_BYTE)) return &II_3DNOW;
 
 		/* 2 bytes instruction (OCST_2BYTES). */
 		if (instType < INT_INFOS)
