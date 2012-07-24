@@ -48,8 +48,6 @@ import x86sets
 import x86db
 from x86header import *
 
-FLAGS_BASE_INDEX = 5 # Used to reserve the first few flags in the table for manual defined instructions in x86defs.c
-
 mnemonicsIds = {} # mnemonic : offset to mnemonics table of strings.
 idsCounter = len("undefined") + 2 # Starts immediately after this one.
 
@@ -133,10 +131,6 @@ def CreateJavaDict(mnemonicsIds):
 def DumpMnemonics():
 	global mnemonicsIds
 
-	# Add the hardcoded instruction which are not found in the DB.
-	# Warning: This should be updated synchronously with the code in diStorm.
-	map(lambda x: TranslateMnemonics(None, [x]), ["WAIT", "MOVSXD", "PAUSE"])
-
 	f = open("defs.txt", "w")
 
 	f.write("typedef enum {\n\tI_UNDEFINED = 0, ")
@@ -182,7 +176,7 @@ def DumpMnemonics():
 
 	f.write(regsEnum + "\n")
 
-	# Mnemonics are sorted by insertion order. (Psuedo mnemonics depends on this!)
+	# Mnemonics are sorted by insertion order. (Psuedo mnemonics depend on this!)
 	s = "const unsigned char _MNEMONICS[] =\n\"\\x09\" \"UNDEFINED\\0\" "
 	l = zip(mnemonicsIds.keys(), mnemonicsIds.values())
 	l.sort(lambda x, y: x[1] - y[1])
@@ -197,7 +191,7 @@ def DumpMnemonics():
 	f.close()
 
 	# Used for Python/Java dictionary of opcodeIds-->mnemonics.
-	#CreatePythonDict(mnemonicsIds)
+	CreatePythonDict(mnemonicsIds)
 	#CreateJavaDict(mnemonicsIds)
 
 O_NONE = 0
@@ -313,7 +307,6 @@ _OPT2T = {OperandType.NONE : O_NONE,
 	OperandType.LMEM128_256 : O_MEM
 	}
 
-flagsDict = {}
 def CheckOTCollisions(ii):
 	""" Checks whether an instruction has two or more operands that use the same fields in the diStorm3 structure.
 	E.G: ENTER 0x10, 0x1 --> This instruction uses two OT_IMM, which will cause a collision and use the same field twice which is bougs. """
@@ -364,6 +357,169 @@ def CheckWritableDestinationOperand(ii):
 			ii.flags |= InstFlag.DST_WR
 			return
 
+g = set()
+ccc = 0
+def SetInstructionAffectedFlags(ii, flagsTuple):
+	""" Helper routine to set the m/t/u flags for an instruction info. """
+	# Pad tuple for fast access.
+	if not isinstance(flagsTuple, type(())):
+		flagsTuple = (flagsTuple,)
+	flagsTuple += (0,) * (3 - len(flagsTuple))
+	ii.modifiedFlags = flagsTuple[0]
+	ii.testedFlags = flagsTuple[1]
+	ii.undefinedFlags = flagsTuple[2]
+	global g
+	g.add(flagsTuple)
+	global ccc
+	ccc += 1
+	#print ii.mnemonics
+
+def GetTestedFlagsForCondition(cond):
+	OF, SF, ZF, AF, PF, CF, IF, DF = CPUFlags.OF, CPUFlags.SF, CPUFlags.ZF, CPUFlags.AF, CPUFlags.PF, CPUFlags.CF, CPUFlags.IF, CPUFlags.DF
+	Conditions = {
+		"O": OF,
+		"NO": OF,
+		"B": CF,
+		"AE": CF,
+		"Z": ZF,
+		"NZ": ZF,
+		"BE": CF | ZF,
+		"A": CF | ZF,
+		"S": SF,
+		"NS": SF,
+		"P": PF,
+		"NP": PF,
+		"L": SF | OF,
+		"GE": SF | OF,
+		"LE": SF | OF | ZF,
+		"G": SF | OF | ZF,
+		# Special for FCMOV
+		"U": PF,
+		"NU": PF,
+		"E": ZF,
+		"NE": ZF,
+		"NB": CF,
+		"NBE": CF | ZF
+	}
+	return Conditions[cond]
+
+def CheckInstructionAffectedFlags(ii):
+	"""
+	Add flags for each instruction that is in the following table. We add modified/tested/undefined flags.
+	Note that some instruction reset specific flags, but we don't record that here, we only care about actually modified ones.
+	"""
+	# MNEM: MODIFIED, TEST, UNDEFINED.
+	OF, SF, ZF, AF, PF, CF, IF, DF = CPUFlags.OF, CPUFlags.SF, CPUFlags.ZF, CPUFlags.AF, CPUFlags.PF, CPUFlags.CF, CPUFlags.IF, CPUFlags.DF
+	InstByMnem = {
+		"AAA": (AF | CF, AF, OF | SF | ZF | PF),
+		"AAS": (AF | CF, AF, OF | SF | ZF | PF),
+		"AAD": (SF | ZF | PF, 0, OF | AF | CF),
+		"AAM": (SF | ZF | PF, 0, OF | AF | CF),
+		"ADC": (OF | SF | ZF | AF | PF | CF, CF),
+		"ADD": (OF | SF | ZF | AF | PF | CF),
+		"AND": (OF | SF | ZF | PF | CF, 0, AF),
+		"ARPL": (ZF),
+		"BSF": (ZF, 0, OF | SF | ZF | AF | PF | CF),
+		"BSR": (ZF, 0, OF | SF | ZF | AF | PF | CF),
+		"BT": (CF, 0, OF | SF | ZF | AF | PF),
+		"BTS": (CF, 0, OF | SF | ZF | AF | PF),
+		"BTR": (CF, 0, OF | SF | ZF | AF | PF),
+		"BTC": (CF, 0, OF | SF | ZF | AF | PF),
+		"CLC": (CF),
+		"CLD": (DF),
+		"CLI": (IF),
+		"CMC": (CF),
+		"CMP": (OF | SF | ZF | AF | PF | CF),
+		"CMPXCHG": (OF | SF | ZF | AF | PF | CF),
+		"CMPXCHG8B": (ZF),
+		"CMPXCHG16B": (ZF), # Same inst as previous.
+		"COMSID": (ZF | PF | CF),
+		"COMISS": (ZF | PF | CF),
+		"DAA": (SF | ZF | AF | PF | CF, AF | CF, OF),
+		"DAS": (SF | ZF | AF | PF | CF, AF | CF, OF),
+		"DEC": (OF | SF | ZF | AF | PF),
+		"DIV": (0, 0, OF | SF | ZF | AF | PF | CF),
+		"FCOMI":  (ZF | PF | CF),
+		"FCOMIP": (ZF | PF | CF),
+		"FUCOMI": (ZF | PF | CF),
+		"FUCOMIP": (ZF | PF | CF),
+		"IDIV": (0, 0, OF | SF | ZF | AF | PF | CF),
+		"IMUL": (OF | CF, 0, SF | ZF | AF | PF),
+		"INC": (OF | SF | ZF | AF | PF),
+		"UCOMSID": (ZF | PF | CF),
+		"UCOMISS": (ZF | PF | CF),
+		"IRET": (OF | SF | ZF | AF | PF | CF | IF | DF),
+		"LAR": (ZF),
+		"LOOPZ": (0, ZF),
+		"LOOPNZ": (0, ZF),
+		"LSL": (ZF),
+		"LZCNT": (ZF | CF, 0, OF | SF | AF | PF),
+		"MUL": (OF | CF, 0, SF | ZF | AF | PF),
+		"NEG": (OF | SF | ZF | AF | PF | CF),
+		"OR": (SF | ZF | PF, AF),
+		"POPCNT": (ZF),
+		"POPF": (OF | SF | ZF | AF | PF | CF | IF | DF),
+		"RSM": (OF | SF | ZF | AF | PF | CF | IF | DF),
+		"SAHF": (SF | ZF | AF | PF | CF),
+		"SBB": (OF | SF | ZF | AF | PF | CF, CF),
+		"STC": (CF),
+		"STD": (DF),
+		"STI": (IF),
+		"SUB": (OF | SF | ZF | AF | PF | CF),
+		"TEST": (SF | ZF | PF, 0, AF),
+		"VERR": (ZF),
+		"VERW": (ZF),
+		"XADD": (OF | SF | ZF | AF | PF | CF),
+		"XOR": (SF | ZF | PF, 0, AF),
+		# IO/String instructions:
+		"MOVS": (0, DF),
+		"LODS": (0, DF),
+		"STOS": (0, DF),
+		"CMPS":	(OF | SF | ZF | AF | PF | CF, DF),
+		"SCAS": (OF | SF | ZF | AF | PF | CF, DF),
+		"INS": (0, DF),
+		"OUTS": (0, DF)
+	}
+	# Check for mnemonics in the above table.
+	for i in ii.mnemonics:
+		if InstByMnem.has_key(i) and (ii.flags & InstFlag.PSEUDO_OPCODE) == 0:
+			SetInstructionAffectedFlags(ii, InstByMnem[i])
+			return
+
+	# Look carefuly for SETcc or Jcc instructions.
+	for i in ["SET", "CMOV", "FCMOV"]:
+		if ii.mnemonics[0].find(i) == 0:
+			SetInstructionAffectedFlags(ii, GetTestedFlagsForCondition(ii.mnemonics[0][len(i):]))
+			return
+	# See if it's a Jcc instruction.
+	if ii.mnemonics[0][:1] == "J" and ii.mnemonics[0][:2] not in ["JM", "JC", "JE", "JR"]:
+		SetInstructionAffectedFlags(ii, GetTestedFlagsForCondition(ii.mnemonics[0][1:]))
+		return
+
+	# Still no match, try special shift/rotate instructions.
+	# Special shift/rotate instruction that with constant 1 have different flag affections:
+	# First tuple is with constant 1, second tuple is with any count (CL).
+	Shifts = [
+		(["RCL", "RCR"], (OF | CF, CF), (CF, CF, OF)),
+		(["ROL", "ROR"], (OF | CF), (CF, 0, OF)),
+		(["SAL" "SAR", "SHL", "SHR"], (OF | SF | ZF | PF | CF, 0, AF), (SF | ZF | PF | CF, 0, OF | AF)),
+		(["SHLD", "SHRD"], (OF | SF | ZF | PF | CF, 0, AF), (SF | ZF | PF | CF, 0, OF | AF))
+	]
+	for i in Shifts:
+		for j in i[0]:
+			if ii.mnemonics[0] == j:
+				flags = i[1] if ii.operands[1] == OperandType.CONST1 else i[2]
+				SetInstructionAffectedFlags(ii, flags)
+				return
+
+	# The instruction doesn't affect any flags...
+	return
+
+# Table to hold shared inst-info.
+sharedInfoDict = {}
+# Table to hold shared flags.
+flagsDict = {}
+
 def FormatInstruction(ii):
 	""" Formats a string with all information relevant for diStorm InstInfo structure
 	or the InstInfoEx. These are the internal structures diStorm uses for holding the instructions' information.
@@ -387,6 +543,9 @@ def FormatInstruction(ii):
 
 	# Add flags for writable destination operand.
 	CheckWritableDestinationOperand(ii)
+
+	# Add affected modified/tested/undefined flags for instruction.
+	CheckInstructionAffectedFlags(ii)
 
 	# Pad mnemonics to three, in case EXMNEMONIC/2 isn't used (so we don't get an exception).
 	mnems = TranslateMnemonics([None, ii.classType][(ii.flags & InstFlag.PSEUDO_OPCODE) == InstFlag.PSEUDO_OPCODE], ii.mnemonics) + ["0", "0"]
@@ -414,16 +573,23 @@ def FormatInstruction(ii):
 	flags = ii.flags & ((1 << InstFlag.FLAGS_EX_START_INDEX)-1)
 	# Allocate a slot for this flag if needed.
 	if not flagsDict.has_key(flags):
-		flagsDict[flags] = len(flagsDict) + FLAGS_BASE_INDEX # Skip a few reserved slots.
+		flagsDict[flags] = len(flagsDict)
 	# Get the flags-index.
 	flagsIndex = flagsDict[flags]
 	if flagsIndex >= 256:
 		raise "FlagsIndex exceeded its 8 bits. Change flags of _InstInfo to be uint16!"
 
-	# Also classType and flow control are shared in two nibbles.
-	fields = "0x%x, %d, %d, %d, %s" % (flagsIndex, ops[1], ops[0], (ii.classType << 3) | ii.flowControl,  mnems[0])
-	# "Structure-Name" = II_Bytes-Code {Fields + Optional-Fields}.
+	# InstSharedInfo:
+	sharedInfo = (flagsIndex, ops[1], ops[0], (ii.classType << 3) | ii.flowControl, ii.modifiedFlags, ii.testedFlags, ii.undefinedFlags)
+	if not sharedInfoDict.has_key(sharedInfo):
+		sharedInfoDict[sharedInfo] = len(sharedInfoDict)
+	# Get the shared-info-index.
+	sharedInfoIndex = sharedInfoDict[sharedInfo]
+	if sharedInfoIndex >= 2**16:
+		raise "SharedInfoIndex exceeded its 16 bits. Change type of sharedInfoIndex in _InstInfo!"
 
+	fields = "0x%x, %s" % (sharedInfoIndex, mnems[0])
+	# "Structure-Name" = II_Bytes-Code {Fields + Optional-Fields}.
 	return ("\t/*II%s*/ {%s%s}" % (ii.tag, fields, optFields), (ii.flags & InstFlag.EXTENDED) != 0)
 
 def FilterTable(table):
@@ -442,7 +608,7 @@ def GeneratePseudoMnemonicOffsets():
 
 	# (AVX=VCMPxxxYY + null + lengthByte).
 	lengths = map(lambda x: 4 + len(x) + 2 + 2, AVXCmpTypes)
-	s += "uint16_t VCmpMnemonicOffsets[32] = {\n" + ", ".join([str(sum(lengths[:i] or [0])) for i in xrange(len(lengths))]) + "\n};\n";
+	s += "uint16_t VCmpMnemonicOffsets[32] = {\n" + ", ".join([str(sum(lengths[:i] or [0])) for i in xrange(len(lengths))]) + "\n};";
 	return s
 
 def CreateTables(db):
@@ -535,7 +701,6 @@ def CreateTables(db):
 
 	:!:NOTE:!: You MUST iterate a table with GenBlock wrapper, otherwise you might NOT get all instructions from the DB!
 		   Refer to x86db.py-class GenBlock for more information. """
-
 	indexShift = 13 # According to InstNode in instructions.h.
 	InstInfos = []
 	InstInfosEx = []
@@ -567,14 +732,16 @@ def CreateTables(db):
 			else:
 				# False indicates this entry points nothing.
 				InstructionsTree.append((0, ""))
-	s0 = "/* See x86defs.c if you get an error here. */\n_iflags FlagsTable[%d + %d] = {\n%s\n};" % (len(flagsDict), FLAGS_BASE_INDEX,  ",\n".join(["0x%x" % i[1] for i in sorted(zip(flagsDict.values(), flagsDict.keys()))]))
-	s1 = "\n".join(["_InstNode Table%s = %d;" % (i[0], i[1]) for i in externTables])
-	s2 = "_InstInfo InstInfos[] = {\n%s\n};" % (",\n".join(InstInfos))
-	s3 = "_InstInfoEx InstInfosEx[] = {\n%s\n};" % (",\n".join(InstInfosEx))
-	s4 = "_InstNode InstructionsTree[] = {\n"
-	s4 += ",\n".join(["/* %x - %s */  %s" % (i[0], i[1][1], "0" if i[1][0] == 0 else "0x%x" % i[1][0]) for i in enumerate(InstructionsTree)])
-	s5 = GeneratePseudoMnemonicOffsets()
-	return s0 + "\n\n" + s1 + "\n\n" + s2 + "\n\n" + s3 + "\n\n" + s4 + "\n};\n\n" + s5 + "\n"
+	s = ["\n".join(["_InstInfo II_%s =%s;" % (i.mnemonics[0], FormatInstruction(i)[0]) for i in db.getExportedInstructions()]),
+		"_iflags FlagsTable[%d] = {\n%s\n};" % (len(flagsDict), ",\n".join(["0x%x" % i[1] for i in sorted(zip(flagsDict.values(), flagsDict.keys()))])),
+		"\n".join(["_InstNode Table%s = %d;" % (i[0], i[1]) for i in externTables]),
+		"_InstInfo InstInfos[%d] = {\n%s\n};" % (len(InstInfos), ",\n".join(InstInfos)),
+		"_InstInfoEx InstInfosEx[%d] = {\n%s\n};" % (len(InstInfosEx), ",\n".join(InstInfosEx)),
+		"_InstNode InstructionsTree[%d] = {\n%s\n};" % (len(InstructionsTree), ",\n".join(["/* %x - %s */  %s" % (i[0], i[1][1], "0" if i[1][0] == 0 else "0x%x" % i[1][0]) for i in enumerate(InstructionsTree)])),
+		# sharedInfoDict must be evaluated last, since the exported instructions above add items to it!
+		"_InstSharedInfo InstSharedInfoTable[%d] = {\n%s\n};" % (len(sharedInfoDict), ",\n".join(["{%s}" % str(i[1])[1:-1] for i in sorted(zip(sharedInfoDict.values(), sharedInfoDict.keys()))])),
+		GeneratePseudoMnemonicOffsets()]
+	return "\n\n".join(s)
 
 def main():
 	# Init the 80x86/x64 instructions sets DB.
@@ -590,11 +757,9 @@ def main():
 	lists = CreateTables(db)
 	# Write them to the file also.
 	f.write(lists)
-
 	f.close()
 
 	DumpMnemonics()
 
 	print "The file output.txt was written successfully"
 main()
-

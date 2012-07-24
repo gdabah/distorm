@@ -230,7 +230,7 @@ Mnemonics = {0x669: "SLDT", 0x62: "POPA", 0x8ee: "UNPCKHPS", 0x115: "POPF", 0x11
 0x1dd4: "VPTEST", 0x532: "FISUB", 0x205: "STD", 0xf13: "VPACKSSDW", 0x3d: "XOR",
 0xc7f: "VMULPD", 0x1f1: "STC", 0x1fb: "STI", 0x26c2: "LDMXCSR", 0x116a: "CMPLTPD",
 0xbe7: "ORPS", 0x1ef6: "VPACKUSDW", 0x61b: "FSUBP", 0x66f: "STR", 0x40e: "FSUBR",
-0x111b: "CMPLTPS", 0x230d: "VFMADD231SD", 0x272b: "PAUSE", 0x1a8d: "CVTPD2DQ",
+0x111b: "CMPLTPS", 0x230d: "VFMADD231SD", 0x2725: "PAUSE", 0x1a8d: "CVTPD2DQ",
 0x372: "RSM", 0xb5a: "VSQRTSD", 0xbf3: "VORPS", 0x218e: "VFMADDSUB213PS", 0x23cf: "AESENC",
 0x1437: "VCMPEQ_UQPD", 0x902: "VUNPCKHPS", 0x1cf3: "PMADDUBSW", 0x1355: "VCMPNLE_UQPS",
 0x1b68: "VPSLLW", 0x1bc5: "MASKMOVQ", 0x1c8: "CALL", 0xb51: "VSQRTSS", 0x19dc: "PADDUSB",
@@ -280,7 +280,7 @@ Mnemonics = {0x669: "SLDT", 0x62: "POPA", 0x8ee: "UNPCKHPS", 0x115: "POPF", 0x11
 0x340: "SETNP", 0xf43: "VPUNPCKHQDQ", 0xd2c: "SUBPS", 0x1230: "CMPNLTSD", 0x674: "LLDT",
 0x2229: "VFMSUB213SD", 0x1dcd: "PTEST", 0x2164: "VFNMSUB132PD", 0x279: "GETSEC",
 0x1d69: "VPSIGND", 0x1ab: "JCXZ", 0x11e1: "CMPNLTSS", 0x34d: "SETGE", 0x1112: "CMPEQPS",
-0x1bb4: "PSADBW", 0x2723: "MOVSXD", 0x2156: "VFNMSUB132PS", 0x185: "AAD", 0x23ec: "VAESENCLAST",
+0x1bb4: "PSADBW", 0x271d: "MOVSXD", 0x2156: "VFNMSUB132PS", 0x185: "AAD", 0x23ec: "VAESENCLAST",
 0xf37: "PUNPCKHQDQ", 0x878: "MOVLPD", 0x19e5: "VPADDUSW", 0x12c8: "VCMPFALSEPS",
 0x180: "AAM", 0xf2a: "VPUNPCKLQDQ", 0xd76: "MINSS", 0x1c42: "PADDD", 0x145a: "VCMPFALSEPD",
 0xe3e: "VPUNPCKLWD", 0x870: "MOVLPS", 0x729: "CLGI", 0x4c: "AAS", 0x139: "LODS",
@@ -301,19 +301,19 @@ Mnemonics = {0x669: "SLDT", 0x62: "POPA", 0x8ee: "UNPCKHPS", 0x115: "POPF", 0x11
 0xb6c: "RSQRTSS", 0x1d9d: "VTESTPS", 0x86: "JO", 0xdfc: "VMAXPS", 0x1998: "PSUBUSB",
 0xca: "JG", 0x1ddc: "VBROADCASTSS", 0xa6: "JA", 0x8f: "JB", 0xe9: "CWDE", 0x13f4: "VCMPLEPD",
 0x1038: "VMWRITE", 0x1262: "VCMPLEPS", 0x1983: "PMOVMSKB", 0x254b: "INSERTPS",
-0x25fe: "PCMPESTRI", 0x271d: "WAIT", 0x152b: "VCMPFALSE_OSPD", 0x25e7: "PCMPESTRM",
-0xe4a: "PUNPCKLDQ", 0xc69: "MULSS", 0xd50: "VSUBPD", 0x1161: "CMPEQPD", 0x178b: "VCMPNEQ_OQSD",
-0xaec: "VCOMISD", 0xd94: "VMINSS", 0x1c49: "VPADDD", 0x258: "RDMSR", 0x1d58: "VPSIGNW",
-0x1b1: "JECXZ", 0xc70: "MULSD", 0x154: "ENTER", 0x2423: "MOVBE", 0x1016: "VZEROALL",
-0xd9c: "VMINSD", 0x15f9: "VCMPNEQ_OQSS", 0x7e4: "PFSUBR", 0x12e3: "VCMPGEPS",
-0x19a1: "VPSUBUSB", 0x2341: "VFMSUB231SD", 0x2021: "PMAXUD", 0x2688: "FXSAVE",
-0x580: "FISTTP", 0x1475: "VCMPGEPD", 0x2489: "BLENDPS", 0x1718: "VCMPLESD",
-0x5a7: "FCMOVNBE", 0x2334: "VFMSUB231SS", 0x25c6: "VBLENDVPS", 0x25a5: "VMPSADBW",
-0x19b4: "VPSUBUSW", 0x170e: "VCMPLTSD", 0x1ed7: "MOVNTDQA", 0x18c0: "SHUFPD",
-0xd33: "SUBPD", 0xb27: "SQRTPD", 0x94e: "VMOVHPD", 0x6b7: "VMCALL", 0x20c3: "VFMADD132PD",
-0x15b: "LEAVE", 0x18b8: "SHUFPS", 0x1303: "VCMPEQ_OSPS", 0x2609: "VPCMPESTRI",
-0x157c: "VCMPLTSS", 0x25f2: "VPCMPESTRM", 0x20b6: "VFMADD132PS", 0x69d: "LIDT",
-0x498: "F2XM1", 0x945: "VMOVHPS", 0x1f82: "PMOVZXDQ", 0x100a: "VZEROUPPER",
+0x2732: "3DNOW", 0x25fe: "PCMPESTRI", 0x272c: "WAIT", 0x152b: "VCMPFALSE_OSPD",
+0x25e7: "PCMPESTRM", 0xe4a: "PUNPCKLDQ", 0xc69: "MULSS", 0xd50: "VSUBPD", 0x1161: "CMPEQPD",
+0x178b: "VCMPNEQ_OQSD", 0xaec: "VCOMISD", 0xd94: "VMINSS", 0x1c49: "VPADDD",
+0x258: "RDMSR", 0x1d58: "VPSIGNW", 0x1b1: "JECXZ", 0xc70: "MULSD", 0x154: "ENTER",
+0x2423: "MOVBE", 0x1016: "VZEROALL", 0xd9c: "VMINSD", 0x15f9: "VCMPNEQ_OQSS",
+0x7e4: "PFSUBR", 0x12e3: "VCMPGEPS", 0x19a1: "VPSUBUSB", 0x2341: "VFMSUB231SD",
+0x2021: "PMAXUD", 0x2688: "FXSAVE", 0x580: "FISTTP", 0x1475: "VCMPGEPD", 0x2489: "BLENDPS",
+0x1718: "VCMPLESD", 0x5a7: "FCMOVNBE", 0x2334: "VFMSUB231SS", 0x25c6: "VBLENDVPS",
+0x25a5: "VMPSADBW", 0x19b4: "VPSUBUSW", 0x170e: "VCMPLTSD", 0x1ed7: "MOVNTDQA",
+0x18c0: "SHUFPD", 0xd33: "SUBPD", 0xb27: "SQRTPD", 0x94e: "VMOVHPD", 0x6b7: "VMCALL",
+0x20c3: "VFMADD132PD", 0x15b: "LEAVE", 0x18b8: "SHUFPS", 0x1303: "VCMPEQ_OSPS",
+0x2609: "VPCMPESTRI", 0x157c: "VCMPLTSS", 0x25f2: "VPCMPESTRM", 0x20b6: "VFMADD132PS",
+0x69d: "LIDT", 0x498: "F2XM1", 0x945: "VMOVHPS", 0x1f82: "PMOVZXDQ", 0x100a: "VZEROUPPER",
 0xb1f: "SQRTPS", 0xbd5: "VANDNPS", 0x1958: "VPADDQ", 0x4d8: "FPREM", 0x1c3a: "VPADDW",
 0x24c2: "PALIGNR", 0x1faa: "PMINSB", 0xe89: "PCMPGTW", 0x36c: "SHLD", 0x14f: "LDS",
 0x1c2b: "VPADDB", 0x703: "VMRUN", 0x269a: "RDFSBASE", 0xbde: "VANDNPD", 0x190: "XLAT",
@@ -461,6 +461,22 @@ FLAGS = [
 
 # Instruction could not be disassembled. Special-case handling
 FLAG_NOT_DECODABLE = 0xFFFF # -1 in uint16
+# Some features
+DF_NONE = 0
+DF_MAXIMUM_ADDR16 = 1
+DF_MAXIMUM_ADDR32 = 2
+DF_RETURN_FC_ONLY = 4
+DF_STOP_ON_CALL = 8
+# Flow control flags
+DF_STOP_ON_CALL = 0x8
+DF_STOP_ON_RET  = 0x10
+DF_STOP_ON_SYS  = 0x20
+DF_STOP_ON_UNC_BRANCH  = 0x40
+DF_STOP_ON_CND_BRANCH  = 0x80
+DF_STOP_ON_INT  = 0x100
+DF_STOP_ON_CMOV  = 0x200
+DF_STOP_ON_FLOW_CONTROL = (DF_STOP_ON_CALL | DF_STOP_ON_RET | DF_STOP_ON_SYS | \
+	DF_STOP_ON_UNC_BRANCH | DF_STOP_ON_CND_BRANCH | DF_STOP_ON_INT | DF_STOP_ON_CMOV)
 
 def DecodeGenerator(codeOffset, code, dt):
     """
@@ -814,7 +830,7 @@ class Instruction (object):
         return self._toText()
 
 
-def DecomposeGenerator(codeOffset, code, dt):
+def DecomposeGenerator(codeOffset, code, dt, features = 0):
     """
     @type  codeOffset: long
     @param codeOffset: Memory address where the code is located.
@@ -832,6 +848,10 @@ def DecomposeGenerator(codeOffset, code, dt):
          * L{Decode32Bits}: IA-32 decoding
 
          * L{Decode64Bits}: AMD64 decoding
+
+    @type  features: int
+    @param features: A flow control stopping criterion, eg. DF_STOP_ON_CALL.
+                     or other features, eg. DF_RETURN_FC_ONLY.
 
     @rtype:  generator of TODO
     @return: Generator of TODO
@@ -857,7 +877,7 @@ def DecomposeGenerator(codeOffset, code, dt):
     while codeLen > 0:
         
         usedInstructionsCount = c_uint(0)
-        codeInfo = _CodeInfo(_OffsetType(codeOffset), _OffsetType(0), cast(p_code, c_char_p), codeLen, dt, 0)
+        codeInfo = _CodeInfo(_OffsetType(codeOffset), _OffsetType(0), cast(p_code, c_char_p), codeLen, dt, features)
         status = internal_decompose(byref(codeInfo), byref(result), MAX_INSTRUCTIONS, byref(usedInstructionsCount))
         if status == DECRES_INPUTERR:
             raise ValueError("Invalid arguments passed to distorm_decode()")
@@ -878,8 +898,10 @@ def DecomposeGenerator(codeOffset, code, dt):
         codeOffset = codeOffset + delta
         p_code     = byref(code_buf, instruction_off)
         codeLen    = codeLen - delta
+	if (features & DF_STOP_ON_FLOW_CONTROL) != 0:
+		break # User passed a stop flag.
 
-def Decompose(offset, code, type = Decode32Bits):
+def Decompose(offset, code, type = Decode32Bits, features = 0):
     """
     @type  offset: long
     @param offset: Memory address where the code is located.
@@ -898,8 +920,12 @@ def Decompose(offset, code, type = Decode32Bits):
 
          * L{Decode64Bits}: AMD64 decoding
 
+    @type  features: int
+    @param features: A flow control stopping criterion, eg. DF_STOP_ON_CALL.
+                     or other features, eg. DF_RETURN_FC_ONLY.
+
     @rtype:  TODO
     @return: TODO
     @raise ValueError: Invalid arguments.
     """
-    return list( DecomposeGenerator(offset, code, type) )
+    return list( DecomposeGenerator(offset, code, type, features) )

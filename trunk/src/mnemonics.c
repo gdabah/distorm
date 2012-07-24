@@ -273,7 +273,8 @@ const unsigned char _MNEMONICS[] =
 "\x08" "RDFSBASE\0" "\x07" "FXRSTOR\0" "\x09" "FXRSTOR64\0" "\x08" "RDGSBASE\0" \
 "\x07" "LDMXCSR\0" "\x08" "WRFSBASE\0" "\x08" "VLDMXCSR\0" "\x07" "STMXCSR\0" \
 "\x08" "WRGSBASE\0" "\x08" "VSTMXCSR\0" "\x06" "RDRAND\0" "\x07" "VMPTRLD\0" \
-"\x07" "VMCLEAR\0" "\x05" "VMXON\0" "\x04" "WAIT\0" "\x06" "MOVSXD\0" "\x05" "PAUSE\0";
+"\x07" "VMCLEAR\0" "\x05" "VMXON\0" "\x06" "MOVSXD\0" "\x05" "PAUSE\0" "\x04" "WAIT\0" \
+"\x05" "3DNOW\0";
 
 const _WRegister _REGISTERS[] = {
 	{3, "RAX"}, {3, "RCX"}, {3, "RDX"}, {3, "RBX"}, {3, "RSP"}, {3, "RBP"}, {3, "RSI"}, {3, "RDI"}, {2, "R8"}, {2, "R9"}, {3, "R10"}, {3, "R11"}, {3, "R12"}, {3, "R13"}, {3, "R14"}, {3, "R15"},

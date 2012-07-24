@@ -205,18 +205,6 @@ class Instructions:
 		Set("60", ["PUSHA"], [], IFlag.NATIVE | IFlag.INVALID_64BITS)
 		Set("61", ["POPA"], [], IFlag.NATIVE | IFlag.INVALID_64BITS)
 		Set("62", ["BOUND"], [OPT.REG_FULL, OPT.MEM], IFlag.MODRM_REQUIRED | IFlag.INVALID_64BITS)
-
-		# Notes for diStorm:
-		# 63 /R
-		# 16/32: ARPL reg/mem16, reg16
-		# 64: MOVSXD OT_REG_FULL, OT_RM_FULL
-		# Damn processor, my DB won't support mixing of operands types.
-		# Therefore this instruction will be defined in x86defs and returned in the locate_inst according to the decoding type.
-		# This is because I must not change the DB, otherwise the code isn't multi-threaded compliant!
-		# I combine DB with Code in Waitable instructions also...
-		# This InstInfo is unused! x86defs.c uses its own. We just allocate it here so it exists in DB.
-
-		Set("63", ["ARPL"], [OPT.RM16, OPT.REG16], IFlag.MODRM_REQUIRED | IFlag._64BITS)
 		Set("68", ["PUSH"], [OPT.IMM_FULL], IFlag._64BITS)
 		Set("69", ["IMUL"], [OPT.REG_FULL, OPT.RM_FULL, OPT.IMM_FULL], IFlag.MODRM_REQUIRED)
 		Set("6a", ["PUSH"], [OPT.SEIMM8], IFlag.PRE_OP_SIZE | IFlag._64BITS)
@@ -480,6 +468,41 @@ class Instructions:
 		Set("0f, 37", ["GETSEC"], [], IFlag.MODRM_REQUIRED | IFlag._32BITS)
 
 		# XSAVEOPT is declared below (see SFENCE).
+
+	def init_Exported(self):
+		""" Exported instruction are special instruction that create a collision in the DB.
+		Therefore they are exported directly so diStorm can use them manually in the
+		insts.c instruction look-up code.
+		Note that they ignore their opcodes here.
+		Also the path to the instruction in the trie has to be defined by any instruction with same opcode!
+		So for instance, NOP|PAUSE|XCHG -> XHG is really defined, the rest are exported.
+		Inside diStorm it will know which one to use. """
+
+		Set = lambda *args: self.SetCallback(ISetClass.INTEGER, *args)
+		# 63 /R
+		# 16/32: ARPL reg/mem16, reg16
+		# 64: MOVSXD OT_REG_FULL, OT_RM_FULL
+		# Damn processor, my DB won't support mixing of operands types.
+		# Define ARPL!
+		Set("63", ["ARPL"], [OPT.RM16, OPT.REG16], IFlag.MODRM_REQUIRED)
+
+		# MOVSXD:
+		# This is the worst defined instruction ever. It has so many variations.
+		# I decided after a third review, to make it like MOVSXD RAX, EAX when there IS a REX.W.
+		# Otherwise it will be MOVSXD EAX, EAX, which really zero extends to RAX.
+		# Completely ignoring DB 0x66, which is possible by the docs, BTW.
+		Set("63", ["MOVSXD"], [OPT.REG32_64, OPT.RM32], IFlag.MODRM_REQUIRED | IFlag._64BITS | IFlag.PRE_REX | IFlag.EXPORTED)
+
+		Set("90", ["NOP"], [], IFlag.EXPORTED)
+		# This instruction is supported directly in diStorm, since it's not a mandatory prefix really.
+		Set("f3, 90", ["PAUSE"], [], IFlag._32BITS | IFlag.EXPORTED)
+
+		# Wait instruction is needed, but it can be a prefix. See next page for more info.
+		Set("9b", ["WAIT"], [], IFlag.EXPORTED)
+
+		Set = lambda *args: self.SetCallback(ISetClass._3DNOW, *args)
+		# This is not really an instruction, but a gateway to all 3dnow instructions.
+		Set("0f, 0f", ["3DNOW"], [OPT.MM, OPT.MM64], IFlag.MODRM_REQUIRED | IFlag._3DNOW_FETCH | IFlag.EXPORTED)
 
 	def init_FPU(self):
 		Set = lambda *args: self.SetCallback(ISetClass.FPU, *args)
@@ -969,9 +992,6 @@ class Instructions:
 		Set("f3, 0f, 7f", ["MOVDQU"], [OPT.XMM128, OPT.XMM], IFlag.MODRM_REQUIRED | IFlag._32BITS)
 		Set("f3, 0f, d6", ["MOVQ2DQ"], [OPT.XMM, OPT.MM_RM], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.MODRR_REQUIRED)
 		Set("f3, 0f, e6", ["CVTDQ2PD"], [OPT.XMM, OPT.XMM64], IFlag.MODRM_REQUIRED | IFlag._32BITS)
-
-		# This instruction is suppoeted directly in diStorm, since it's not a mandatory prefix really.
-		# Set("f3, 90", ["PAUSE"], [], IFlag._32BITS)
 
 	def init_SSE3(self):
 		Set = lambda *args: self.SetCallback(ISetClass.SSE3, *args)
@@ -1614,6 +1634,7 @@ class Instructions:
 		self.SetCallback = SetCallback
 		Set = lambda *args: self.SetCallback(ISetClass.INTEGER, *args)
 		self.init_INTEGER()
+		self.init_Exported()
 		self.init_FPU()
 		self.init_P6()
 		self.init_MMX()

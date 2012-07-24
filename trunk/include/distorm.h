@@ -216,19 +216,18 @@ typedef struct {
 /* No register was defined. */
 #define R_NONE ((uint8_t)-1)
 
-#define REGS64_BASE (0)
-#define REGS32_BASE (16)
-#define REGS16_BASE (32)
-#define REGS8_BASE (48)
-#define REGS8_REX_BASE (64)
-#define SREGS_BASE (68)
-/* #define RIP 74 */
-#define FPUREGS_BASE (75)
-#define MMXREGS_BASE (83)
-#define SSEREGS_BASE (91)
-#define AVXREGS_BASE (107)
-#define CREGS_BASE (123)
-#define DREGS_BASE (132)
+#define REGS64_BASE 0
+#define REGS32_BASE 16
+#define REGS16_BASE 32
+#define REGS8_BASE 48
+#define REGS8_REX_BASE 64
+#define SREGS_BASE 68
+#define FPUREGS_BASE 75
+#define MMXREGS_BASE 83
+#define SSEREGS_BASE 91
+#define AVXREGS_BASE 107
+#define CREGS_BASE 123
+#define DREGS_BASE 132
 
 #define OPERANDS_NO (4)
 
@@ -258,6 +257,8 @@ typedef struct {
 	uint8_t dispSize;
 	/* Meta defines the instruction set class, and the flow control flags. Use META macros. */
 	uint8_t meta;
+	/* The CPU flags that the instruction operates upon. */
+	uint8_t modifiedFlagsMask, testedFlagsMask, undefinedFlagsMask;
 } _DInst;
 
 #ifndef DISTORM_LIGHT
@@ -303,6 +304,16 @@ typedef struct {
  * Segments should be checked using the segment macros.
  * For now R8 - R15 are not supported and non general purpose registers map into same RM.
  */
+
+/* CPU Flags that instructions modify, test or undefine. */
+#define D_ZF 1 /* Zero */
+#define D_SF 2 /* Sign */
+#define D_CF 4 /* Carry */
+#define D_OF 8 /* Overflow */
+#define D_PF 0x10 /* Parity */
+#define D_AF 0x20 /* Auxilary */
+#define D_DF 0x40 /* Direction */
+#define D_IF 0x80 /* Interrupt */
 
 /*
  * Instructions Set classes:

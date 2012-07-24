@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 extern uint16_t _REGISTERTORCLASS[];
 
 int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
-                     _OpType type, _OperandNumberType opNum,
+                     _iflags instFlags, _OpType type, _OperandNumberType opNum,
                      unsigned int modrm, _PrefixState* ps, _DecodeType effOpSz,
                      _DecodeType effAdrSz, int* lockableInstruction);
 

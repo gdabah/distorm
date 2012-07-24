@@ -176,8 +176,9 @@ class InstFlag:
 	FORCE_VEXL,             # 36
 	MODRR_BASED,            # 37
 	VEX_V_UNUSED,           # 38
-	GEN_BLOCK               # 39
-	) = [1 << i for i in xrange(40)]
+	GEN_BLOCK,              # 39 From here on: internal to disOps.
+	EXPORTED                # 40
+	) = [1 << i for i in xrange(41)]
 	# Nodes are extended if they have any of the following flags:
 	EXTENDED = (PRE_VEX | USE_EXMNEMONIC | USE_EXMNEMONIC2 | USE_OP3 | USE_OP4)
 	SEGMENTS = (PRE_CS | PRE_SS | PRE_DS | PRE_ES | PRE_FS | PRE_FS)
@@ -232,3 +233,16 @@ class NodeType:
 	LIST_DIVIDED, # 5
 	LIST_PREFIXED # 6
 	) = range(0, 7)
+
+class CPUFlags:
+	""" Specifies all the flags that the x86/x64 CPU supports. """
+	(ZF, # 0
+	SF,  # 1
+	CF,  # 2
+	OF,  # 3
+	PF,  # 4
+	AF,  # 5
+	DF,  # 6
+	IF   # 7
+	) = [1 << i for i in xrange(8)]
+
