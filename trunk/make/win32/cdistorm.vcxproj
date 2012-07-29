@@ -110,10 +110,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CompileAs>CompileAsC</CompileAs>
       <ProgramDataBaseFileName>distorm.pdb</ProgramDataBaseFileName>
+      <WarningLevel>Level4</WarningLevel>
     </ClCompile>
     <Lib>
       <TargetMachine>MachineX86</TargetMachine>
@@ -217,7 +217,6 @@
     <ClCompile Include="..\..\src\prefix.c" />
     <ClCompile Include="..\..\src\textdefs.c" />
     <ClCompile Include="..\..\src\wstring.c" />
-    <ClCompile Include="..\..\src\x86defs.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\config.h" />
