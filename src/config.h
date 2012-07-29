@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #define CONFIG_H
 
 /* diStorm version number. */
-#define __DISTORMV__ 0x030200
+#define __DISTORMV__ 0x030300
 
 #include <string.h> /* memset, memcpy - can be easily self implemented for libc independency. */
 

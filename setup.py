@@ -232,7 +232,7 @@ def main():
 
     # Metadata
     'name'              : 'distorm3',
-    'version'           : '2',
+    'version'           : '3',
     'description'       : 'The goal of diStorm3 is to decode x86/AMD64' \
                           ' binary streams and return a structure that' \
                           ' describes each instruction.',
@@ -257,9 +257,8 @@ def main():
                         'Operating System :: Microsoft :: Windows',
                         'Operating System :: MacOS :: MacOS X',
                         'Operating System :: POSIX :: Linux',
-                        'Programming Language :: Python :: 2.4',
-                        'Programming Language :: Python :: 2.5',
                         'Programming Language :: Python :: 2.6',
+                        'Programming Language :: Python :: 2.7',
                         'Topic :: Software Development :: Disassemblers',
                         'Topic :: Software Development :: Libraries :: Python Modules',
                         ]
