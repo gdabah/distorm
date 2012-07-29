@@ -124,6 +124,27 @@ for (int i = 0; i < sizeof(uint16_t); i++) {
 
 Note that RIP can be checked with the FLAG_RIP_RELATIVE. Segment registers have the 'segment' field. And R8-R15 are not mapped, I might add them in the future.
 
+
+The following three fields describe how the instruction affects the CPU flags.
+It's a simple bit mask that can be tested using the following values:
+||D_ZF || Zero Flag ||
+||D_SF || Sign Flag ||
+||D_CF || Carry Flag ||
+||D_OF || Overflow Flag ||
+||D_PF || Parity Flag ||
+||D_AF || Auxiliary Flag ||
+||D_DF || Direction Flag ||
+||D_IF || Interrupt Flag ||
+
+<b>uint8_t modifiedFlags;</b>
+* Use the above flags to check if a specific CPU flag is being modified (output) by this instruction. 
+
+<b>uint8_t testedFlags;</b>
+* Use the above flags to check if a specific CPU flag is being tested (input) by this instruction.
+
+<b>uint8_t undefinedFlags;</b>
+* Use the above flags to check if a specific CPU flag is being undefined (output) by this instruction.
+
 ----
 
 ===Flags===
