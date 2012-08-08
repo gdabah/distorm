@@ -164,7 +164,10 @@ class _DInst (Structure):
         ('base', c_ubyte),    # base register for indirections
         ('scale', c_ubyte),   # ignore for values 0, 1 (other valid values - 2,4,8)
         ('dispSize', c_ubyte),
-        ('meta', c_ubyte) # meta flags - instruction set class, etc. See C headers again...
+        ('meta', c_ubyte), # meta flags - instruction set class, etc. See C headers again...
+        ('modifiedFlagsMask', c_ubyte),
+        ('testedFlagsMask', c_ubyte),
+        ('undefinedFlagsMask', c_ubyte)
     ]
 
 
@@ -466,7 +469,6 @@ DF_NONE = 0
 DF_MAXIMUM_ADDR16 = 1
 DF_MAXIMUM_ADDR32 = 2
 DF_RETURN_FC_ONLY = 4
-DF_STOP_ON_CALL = 8
 # Flow control flags
 DF_STOP_ON_CALL = 0x8
 DF_STOP_ON_RET  = 0x10
