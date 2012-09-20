@@ -53,9 +53,9 @@ idsCounter = len("undefined") + 2 # Starts immediately after this one.
 
 SSECmpTypes = ["EQ", "LT", "LE", "UNORD", "NEQ", "NLT", "NLE", "ORD"]
 AVXCmpTypes = ["EQ", "LT", "LE", "UNORD", "NEQ", "NLT", "NLE", "ORD",
-				"EQ_UQ", "NGE", "NGT", "FALSE", "NEQ_OQ", "GE", "GT", "TRUE",
-				"EQ_OS", "LT_OQ", "LE_OQ", "UNORD_S", "NEQ_US", "NLT_UQ", "NLE_UQ", "ORD_S",
-				"EQ_US", "NGE_UQ", "NGT_UQ", "FALSE_OS", "NEQ_OS", "GE_OQ", "GT_OQ", "TRUE_US"]
+		"EQ_UQ", "NGE", "NGT", "FALSE", "NEQ_OQ", "GE", "GT", "TRUE",
+		"EQ_OS", "LT_OQ", "LE_OQ", "UNORD_S", "NEQ_US", "NLT_UQ", "NLE_UQ", "ORD_S",
+		"EQ_US", "NGE_UQ", "NGT_UQ", "FALSE_OS", "NEQ_OS", "GE_OQ", "GT_OQ", "TRUE_US"]
 
 # Support SSE pseudo compare instructions. We will have to add them manually.
 def FixPseudo(mnems):
@@ -357,8 +357,6 @@ def CheckWritableDestinationOperand(ii):
 			ii.flags |= InstFlag.DST_WR
 			return
 
-g = set()
-ccc = 0
 def SetInstructionAffectedFlags(ii, flagsTuple):
 	""" Helper routine to set the m/t/u flags for an instruction info. """
 	# Pad tuple for fast access.
@@ -368,11 +366,6 @@ def SetInstructionAffectedFlags(ii, flagsTuple):
 	ii.modifiedFlags = flagsTuple[0]
 	ii.testedFlags = flagsTuple[1]
 	ii.undefinedFlags = flagsTuple[2]
-	global g
-	g.add(flagsTuple)
-	global ccc
-	ccc += 1
-	#print ii.mnemonics
 
 def GetTestedFlagsForCondition(cond):
 	OF, SF, ZF, AF, PF, CF, IF, DF = CPUFlags.OF, CPUFlags.SF, CPUFlags.ZF, CPUFlags.AF, CPUFlags.PF, CPUFlags.CF, CPUFlags.IF, CPUFlags.DF
@@ -401,7 +394,8 @@ def GetTestedFlagsForCondition(cond):
 		"NB": CF,
 		"NBE": CF | ZF
 	}
-	return Conditions[cond]
+	# Return tested flags only.
+	return (0, Conditions[cond], 0)
 
 def CheckInstructionAffectedFlags(ii):
 	"""

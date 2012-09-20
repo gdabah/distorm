@@ -43,6 +43,9 @@ public class DecomposedInst {
 	private int mUnusedPrefixesMask;
 	private int mMeta;
 	private int mRegistersMask;
+	private int mModifiedFlagsMask;
+	private int mTestedFlagsMask;
+	private int mUndefinedFlagsMask;
 
 	public long getAddress() {
 		return mAddr;
@@ -73,5 +76,14 @@ public class DecomposedInst {
 	}
 	public int getRegistersMask() {
 		return mRegistersMask;
+	}
+	public int getModifiedFlagsMask() {
+		return mModifiedFlagsMask;
+	}
+	public int getTestedFlagsMask() {
+		return mTestedFlagsMask;
+	}
+	public int getUndefinedFlagsMask() {
+		return mUndefinedFlagsMask;
 	}
 }
