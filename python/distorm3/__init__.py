@@ -165,11 +165,10 @@ class _DInst (Structure):
         ('scale', c_ubyte),   # ignore for values 0, 1 (other valid values - 2,4,8)
         ('dispSize', c_ubyte),
         ('meta', c_ubyte), # meta flags - instruction set class, etc. See C headers again...
-        ('modifiedFlagsMask', c_ubyte),
-        ('testedFlagsMask', c_ubyte),
-        ('undefinedFlagsMask', c_ubyte)
-    ]
-
+        ('modifiedFlagsMask', c_ubyte), # CPU modified (output) flags by instruction.
+        ('testedFlagsMask', c_ubyte), # CPU tested (input) flags by instruction.
+        ('undefinedFlagsMask', c_ubyte) # CPU undefined flags by instruction.
+        ]
 
 #==============================================================================
 # diStorm Python interface
@@ -199,9 +198,9 @@ Mnemonics = {0x669: "SLDT", 0x62: "POPA", 0x8ee: "UNPCKHPS", 0x115: "POPF", 0x11
 0x1d0a: "PHSUBW", 0x11ff: "CMPEQSD", 0x3b2: "XADD", 0x2ae: "CMOVBE", 0x47: "CMP",
 0x24: "SBB", 0x106e: "VHADDPS", 0x26ad: "FXRSTOR64", 0x2064: "INVVPID", 0x20f: "LSL",
 0x165d: "VCMPNEQ_USSS", 0x1065: "VHADDPD", 0x38b: "LSS", 0x20f7: "VFMSUB132PD",
-0x121: "LAHF", 0x7ec: "PFACC", 0x803: "PFRCPIT2", 0xe27: "VPUNPCKLBW", 0x7d0: "PFRCPIT1",
-0x1f97: "PCMPGTQ", 0x49f: "FYL2X", 0x1819: "VCMPORD_SSD", 0x1933: "PSRLD",
-0x10e1: "SFENCE", 0xcf5: "CVTPS2DQ", 0x24af: "PBLENDW", 0x21ae: "VFMSUBADD213PS",
+0x121: "LAHF", 0x7ec: "PFACC", 0x2620: "VPCMPISTRM", 0x803: "PFRCPIT2", 0xe27: "VPUNPCKLBW",
+0x7d0: "PFRCPIT1", 0x1f97: "PCMPGTQ", 0x49f: "FYL2X", 0x1819: "VCMPORD_SSD",
+0x1933: "PSRLD", 0x10e1: "SFENCE", 0xcf5: "CVTPS2DQ", 0x24af: "PBLENDW", 0x21ae: "VFMSUBADD213PS",
 0xe76: "PCMPGTB", 0xe9c: "PCMPGTD", 0x23d7: "VAESENC", 0x957: "VMOVSHDUP",
 0x259c: "MPSADBW", 0x14e7: "VCMPNLE_UQPD", 0x70a: "VMMCALL", 0x102f: "INSERTQ",
 0x2252: "VFNMADD213SS", 0x9bf: "CVTPI2PD", 0x16f: "INT", 0x1d87: "VPERMILPS",
@@ -211,14 +210,14 @@ Mnemonics = {0x669: "SLDT", 0x62: "POPA", 0x8ee: "UNPCKHPS", 0x115: "POPF", 0x11
 0x245: "NOP", 0x4e8: "FSQRT", 0x1d92: "VPERMILPD", 0x51: "INC", 0x239: "UD2",
 0xfe7: "VPCMPEQW", 0x2615: "PCMPISTRM", 0x1ecd: "VPCMPEQQ", 0x114d: "CMPNLEPS",
 0x1826: "VCMPEQ_USSD", 0x13fe: "VCMPUNORDPD", 0x5fd: "FADDP", 0x145: "RET",
-0xffa: "VPCMPEQD", 0x1fc3: "VPMINSD", 0x2542: "VPINSRB", 0xfd4: "VPCMPEQB",
-0x18fa: "ADDSUBPD", 0x22a6: "VFMADDSUB231PS", 0x1694: "VCMPEQ_USSS", 0x1d50: "PSIGNW",
-0x1ea8: "VPMOVSXDQ", 0x2007: "VPMAXSD", 0x35b: "SETG", 0x1ff6: "VPMAXSB", 0x327: "SETA",
-0x306: "SETB", 0x26df: "STMXCSR", 0x347: "SETL", 0x20ea: "VFMSUB132PS", 0x2f9: "SETO",
-0xbcd: "ANDNPD", 0x1106: "BSR", 0x8ba: "VMOVDDUP", 0x1b3c: "VPMAXSW", 0x1d61: "PSIGND",
-0x33a: "SETP", 0x1d3f: "PSIGNB", 0x395: "LFS", 0x32d: "SETS", 0x1590: "VCMPUNORDSS",
-0xbc5: "ANDNPS", 0x2716: "VMXON", 0xbb5: "VANDPS", 0x6f3: "XSETBV", 0x1c3: "OUT",
-0x67a: "LTR", 0x2570: "VPINSRD", 0x10ff: "TZCNT", 0xa57: "VCVTTSS2SI", 0x266e: "VPSRLDQ",
+0xffa: "VPCMPEQD", 0x1fc3: "VPMINSD", 0xfd4: "VPCMPEQB", 0x18fa: "ADDSUBPD",
+0x22a6: "VFMADDSUB231PS", 0x1694: "VCMPEQ_USSS", 0x1d50: "PSIGNW", 0x1ea8: "VPMOVSXDQ",
+0x2007: "VPMAXSD", 0x35b: "SETG", 0x1ff6: "VPMAXSB", 0x327: "SETA", 0x306: "SETB",
+0x26df: "STMXCSR", 0x347: "SETL", 0x20ea: "VFMSUB132PS", 0x2f9: "SETO", 0xbcd: "ANDNPD",
+0x1106: "BSR", 0x8ba: "VMOVDDUP", 0x1b3c: "VPMAXSW", 0x1d61: "PSIGND", 0x33a: "SETP",
+0x1d3f: "PSIGNB", 0x395: "LFS", 0x32d: "SETS", 0x1590: "VCMPUNORDSS", 0xbc5: "ANDNPS",
+0x2716: "VMXON", 0xbb5: "VANDPS", 0x6f3: "XSETBV", 0x1c3: "OUT", 0x67a: "LTR",
+0x2570: "VPINSRD", 0x10ff: "TZCNT", 0xa57: "VCVTTSS2SI", 0x266e: "VPSRLDQ",
 0x4c6: "FDECSTP", 0x2666: "PSRLDQ", 0x186d: "VCMPGE_OQSD", 0x2677: "PSLLDQ",
 0x50f: "FCOS", 0x4b5: "FXTRACT", 0x16db: "VCMPGE_OQSS", 0x1ee1: "VMOVNTDQA",
 0x151d: "VCMPNGT_UQPD", 0x3f5: "FMUL", 0x13c4: "VCMPGT_OQPS", 0x60b: "FCOMPP",
@@ -279,30 +278,31 @@ Mnemonics = {0x669: "SLDT", 0x62: "POPA", 0x8ee: "UNPCKHPS", 0x115: "POPF", 0x11
 0x243d: "ROUNDPS", 0x2ff: "SETNO", 0x6eb: "XGETBV", 0x1fbb: "PMINSD", 0x1c24: "PADDB",
 0x4be: "FPREM1", 0x200: "CLD", 0x51c: "FIMUL", 0xc08: "XORPD", 0x1ec: "CLC",
 0x42c: "FSTP", 0x249c: "BLENDPD", 0x19ef: "PADDUSW", 0x1c80: "FNINIT", 0x319: "SETNZ",
-0x1951: "PADDQ", 0xc01: "XORPS", 0x228a: "VFNMSUB213SS", 0x333: "SETNS", 0x515: "FIADD",
-0x340: "SETNP", 0xf43: "VPUNPCKHQDQ", 0xd2c: "SUBPS", 0x1230: "CMPNLTSD", 0x674: "LLDT",
-0x2229: "VFMSUB213SD", 0x1dcd: "PTEST", 0x2164: "VFNMSUB132PD", 0x279: "GETSEC",
-0x1d69: "VPSIGND", 0x1ab: "JCXZ", 0x11e1: "CMPNLTSS", 0x34d: "SETGE", 0x1112: "CMPEQPS",
-0x1bb4: "PSADBW", 0x271d: "MOVSXD", 0x2156: "VFNMSUB132PS", 0x185: "AAD", 0x23ec: "VAESENCLAST",
-0xf37: "PUNPCKHQDQ", 0x878: "MOVLPD", 0x19e5: "VPADDUSW", 0x12c8: "VCMPFALSEPS",
-0x180: "AAM", 0xf2a: "VPUNPCKLQDQ", 0xd76: "MINSS", 0x1c42: "PADDD", 0x145a: "VCMPFALSEPD",
-0xe3e: "VPUNPCKLWD", 0x870: "MOVLPS", 0x729: "CLGI", 0x4c: "AAS", 0x139: "LODS",
-0x2d3: "CMOVNP", 0xd7d: "MINSD", 0x1f6: "CLI", 0xa4c: "CVTTSD2SI", 0x523: "FICOM",
-0x1f19: "PMOVZXBW", 0xc26: "ADDPD", 0x75a: "PREFETCHW", 0x1339: "VCMPNEQ_USPS",
-0xc17: "VXORPD", 0x1b07: "POR", 0x16: "POP", 0x2431: "VPERM2F128", 0x19e: "LOOPZ",
-0x1ac1: "MOVNTDQ", 0x1dc: "INT1", 0x382: "CMPXCHG", 0x1df8: "VBROADCASTF128",
-0x150f: "VCMPNGE_UQPD", 0x1cbe: "PHADDW", 0xc0f: "VXORPS", 0x14cb: "VCMPNEQ_USPD",
-0xc1f: "ADDPS", 0x7fc: "PFMUL", 0x697: "LGDT", 0x67f: "VERR", 0x685: "VERW",
-0x1087: "VHSUBPD", 0x1968: "VPMULLW", 0x845: "VMOVUPS", 0x174: "INTO", 0x1c79: "FCLEX",
-0x1090: "VHSUBPS", 0xcb5: "CVTSD2SS", 0x47b: "FLDPI", 0x1e17: "PABSW", 0xe04: "VMAXPD",
-0x1d3: "JMP FAR", 0xeb9: "VPACKUSWB", 0x571: "FUCOMPP", 0x84e: "VMOVUPD", 0x816: "PSWAPD",
-0x1c33: "PADDW", 0x1b70: "PSLLD", 0x740: "SWAPGS", 0x880: "MOVSLDUP", 0x9c9: "CVTSI2SS",
-0x17ad: "VCMPTRUESD", 0x11cb: "CMPUNORDSS", 0xd20: "VCVTTPS2DQ", 0xb37: "SQRTSD",
-0x1dea: "VBROADCASTSD", 0x1c06: "PSUBD", 0xce: "TEST", 0x39a: "LGS", 0x161b: "VCMPTRUESS",
-0x266: "SYSENTER", 0x9d3: "CVTSI2SD", 0x1745: "VCMPNLESD", 0x1da6: "VTESTPD",
-0x98: "JZ", 0xdd0: "VDIVSS", 0xbfa: "VORPD", 0xb3: "JP", 0xaa: "JS", 0xbc: "JL",
-0xb6c: "RSQRTSS", 0x1d9d: "VTESTPS", 0x86: "JO", 0xdfc: "VMAXPS", 0x1998: "PSUBUSB",
-0xca: "JG", 0x1ddc: "VBROADCASTSS", 0xa6: "JA", 0x8f: "JB", 0xe9: "CWDE", 0x13f4: "VCMPLEPD",
+0x119c: "CMPNLEPD", 0xc01: "XORPS", 0x228a: "VFNMSUB213SS", 0x333: "SETNS",
+0x515: "FIADD", 0x340: "SETNP", 0xf43: "VPUNPCKHQDQ", 0xd2c: "SUBPS", 0x1230: "CMPNLTSD",
+0x674: "LLDT", 0x2229: "VFMSUB213SD", 0x1dcd: "PTEST", 0x2164: "VFNMSUB132PD",
+0x279: "GETSEC", 0x1d69: "VPSIGND", 0x1ab: "JCXZ", 0x11e1: "CMPNLTSS", 0x34d: "SETGE",
+0x1112: "CMPEQPS", 0x1bb4: "PSADBW", 0x271d: "MOVSXD", 0x2156: "VFNMSUB132PS",
+0x185: "AAD", 0x23ec: "VAESENCLAST", 0xf37: "PUNPCKHQDQ", 0x878: "MOVLPD",
+0x19e5: "VPADDUSW", 0x12c8: "VCMPFALSEPS", 0x180: "AAM", 0xf2a: "VPUNPCKLQDQ",
+0xd76: "MINSS", 0x1c42: "PADDD", 0x145a: "VCMPFALSEPD", 0xe3e: "VPUNPCKLWD",
+0x870: "MOVLPS", 0x729: "CLGI", 0x4c: "AAS", 0x139: "LODS", 0x2d3: "CMOVNP",
+0xd7d: "MINSD", 0x1f6: "CLI", 0xa4c: "CVTTSD2SI", 0x523: "FICOM", 0x1f19: "PMOVZXBW",
+0xc26: "ADDPD", 0x75a: "PREFETCHW", 0x1339: "VCMPNEQ_USPS", 0xc17: "VXORPD",
+0x1b07: "POR", 0x16: "POP", 0x2431: "VPERM2F128", 0x19e: "LOOPZ", 0x1ac1: "MOVNTDQ",
+0x1dc: "INT1", 0x382: "CMPXCHG", 0x1df8: "VBROADCASTF128", 0x150f: "VCMPNGE_UQPD",
+0x1cbe: "PHADDW", 0xc0f: "VXORPS", 0x14cb: "VCMPNEQ_USPD", 0xc1f: "ADDPS",
+0x7fc: "PFMUL", 0x697: "LGDT", 0x67f: "VERR", 0x685: "VERW", 0x1087: "VHSUBPD",
+0x1968: "VPMULLW", 0x845: "VMOVUPS", 0x174: "INTO", 0x1c79: "FCLEX", 0x1090: "VHSUBPS",
+0xcb5: "CVTSD2SS", 0x47b: "FLDPI", 0x1e17: "PABSW", 0xe04: "VMAXPD", 0x1d3: "JMP FAR",
+0xeb9: "VPACKUSWB", 0x571: "FUCOMPP", 0x84e: "VMOVUPD", 0x816: "PSWAPD", 0x1c33: "PADDW",
+0x1b70: "PSLLD", 0x740: "SWAPGS", 0x880: "MOVSLDUP", 0x9c9: "CVTSI2SS", 0x17ad: "VCMPTRUESD",
+0x11cb: "CMPUNORDSS", 0xd20: "VCVTTPS2DQ", 0xb37: "SQRTSD", 0x1dea: "VBROADCASTSD",
+0x1c06: "PSUBD", 0xce: "TEST", 0x39a: "LGS", 0x161b: "VCMPTRUESS", 0x266: "SYSENTER",
+0x9d3: "CVTSI2SD", 0x1745: "VCMPNLESD", 0x1da6: "VTESTPD", 0x98: "JZ", 0xdd0: "VDIVSS",
+0xbfa: "VORPD", 0x1951: "PADDQ", 0xb3: "JP", 0xaa: "JS", 0xbc: "JL", 0xb6c: "RSQRTSS",
+0x1d9d: "VTESTPS", 0x86: "JO", 0xdfc: "VMAXPS", 0x1998: "PSUBUSB", 0xca: "JG",
+0x1ddc: "VBROADCASTSS", 0xa6: "JA", 0x8f: "JB", 0xe9: "CWDE", 0x13f4: "VCMPLEPD",
 0x1038: "VMWRITE", 0x1262: "VCMPLEPS", 0x1983: "PMOVMSKB", 0x254b: "INSERTPS",
 0x2732: "3DNOW", 0x25fe: "PCMPESTRI", 0x272c: "WAIT", 0x152b: "VCMPFALSE_OSPD",
 0x25e7: "PCMPESTRM", 0xe4a: "PUNPCKLDQ", 0xc69: "MULSS", 0xd50: "VSUBPD", 0x1161: "CMPEQPD",
@@ -363,12 +363,12 @@ Mnemonics = {0x669: "SLDT", 0x62: "POPA", 0x8ee: "UNPCKHPS", 0x115: "POPF", 0x11
 0xf50: "MOVD", 0x921: "MOVHPS", 0xc5b: "MULPS", 0x1258: "VCMPLTPS", 0x368: "BT",
 0x99b: "MOVAPD", 0x137d: "VCMPNGE_UQPS", 0x1b8: "JRCXZ", 0xc62: "MULPD", 0x127: "MOVS",
 0x6af: "INVLPG", 0xf56: "MOVQ", 0xd8c: "VMINPD", 0x1e26: "PABSD", 0x11b: "SAHF",
-0x13d1: "VCMPTRUE_USPS", 0x76c: "PI2FD", 0x1e08: "PABSB", 0x247f: "VROUNDSD",
-0x1a10: "VPANDN", 0xe55: "VPUNPCKLDQ", 0x62a: "FDIVP", 0x1c15: "PSUBQ", 0x41b: "FDIVR",
-0x415: "FDIV", 0x1563: "VCMPTRUE_USPD", 0x750: "PREFETCH", 0x1004: "EMMS",
-0xd84: "VMINPS", 0x22e6: "VFMADD231PS", 0x227c: "VFNMSUB213PD", 0xa83: "CVTSS2SI",
-0x929: "MOVHPD", 0x29f: "CMOVZ", 0x1a4c: "VPAVGW", 0xff: "CQO", 0x1c0d: "VPSUBD",
-0x2cc: "CMOVP", 0x1572: "VCMPEQSS", 0x2bd: "CMOVS", 0x1e4a: "PMOVSXBD", 0x246c: "VROUNDSS",
+0x13d1: "VCMPTRUE_USPS", 0x76c: "PI2FD", 0x1e08: "PABSB", 0x1a10: "VPANDN",
+0xe55: "VPUNPCKLDQ", 0x62a: "FDIVP", 0x1c15: "PSUBQ", 0x41b: "FDIVR", 0x415: "FDIV",
+0x1563: "VCMPTRUE_USPD", 0x750: "PREFETCH", 0x1004: "EMMS", 0xd84: "VMINPS",
+0x22e6: "VFMADD231PS", 0x227c: "VFNMSUB213PD", 0xa83: "CVTSS2SI", 0x929: "MOVHPD",
+0x29f: "CMOVZ", 0x1a4c: "VPAVGW", 0xff: "CQO", 0x1c0d: "VPSUBD", 0x2cc: "CMOVP",
+0x1572: "VCMPEQSS", 0x2bd: "CMOVS", 0x1e4a: "PMOVSXBD", 0x246c: "VROUNDSS",
 0x1c1c: "VPSUBQ", 0x2db: "CMOVL", 0x1904: "ADDSUBPS", 0x281: "CMOVO", 0x2b6: "CMOVA",
 0x290: "CMOVB", 0xec4: "PUNPCKHBW", 0x262c: "PCMPISTRI", 0x2f2: "CMOVG", 0x198d: "VPMOVMSKB",
 0x240a: "AESDECLAST", 0x82f: "MOVUPD", 0x20a6: "VFMSUBADD132PD", 0x1bbc: "VPSADBW",
@@ -390,40 +390,39 @@ Mnemonics = {0x669: "SLDT", 0x62: "POPA", 0x8ee: "UNPCKHPS", 0x115: "POPF", 0x11
 0x1e93: "VPMOVSXWQ", 0x173a: "VCMPNLTSD", 0x235c: "VFNMADD231PD", 0x1ca6: "FSTSW",
 0x748: "RDTSCP", 0x10c3: "MFENCE", 0x20d0: "VFMADD132SS", 0x1fdd: "PMINUD",
 0x5ba: "FENI", 0x68: "BOUND", 0x2446: "VROUNDPS", 0xfa5: "PSHUFLW", 0xc87: "VMULSS",
-0x184f: "VCMPFALSE_OSSD", 0xd0a: "VCVTDQ2PS", 0x1586: "VCMPLESS", 0x447: "FNOP",
-0x1143: "CMPNLTPS", 0x1284: "VCMPNLTPS", 0x482: "FLDLG2", 0x223: "SYSRET",
-0x1c6a: "FSTCW", 0x221c: "VFMSUB213SS", 0x72f: "SKINIT", 0xbbd: "VANDPD", 0x492: "FLDZ",
-0x33: "SUB", 0x1cc6: "VPHADDW", 0x654: "NEG", 0x1fcc: "PMINUW", 0xde7: "MAXPD",
-0x1363: "VCMPORD_SPS", 0x133: "STOS", 0x23b0: "VFNMSUB231SD", 0x1722: "VCMPUNORDSD",
-0x81e: "PAVGUSB", 0x14f5: "VCMPORD_SPD", 0xde0: "MAXPS", 0x19be: "PMINUB",
-0x1bdb: "VMASKMOVDQU", 0x637: "FBSTP", 0x1896: "PINSRW", 0x1f62: "VPMOVZXWD",
-0x1fd4: "VPMINUW", 0x180b: "VCMPNLE_UQSD", 0x18a: "SALC", 0x24d5: "PEXTRB",
-0x8d8: "VUNPCKLPS", 0x1679: "VCMPNLE_UQSS", 0xf6a: "MOVDQA", 0x15a8: "VCMPNLTSS",
-0x1b7f: "PSLLQ", 0xa17: "VMOVNTPS", 0x1fe5: "VPMINUD", 0x962: "PREFETCHNTA",
-0x8e3: "VUNPCKLPD", 0x1041: "CVTPH2PS", 0x2654: "VAESKEYGENASSIST", 0x1ae5: "PSUBSW",
-0x1768: "VCMPNGESD", 0x1c51: "FNSTENV", 0x1c9e: "FNSTSW", 0x1188: "CMPNEQPD",
-0x1a45: "PAVGW", 0x9fc: "MOVNTPD", 0x1502: "VCMPEQ_USPD", 0x5c8: "FSETPM",
-0x1db9: "BLENDVPS", 0x219e: "VFMADDSUB213PD", 0xb: "ADD", 0x15d6: "VCMPNGESS",
-0x1f: "ADC", 0x1ad4: "PSUBSB", 0x1dc3: "BLENDVPD", 0xecf: "VPUNPCKHBW", 0x25f: "RDPMC",
-0x9f3: "MOVNTPS", 0x10fa: "BSF", 0x13ea: "VCMPLTPD", 0x1a18: "PAVGB", 0xdf: "LEA",
-0x1a97: "VCVTTPD2DQ", 0xe7f: "VPCMPGTB", 0xea5: "VPCMPGTD", 0x465: "FLD1",
+0xd0a: "VCVTDQ2PS", 0x1586: "VCMPLESS", 0x447: "FNOP", 0x1143: "CMPNLTPS",
+0x1284: "VCMPNLTPS", 0x482: "FLDLG2", 0x223: "SYSRET", 0x1c6a: "FSTCW", 0x221c: "VFMSUB213SS",
+0x72f: "SKINIT", 0xbbd: "VANDPD", 0x492: "FLDZ", 0x33: "SUB", 0x1cc6: "VPHADDW",
+0x654: "NEG", 0x1fcc: "PMINUW", 0xde7: "MAXPD", 0x1363: "VCMPORD_SPS", 0x133: "STOS",
+0x23b0: "VFNMSUB231SD", 0x1722: "VCMPUNORDSD", 0x81e: "PAVGUSB", 0x14f5: "VCMPORD_SPD",
+0xde0: "MAXPS", 0x19be: "PMINUB", 0x1bdb: "VMASKMOVDQU", 0x637: "FBSTP", 0x1896: "PINSRW",
+0x1f62: "VPMOVZXWD", 0x1fd4: "VPMINUW", 0x180b: "VCMPNLE_UQSD", 0x18a: "SALC",
+0x24d5: "PEXTRB", 0x8d8: "VUNPCKLPS", 0x1679: "VCMPNLE_UQSS", 0xf6a: "MOVDQA",
+0x15a8: "VCMPNLTSS", 0x1b7f: "PSLLQ", 0xa17: "VMOVNTPS", 0x1fe5: "VPMINUD",
+0x962: "PREFETCHNTA", 0x8e3: "VUNPCKLPD", 0x1041: "CVTPH2PS", 0x2654: "VAESKEYGENASSIST",
+0x1ae5: "PSUBSW", 0x1768: "VCMPNGESD", 0x1c51: "FNSTENV", 0x1c9e: "FNSTSW",
+0x1188: "CMPNEQPD", 0x1a45: "PAVGW", 0x9fc: "MOVNTPD", 0x1502: "VCMPEQ_USPD",
+0x5c8: "FSETPM", 0x1db9: "BLENDVPS", 0x219e: "VFMADDSUB213PD", 0xb: "ADD",
+0x15d6: "VCMPNGESS", 0x1f: "ADC", 0x1ad4: "PSUBSB", 0x1dc3: "BLENDVPD", 0xecf: "VPUNPCKHBW",
+0x25f: "RDPMC", 0x9f3: "MOVNTPS", 0x10fa: "BSF", 0x13ea: "VCMPLTPD", 0x1a18: "PAVGB",
+0xdf: "LEA", 0x1a97: "VCVTTPD2DQ", 0xe7f: "VPCMPGTB", 0xea5: "VPCMPGTD", 0x465: "FLD1",
 0x1baa: "VPMADDWD", 0x17e0: "VCMPUNORD_SSD", 0x14a: "LES", 0x313: "SETZ", 0x1fa0: "VPCMPGTQ",
 0xc8f: "VMULSD", 0x21ce: "VFMADD213PS", 0x15b3: "VCMPNLESS", 0x867: "MOVHLPS",
 0x204f: "VPHMINPOSUW", 0x1e2d: "VPABSD", 0x1a27: "PSRAW", 0x7b9: "PFADD", 0x2086: "VFMADDSUB132PD",
-0xadb: "COMISD", 0x13b7: "VCMPGE_OQPS", 0xe0c: "VMAXSS", 0x121a: "CMPUNORDSD",
-0x4ef: "FSINCOS", 0xad3: "COMISS", 0x2076: "VFMADDSUB132PS", 0xb89: "RCPPS",
-0x212c: "VFNMADD132PD", 0x441: "FXCH", 0x2e: "DAA", 0x320: "SETBE", 0xcbf: "VCVTPS2PD",
-0x1ba1: "PMADDWD", 0xbae: "ANDPD", 0x131d: "VCMPLE_OQPS", 0x1773: "VCMPNGTSD",
-0x2386: "VFNMSUB231PS", 0x63e: "FUCOMIP", 0xc77: "VMULPS", 0x211e: "VFNMADD132PS",
-0x26cb: "WRFSBASE", 0x38: "DAS", 0x14af: "VCMPLE_OQPD", 0x17a: "IRET", 0x3c0: "BSWAP",
-0xe1c: "PUNPCKLBW", 0x2010: "PMAXUW", 0x2620: "VPCMPISTRM", 0x1b61: "PSLLW",
-0x164e: "VCMPUNORD_SSS", 0x2236: "VFNMADD213PS", 0xa63: "VCVTTSD2SI", 0x2327: "VFMSUB231PD",
-0x138b: "VCMPNGT_UQPS", 0x1c62: "FNSTCW", 0x2476: "ROUNDSD", 0x119c: "CMPNLEPD",
-0x24ee: "PEXTRQ", 0x1a67: "PMULHW", 0x1ce9: "VPHADDSW", 0x58e: "FISTP", 0x1f6d: "PMOVZXWQ",
-0xcca: "VCVTPD2PS", 0x16f5: "VCMPTRUE_USSS", 0xc53: "VADDSD", 0x1daf: "PBLENDVB",
-0x6c9: "VMRESUME", 0xab6: "UCOMISD", 0x1f58: "PMOVZXWD", 0xa36: "CVTTPD2PI",
-0xaad: "UCOMISS", 0xe6b: "VPACKSSWB", 0xc4b: "VADDSS", 0xf9c: "PSHUFHW", 0x1887: "VCMPTRUE_USSD",
-0x6e4: "MWAIT"}
+0xadb: "COMISD", 0x13b7: "VCMPGE_OQPS", 0xe0c: "VMAXSS", 0x184f: "VCMPFALSE_OSSD",
+0x4ef: "FSINCOS", 0xad3: "COMISS", 0x2076: "VFMADDSUB132PS", 0x2542: "VPINSRB",
+0xb89: "RCPPS", 0x212c: "VFNMADD132PD", 0x441: "FXCH", 0x2e: "DAA", 0x320: "SETBE",
+0xcbf: "VCVTPS2PD", 0x1ba1: "PMADDWD", 0xbae: "ANDPD", 0x131d: "VCMPLE_OQPS",
+0x1773: "VCMPNGTSD", 0x2386: "VFNMSUB231PS", 0x63e: "FUCOMIP", 0xc77: "VMULPS",
+0x211e: "VFNMADD132PS", 0x26cb: "WRFSBASE", 0x38: "DAS", 0x14af: "VCMPLE_OQPD",
+0x17a: "IRET", 0x3c0: "BSWAP", 0xe1c: "PUNPCKLBW", 0x2010: "PMAXUW", 0x247f: "VROUNDSD",
+0x1b61: "PSLLW", 0x164e: "VCMPUNORD_SSS", 0x2236: "VFNMADD213PS", 0xa63: "VCVTTSD2SI",
+0x2327: "VFMSUB231PD", 0x138b: "VCMPNGT_UQPS", 0x1c62: "FNSTCW", 0x2476: "ROUNDSD",
+0x121a: "CMPUNORDSD", 0x24ee: "PEXTRQ", 0x1a67: "PMULHW", 0x1ce9: "VPHADDSW",
+0x58e: "FISTP", 0x1f6d: "PMOVZXWQ", 0xcca: "VCVTPD2PS", 0x16f5: "VCMPTRUE_USSS",
+0xc53: "VADDSD", 0x1daf: "PBLENDVB", 0x6c9: "VMRESUME", 0xab6: "UCOMISD", 0x1f58: "PMOVZXWD",
+0xa36: "CVTTPD2PI", 0xaad: "UCOMISS", 0xe6b: "VPACKSSWB", 0xc4b: "VADDSS"
+}
 
 Registers = ["RAX", "RCX", "RDX", "RBX", "RSP", "RBP", "RSI", "RDI", "R8", "R9", "R10", "R11", "R12", "R13", "R14", "R15",
 "EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI", "R8D", "R9D", "R10D", "R11D", "R12D", "R13D", "R14D", "R15D",
@@ -543,12 +542,12 @@ def DecodeGenerator(codeOffset, code, dt):
             asm  = di.mnemonic.p
             if len(di.operands.p):
                 asm += " " + di.operands.p
-            pydi = ( di.offset, di.size, asm, di.instructionHex.p )
+            pydi = (di.offset, di.size, asm, di.instructionHex.p)
             instruction_off += di.size
             yield pydi
 
         di         = result[used - 1]
-        delta      = di.offset - codeOffset + result[used -1].size
+        delta      = di.offset - codeOffset + result[used - 1].size
         if delta <= 0:
             break
         codeOffset = codeOffset + delta
@@ -584,7 +583,7 @@ def Decode(offset, code, type = Decode32Bits):
 
     @raise ValueError: Invalid arguments.
     """
-    return list( DecodeGenerator(offset, code, type) )
+    return list(DecodeGenerator(offset, code, type))
 
 OPERAND_NONE = ""
 OPERAND_IMMEDIATE = "Immediate"
@@ -930,4 +929,4 @@ def Decompose(offset, code, type = Decode32Bits, features = 0):
     @return: TODO
     @raise ValueError: Invalid arguments.
     """
-    return list( DecomposeGenerator(offset, code, type, features) )
+    return list(DecomposeGenerator(offset, code, type, features))

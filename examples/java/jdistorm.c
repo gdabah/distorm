@@ -56,6 +56,9 @@ static struct _DecomposedInstIds {
 	jfieldID ID_UnusedPrefixesMask;
 	jfieldID ID_Meta;
 	jfieldID ID_RegistersMask;
+	jfieldID ID_ModifiedFlagsMask;
+	jfieldID ID_TestedFlagsMask;
+	jfieldID ID_UndefinedFlagsMask;
 } g_DecomposedInstIds;
 
 static struct _OperandIds {
@@ -207,6 +210,9 @@ JNIEXPORT void JNICALL Java_diStorm3_distorm3_Decompose
 		(*env)->SetIntField(env, jInst, g_DecomposedInstIds.ID_UnusedPrefixesMask, insts[i].unusedPrefixesMask);
 		(*env)->SetIntField(env, jInst, g_DecomposedInstIds.ID_Meta, insts[i].meta);
 		(*env)->SetIntField(env, jInst, g_DecomposedInstIds.ID_RegistersMask, insts[i].usedRegistersMask);
+		(*env)->SetIntField(env, jInst, g_DecomposedInstIds.ID_ModifiedFlagsMask, insts[i].modifiedFlagsMask);
+		(*env)->SetIntField(env, jInst, g_DecomposedInstIds.ID_TestedFlagsMask, insts[i].testedFlagsMask);
+		(*env)->SetIntField(env, jInst, g_DecomposedInstIds.ID_UndefinedFlagsMask, insts[i].undefinedFlagsMask);
 
 		/* Immediate variant. */
 		jImm = (*env)->AllocObject(env, g_ImmIds.jCls);
@@ -369,6 +375,9 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved)
 	g_DecomposedInstIds.ID_UnusedPrefixesMask = (*env)->GetFieldID(env, jCls, "mUnusedPrefixesMask", "I");
 	g_DecomposedInstIds.ID_Meta = (*env)->GetFieldID(env, jCls, "mMeta", "I");
 	g_DecomposedInstIds.ID_RegistersMask = (*env)->GetFieldID(env, jCls, "mRegistersMask", "I");
+	g_DecomposedInstIds.ID_ModifiedFlagsMask = (*env)->GetFieldID(env, jCls, "mModifiedFlagsMask", "I");
+	g_DecomposedInstIds.ID_TestedFlagsMask = (*env)->GetFieldID(env, jCls, "mTestedFlagsMask", "I");
+	g_DecomposedInstIds.ID_UndefinedFlagsMask = (*env)->GetFieldID(env, jCls, "mUndefinedFlagsMask", "I");
 
 	jCls = (*env)->FindClass(env, PACKAGE_PREFIX "Operand");
 	g_OperandIds.jCls = (*env)->NewWeakGlobalRef(env, jCls);
