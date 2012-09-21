@@ -502,7 +502,7 @@ class Instructions:
 
 		Set = lambda *args: self.SetCallback(ISetClass._3DNOW, *args)
 		# This is not really an instruction, but a gateway to all 3dnow instructions.
-		Set("0f, 0f", ["3DNOW"], [OPT.MM, OPT.MM64], IFlag.MODRM_REQUIRED | IFlag._3DNOW_FETCH | IFlag.EXPORTED)
+		Set("0f, 0f", ["_3DNOW"], [OPT.MM, OPT.MM64], IFlag.MODRM_REQUIRED | IFlag._3DNOW_FETCH | IFlag.EXPORTED)
 
 	def init_FPU(self):
 		Set = lambda *args: self.SetCallback(ISetClass.FPU, *args)

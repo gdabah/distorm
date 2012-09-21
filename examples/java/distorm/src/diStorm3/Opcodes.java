@@ -583,7 +583,7 @@ public class Opcodes {
 		mOpcodes.put(0x1262, OpcodeEnum.VCMPLEPS);
 		mOpcodes.put(0x1983, OpcodeEnum.PMOVMSKB);
 		mOpcodes.put(0x254b, OpcodeEnum.INSERTPS);
-		mOpcodes.put(0x2732, OpcodeEnum.3DNOW);
+		mOpcodes.put(0x2732, OpcodeEnum._3DNOW);
 		mOpcodes.put(0x25fe, OpcodeEnum.PCMPESTRI);
 		mOpcodes.put(0x272c, OpcodeEnum.WAIT);
 		mOpcodes.put(0x152b, OpcodeEnum.VCMPFALSE_OSPD);
