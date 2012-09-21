@@ -22,5 +22,4 @@ src\textdefs.c
 src\textdefs.h
 src\wstring.c
 src\wstring.h
-src\x86defs.c
 src\x86defs.h
