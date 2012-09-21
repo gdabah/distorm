@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 #ifndef DISTORM_LIGHT
 
+
 const unsigned char _MNEMONICS[] =
 "\x09" "UNDEFINED\0" "\x03" "ADD\0" "\x04" "PUSH\0" "\x03" "POP\0" "\x02" "OR\0" \
 "\x03" "ADC\0" "\x03" "SBB\0" "\x03" "AND\0" "\x03" "DAA\0" "\x03" "SUB\0" \
@@ -274,7 +275,7 @@ const unsigned char _MNEMONICS[] =
 "\x07" "LDMXCSR\0" "\x08" "WRFSBASE\0" "\x08" "VLDMXCSR\0" "\x07" "STMXCSR\0" \
 "\x08" "WRGSBASE\0" "\x08" "VSTMXCSR\0" "\x06" "RDRAND\0" "\x07" "VMPTRLD\0" \
 "\x07" "VMCLEAR\0" "\x05" "VMXON\0" "\x06" "MOVSXD\0" "\x05" "PAUSE\0" "\x04" "WAIT\0" \
-"\x05" "3DNOW\0";
+"\x06" "_3DNOW\0";
 
 const _WRegister _REGISTERS[] = {
 	{3, "RAX"}, {3, "RCX"}, {3, "RDX"}, {3, "RBX"}, {3, "RSP"}, {3, "RBP"}, {3, "RSI"}, {3, "RDI"}, {2, "R8"}, {2, "R9"}, {3, "R10"}, {3, "R11"}, {3, "R12"}, {3, "R13"}, {3, "R14"}, {3, "R15"},

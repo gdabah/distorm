@@ -192,7 +192,7 @@ def DumpMnemonics():
 
 	# Used for Python/Java dictionary of opcodeIds-->mnemonics.
 	#CreatePythonDict(mnemonicsIds)
-	#CreateJavaDict(mnemonicsIds)
+	CreateJavaDict(mnemonicsIds)
 
 O_NONE = 0
 # REG standalone
@@ -707,7 +707,6 @@ def CreateTables(db):
 		if x.tag in ["_0F_0F", "_0F", "_0F_3A", "_0F_38"]:
 			# Store the index of these special tables, they are used directly in instructions.c.
 			externTables.append((x.tag, len(InstructionsTree)))
-		#print x.tag
 		# Notice we use GenBlock for the special instructions, this is a must, otherwise we miss instructions from the DB.
 		for i in x86db.GenBlock(x):
 			if isinstance(i, x86db.InstructionInfo):
@@ -726,7 +725,7 @@ def CreateTables(db):
 			else:
 				# False indicates this entry points nothing.
 				InstructionsTree.append((0, ""))
-	s = ["\n".join(["_InstInfo II_%s =%s;" % (i.mnemonics[0], FormatInstruction(i)[0]) for i in db.getExportedInstructions()]),
+	s = ["\n".join(["_InstInfo II_%s =%s;" % (i.mnemonics[0] if i.mnemonics[0][0] != '_' else i.mnemonics[0][1:], FormatInstruction(i)[0]) for i in db.getExportedInstructions()]),
 		"_iflags FlagsTable[%d] = {\n%s\n};" % (len(flagsDict), ",\n".join(["0x%x" % i[1] for i in sorted(zip(flagsDict.values(), flagsDict.keys()))])),
 		"\n".join(["_InstNode Table%s = %d;" % (i[0], i[1]) for i in externTables]),
 		"_InstInfo InstInfos[%d] = {\n%s\n};" % (len(InstInfos), ",\n".join(InstInfos)),
