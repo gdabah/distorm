@@ -1,6 +1,7 @@
 #summary How to compile diStorm3 for Java
 
 The Java wrapper of diStorm3 is now part of the package, and you can find it under examples\java.
+
 Please follow the next instruction in order to get it to work:
 
   # Compile the diStorm library in Visual Studio, clib for x64.
