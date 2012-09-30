@@ -76,8 +76,12 @@ static void distorm_format_size(_WString* str, const _DInst* di, int opNum)
 	 * If given operand number is higher than 2, then output the size anyways.
 	 */
 	if (((opNum >= 2) || ((di->ops[0].type != O_REG) && (di->ops[1].type != O_REG))) ||
-		/* INS/OUTS are exception, because DX is a port specifier and not a real src/dst register. */
-		((di->opcode == I_INS) || (di->opcode == I_OUTS))) {
+		/*
+		 * INS/OUTS are exception, because DX is a port specifier and not a real src/dst register.
+		 * MOVZX is also an exception, because the source operand can be a memory indirection:
+		 * MOVZX EBX, [ECX], but which size from ECX was read?
+		 */
+		((di->opcode == I_INS) || (di->opcode == I_OUTS) || (di->opcode == I_MOVZX))) {
 		switch (di->ops[opNum].size)
 		{
 			case 0: break; /* OT_MEM's unknown size. */
