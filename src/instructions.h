@@ -376,6 +376,9 @@ typedef enum OpType {
 /* Indicates that the instruction doesn't use the VVVV field of the VEX prefix, if it does then it's undecodable. */
 #define INST_VEX_V_UNUSED (1 << 6)
 
+/* Indication that the instruction is privileged (Ring 0), this should be checked on the opcodeId field. */
+#define OPCODE_ID_PRIVILEGED ((uint16_t)0x8000)
+
 /*
  * Indicates which operand is being decoded.
  * Destination (1st), Source (2nd), op3 (3rd), op4 (4th).
@@ -407,7 +410,7 @@ typedef struct {
  */
 typedef struct {
 	uint16_t sharedIndex; /* An index into the SharedInfoTable. */
-	uint16_t opcodeId; /* The opcodeId is really a byte-offset into the mnemonics table. */
+	uint16_t opcodeId; /* The opcodeId is really a byte-offset into the mnemonics table. MSB is a privileged indication. */
 } _InstInfo;
 
 /*
