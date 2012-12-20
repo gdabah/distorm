@@ -91,10 +91,10 @@ typedef unsigned __int8		uint8_t;
 
 /*
  * Operand Size or Adderss size are stored inside the flags:
- * 0 - 16 bits
- * 1 - 32 bits
- * 2 - 64 bits
- * 3 - reserved
+ * 00 - 16 bits
+ * 01 - 32 bits
+ * 10 - 64 bits
+ * 11 - reserved
  *
  * If you call these set-macros more than once, you will have to clean the bits before doing so.
  */
@@ -212,6 +212,11 @@ typedef struct {
 #define FLAG_DST_WR (1 << 6)
 /* The instruction uses RIP-relative indirection. */
 #define FLAG_RIP_RELATIVE (1 << 7)
+
+/* See flag FLAG_GET_XXX macros above. */
+
+/* The instruction is privileged and can only be used from Ring0. */
+#define FLAG_PRIVILEGED_INSTRUCTION (1 << 15)
 
 /* No register was defined. */
 #define R_NONE ((uint8_t)-1)

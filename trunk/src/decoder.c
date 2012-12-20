@@ -80,6 +80,9 @@ static _DecodeType decode_get_effective_op_size(_DecodeType dt, _iflags decodedP
 
 static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 {
+	/* Remember whether the instruction is privileged. */
+	uint16_t privilegedFlag = 0;
+
 	/* The ModR/M byte of the current instruction. */
 	unsigned int modrm = 0;
 
@@ -114,6 +117,10 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	if (ii == NULL) goto _Undecodable;
 	isi = &InstSharedInfoTable[ii->sharedIndex];
 	instFlags = FlagsTable[isi->flagsIndex];
+
+	/* Copy the privileged bit and remove it from the opcodeId field ASAP. */
+	privilegedFlag = ii->opcodeId & OPCODE_ID_PRIVILEGED;
+	ii->opcodeId &= ~OPCODE_ID_PRIVILEGED;
 
 	/*
 	 * If both REX and OpSize are available we will have to disable the OpSize, because REX has precedence.
@@ -356,6 +363,9 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	/* Set the unused prefixes mask. */
 	di->unusedPrefixesMask = prefixes_set_unused_mask(ps);
 
+	/* Fix privileged. Assumes the privilegedFlag is 0x8000 only. */
+	di->flags |= privilegedFlag;
+
 	/* Copy instruction meta. */
 	di->meta = isi->meta;
 	if (di->segment == 0) di->segment = R_NONE;
@@ -557,13 +567,26 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 		pdi->addr = startInstOffset & addrMask;
 		/* pdi->disp &= addrMask; */
 
-		/* Advance to next instruction. */
-		codeLen -= pdi->size;
-		codeOffset += pdi->size;
-		code += pdi->size;
+		if ((decodeResult == DECRES_INPUTERR) && (ps.decodedPrefixes & INST_PRE_VEX)) {
+			if (ps.prefixExtType == PET_VEX3BYTES) {
+				prefixSize -= 2;
+				codeLen += 2;
+			} else if (ps.prefixExtType == PET_VEX2BYTES) {
+				prefixSize -= 1;
+				codeLen += 1;
+			}
+			ps.last = ps.start + prefixSize - 1;
+			code = ps.last + 1;
+			codeOffset = startInstOffset + prefixSize;
+		} else {
+			/* Advance to next instruction. */
+			codeLen -= pdi->size;
+			codeOffset += pdi->size;
+			code += pdi->size;
 
-		/* Instruction's size should include prefixes. */
-		pdi->size += (uint8_t)prefixSize;
+			/* Instruction's size should include prefixes. */
+			pdi->size += (uint8_t)prefixSize;
+		}
 
 		/* Drop all prefixes and the instruction itself, because the instruction wasn't successfully decoded. */
 		if ((decodeResult == DECRES_INPUTERR) && (~_ci->features & DF_RETURN_FC_ONLY)) {

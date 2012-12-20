@@ -80,10 +80,10 @@ def TranslateMnemonics(pseudoClassType, mnems):
 			l.append(0) # Undefined instruction.
 			continue
 		if mnemonicsIds.has_key(i):
-			l.append(str(mnemonicsIds[i]))
+			l.append(mnemonicsIds[i])
 		else:
 			mnemonicsIds[i] = idsCounter
-			l.append(str(idsCounter))
+			l.append(idsCounter)
 			idsCounter += len(i) + 2 # For len/null chars.
 			if idsCounter >= 2**16:
 				raise "opcodeId is too big to fit into uint16_t"
@@ -318,7 +318,7 @@ def CheckOTCollisions(ii):
 			break
 
 # This fucntion for certain flow control related instructions will set their type.
-def CheckForFlowControl(ii):
+def UpdateForFlowControl(ii):
 	if ii.mnemonics[0].find("CMOV") == 0:
 		ii.flowControl = FlowControl.CMOV
 		return
@@ -338,7 +338,7 @@ def CheckForFlowControl(ii):
 			ii.flowControl = p[1]
 			return
 
-def CheckWritableDestinationOperand(ii):
+def UpdateWritableDestinationOperand(ii):
 	prefixes = ["MOV", "SET", "CMOV", "CMPXCHG"]
 	for i in prefixes:
 		if ii.mnemonics[0].find(i) == 0:
@@ -356,6 +356,25 @@ def CheckWritableDestinationOperand(ii):
 		if ii.mnemonics[0] in i:
 			ii.flags |= InstFlag.DST_WR
 			return
+
+def UpdatePrivilegedInstruction(opcodeIds, ii):
+	""" Checks whether a given mnemonic from the given list is privileged,
+		and changes the relevant opcodeId to indicate so.
+		Most significant bit of the OpcodeId is the indicator. """
+
+	def IsPrivilegedMov(ii):
+		" Check for MOV instruction with Debug/Control registers which is privileged. "
+		return (ii.mnemonics[0] == "MOV") and ((OperandType.CREG in ii.operands) or (OperandType.DREG in ii.operands))
+
+	privileged = [
+		"LGDT", "LLDT", "LTR", "LIDT", "LMSW", "CLTS", "INVD",
+		"WBINVD", "INVLPG", "HLT", "RDMSR", "WRMSR", "RDPMC", "RDTSC",
+		# IO Sensitive Instructions, mostly allowed by ring0 only.
+		"IN", "INS", "OUT", "OUTS", "CLI", "STI", "IRET"
+	]
+	for i in enumerate(ii.mnemonics):
+		if (i[1] in privileged) or IsPrivilegedMov(ii):	
+			opcodeIds[i[0]] |= 0x8000
 
 def SetInstructionAffectedFlags(ii, flagsTuple):
 	""" Helper routine to set the m/t/u flags for an instruction info. """
@@ -397,7 +416,7 @@ def GetTestedFlagsForCondition(cond):
 	# Return tested flags only.
 	return (0, Conditions[cond], 0)
 
-def CheckInstructionAffectedFlags(ii):
+def UpdateInstructionAffectedFlags(ii):
 	"""
 	Add flags for each instruction that is in the following table. We add modified/tested/undefined flags.
 	Note that some instruction reset specific flags, but we don't record that here, we only care about actually modified ones.
@@ -513,7 +532,6 @@ def CheckInstructionAffectedFlags(ii):
 sharedInfoDict = {}
 # Table to hold shared flags.
 flagsDict = {}
-
 def FormatInstruction(ii):
 	""" Formats a string with all information relevant for diStorm InstInfo structure
 	or the InstInfoEx. These are the internal structures diStorm uses for holding the instructions' information.
@@ -533,16 +551,19 @@ def FormatInstruction(ii):
 	CheckOTCollisions(ii)
 
 	# Add flags for flow control instructions.
-	CheckForFlowControl(ii)
+	UpdateForFlowControl(ii)
 
 	# Add flags for writable destination operand.
-	CheckWritableDestinationOperand(ii)
+	UpdateWritableDestinationOperand(ii)
 
 	# Add affected modified/tested/undefined flags for instruction.
-	CheckInstructionAffectedFlags(ii)
+	UpdateInstructionAffectedFlags(ii)
 
 	# Pad mnemonics to three, in case EXMNEMONIC/2 isn't used (so we don't get an exception).
-	mnems = TranslateMnemonics([None, ii.classType][(ii.flags & InstFlag.PSEUDO_OPCODE) == InstFlag.PSEUDO_OPCODE], ii.mnemonics) + ["0", "0"]
+	mnems = TranslateMnemonics([None, ii.classType][(ii.flags & InstFlag.PSEUDO_OPCODE) == InstFlag.PSEUDO_OPCODE], ii.mnemonics) + [0, 0]
+
+	# Mark whether the instruction is privileged, by setting MSB of the OpcodeId field.
+	UpdatePrivilegedInstruction(mnems, ii)
 
 	# Pad operands to atleast three (so we don't get an exception too, since there might be instructions with no operands at all).
 	ops = ii.operands + [OperandType.NONE, OperandType.NONE, OperandType.NONE, OperandType.NONE]
@@ -561,7 +582,7 @@ def FormatInstruction(ii):
 		if flagsEx >= 256: # Assert the size of flagsEx is enough to holds this value.
 			raise "FlagsEx exceeded its 8 bits. Change flagsEx of _InstInfoEx to be uint16!"
 		# Concat the mnemonics and the third operand.
-		optFields = ", 0x%x, %d, %d, %s, %s" % (flagsEx, op3, op4, mnems[1], mnems[2])
+		optFields = ", 0x%x, %d, %d, %d, %d" % (flagsEx, op3, op4, mnems[1], mnems[2])
 
 	# Notice we filter out internal bits from flags.
 	flags = ii.flags & ((1 << InstFlag.FLAGS_EX_START_INDEX)-1)
@@ -582,7 +603,7 @@ def FormatInstruction(ii):
 	if sharedInfoIndex >= 2**16:
 		raise "SharedInfoIndex exceeded its 16 bits. Change type of sharedInfoIndex in _InstInfo!"
 
-	fields = "0x%x, %s" % (sharedInfoIndex, mnems[0])
+	fields = "0x%x, %d" % (sharedInfoIndex, mnems[0])
 	# "Structure-Name" = II_Bytes-Code {Fields + Optional-Fields}.
 	return ("\t/*II%s*/ {%s%s}" % (ii.tag, fields, optFields), (ii.flags & InstFlag.EXTENDED) != 0)
 
@@ -752,7 +773,7 @@ def main():
 	f.write(lists)
 	f.close()
 
-	DumpMnemonics()
+	#DumpMnemonics()
 
 	print "The file output.txt was written successfully"
 main()
