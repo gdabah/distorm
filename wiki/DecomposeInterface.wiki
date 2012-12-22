@@ -170,7 +170,9 @@ The FLAG_IMM_SIGNED is important if you want to know whether to treat the immedi
 
 FLAG_DST_WR - This flag indicates whether the first operand, that is the destination operand, is writable or not. This way you can know dependency between instructions. For example: MOV EBX, EAX -> EBX gets overridden, hence the flag will be set. But for: PUSH EBX, the flag is not set, since the PUSH instruction doesn't write to the EBX register. Note that this flag is only supported in Integer instructions.
 
-And last but not least, FLAG_RIP_RELATIVE will indicate when an instruction in 64 bits uses the RIP-relative memory indirection addressing. In order to get the absolute target address you can use the INSTRUCTION_GET_RIP_TARGET. This flag will spare you the scanning for the RIP register in the operands.
+FLAG_RIP_RELATIVE indicates when an instruction in 64 bits uses the RIP-relative memory indirection addressing. In order to get the absolute target address you can use the INSTRUCTION_GET_RIP_TARGET. This flag will spare you the scanning for the RIP register in the operands.
+
+And last but not least, FLAG_PRIVILEGED_INSTRUCTION indicates that the instruction is a privileged instruction, one that can run only from ring 0.
 
 ===Operands===
  As we said earlier, the 'operands' field is an array of 4 operand structures. This is probably the most important information you would want to extract from an instruction.
