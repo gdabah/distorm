@@ -515,7 +515,7 @@ def UpdateInstructionAffectedFlags(ii):
 	Shifts = [
 		(["RCL", "RCR"], (OF | CF, CF), (CF, CF, OF)),
 		(["ROL", "ROR"], (OF | CF), (CF, 0, OF)),
-		(["SAL" "SAR", "SHL", "SHR"], (OF | SF | ZF | PF | CF, 0, AF), (SF | ZF | PF | CF, 0, OF | AF)),
+		(["SAL", "SAR", "SHL", "SHR"], (OF | SF | ZF | PF | CF, 0, AF), (SF | ZF | PF | CF, 0, OF | AF)),
 		(["SHLD", "SHRD"], (OF | SF | ZF | PF | CF, 0, AF), (SF | ZF | PF | CF, 0, OF | AF))
 	]
 	for i in Shifts:
