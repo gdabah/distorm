@@ -669,7 +669,7 @@ def _getFC(metaflags):
     try:
         return FlowControlFlags[realvalue]
     except IndexError:
-        print "Bad meta-flags: %d", realvalue
+        print ("Bad meta-flags: %d", realvalue)
         raise
 
 def _getMnem(opcode):
@@ -900,8 +900,9 @@ def DecomposeGenerator(codeOffset, code, dt, features = 0):
         codeOffset = codeOffset + delta
         p_code     = byref(code_buf, instruction_off)
         codeLen    = codeLen - delta
-	if (features & DF_STOP_ON_FLOW_CONTROL) != 0:
-		break # User passed a stop flag.
+        
+        if (features & DF_STOP_ON_FLOW_CONTROL) != 0:
+            break # User passed a stop flag.
 
 def Decompose(offset, code, type = Decode32Bits, features = 0):
     """
