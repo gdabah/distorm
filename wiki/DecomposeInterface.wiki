@@ -160,7 +160,7 @@ It is important to understand the meaning of the two sizes:
 {{{MOV [EAX], byte ptr 0}}} - operand size is 8 in both operands, however the size of the register that references the memory, EAX, is obviously 32 (or Decode32Bits).
 And one more thing about it, it's the effective operand/address size, rather than the input DecodeType you supply when calling the Decompose function (this can happen with prefixes for the instruction)!
 
-FLAG_GET_PREFIX returns the prefix of the instruction (FLAG_LOCK, FLAG_REPNZ, FLAG_REP).
+FLAG_GET_PREFIX returns the prefix of the instruction (FLAG_LOCK, FLAG_REPNZ, FLAG_REP). Note that the string instructions CMPS and SCAS treats the FLAG_REP as 'REPZ'.
 
 There are a few more flags such as:
 FLAG_HINT_TAKEN, FLAG_HINT_NOT_TAKEN, FLAG_IMM_SIGNED.
