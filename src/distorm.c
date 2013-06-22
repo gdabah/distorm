@@ -183,7 +183,9 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 			strcpy_WSN(str, "LOCK ");
 		break;
 		case FLAG_REP:
-			strcpy_WSN(str, "REP ");
+			/* REP prefix for CMPS and SCAS is really a REPZ. */
+			if ((di->opcode == I_CMPS) || (di->opcode == I_SCAS)) strcpy_WSN(str, "REPZ ");
+			else strcpy_WSN(str, "REP ");
 		break;
 		case FLAG_REPNZ:
 			strcpy_WSN(str, "REPNZ ");
