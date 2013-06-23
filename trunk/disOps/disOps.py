@@ -339,6 +339,7 @@ def UpdateForFlowControl(ii):
 			return
 
 def UpdateWritableDestinationOperand(ii):
+	" Mark dst-wrt flag for all Integer instructions that write to GPR/mem. "
 	prefixes = ["MOV", "SET", "CMOV", "CMPXCHG"]
 	for i in prefixes:
 		if ii.mnemonics[0].find(i) == 0:
@@ -356,6 +357,21 @@ def UpdateWritableDestinationOperand(ii):
 		if ii.mnemonics[0] in i:
 			ii.flags |= InstFlag.DST_WR
 			return
+
+	# Make sure it's an FPU instruction before we continue.
+	if ii.classType != ISetClass.FPU:
+		return
+	fpu_mnemonics = [
+		"FSTENV", "FSTCW", "FSAVE", "FSTSW", "FST", "FSTP", "FNSTENV", "FNSTCW",
+		"FIST", "FISTP", "FNSAVE", "FBSTP", "FNSTSW"
+	]
+	for i in fpu_mnemonics:
+		if ii.mnemonics[0] in i:
+			if len(ii.operands) > 0:
+				# Ignore operands of FPU STi.
+				if ii.operands[0] not in [OperandType.FPU_SI, OperandType.FPU_SSI, OperandType.FPU_SIS]:
+					ii.flags |= InstFlag.DST_WR
+					return
 
 def UpdatePrivilegedInstruction(opcodeIds, ii):
 	""" Checks whether a given mnemonic from the given list is privileged,
