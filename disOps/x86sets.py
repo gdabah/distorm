@@ -524,11 +524,11 @@ class Instructions:
 		# Because it's found in the prefixed table at the same entry of 0x66 for mandatory prefix.
 
 		Set("9b, d9 //06", ["FSTENV"], [OPT.MEM], IFlag.PRE_OP_SIZE | IFlag.MODRM_REQUIRED | IFlag._32BITS)
-		Set("9b, d9 //07", ["FSTCW"], [OPT.MEM16], IFlag.PRE_OP_SIZE | IFlag.MODRM_REQUIRED | IFlag._32BITS)
+		Set("9b, d9 //07", ["FSTCW"], [OPT.MEM], IFlag.PRE_OP_SIZE | IFlag.MODRM_REQUIRED | IFlag._32BITS)
 		Set("9b, db //e2", ["FCLEX"], [], IFlag.PRE_OP_SIZE | IFlag._32BITS)
 		Set("9b, db //e3", ["FINIT"], [], IFlag.PRE_OP_SIZE | IFlag._32BITS)
 		Set("9b, dd //06", ["FSAVE"], [OPT.MEM], IFlag.PRE_OP_SIZE | IFlag.MODRM_REQUIRED | IFlag._32BITS)
-		Set("9b, dd //07", ["FSTSW"], [OPT.MEM16], IFlag.PRE_OP_SIZE | IFlag.MODRM_REQUIRED | IFlag._32BITS)
+		Set("9b, dd //07", ["FSTSW"], [OPT.MEM], IFlag.PRE_OP_SIZE | IFlag.MODRM_REQUIRED | IFlag._32BITS)
 		Set("9b, df //e0", ["FSTSW"], [OPT.ACC16], IFlag.PRE_OP_SIZE | IFlag._32BITS)
 
 
@@ -553,9 +553,9 @@ class Instructions:
 		Set("d9 //02", ["FST"], [OPT.FPUM32], IFlag.MODRM_REQUIRED)
 		Set("d9 //03", ["FSTP"], [OPT.FPUM32], IFlag.MODRM_REQUIRED)
 		Set("d9 //04", ["FLDENV"], [OPT.MEM], IFlag.MODRM_REQUIRED)
-		Set("d9 //05", ["FLDCW"], [OPT.MEM16], IFlag.MODRM_REQUIRED)
+		Set("d9 //05", ["FLDCW"], [OPT.MEM], IFlag.MODRM_REQUIRED)
 		Set("d9 //06", ["FNSTENV"], [OPT.MEM], IFlag.MODRM_REQUIRED)
-		Set("d9 //07", ["FNSTCW"], [OPT.MEM16], IFlag.MODRM_REQUIRED)
+		Set("d9 //07", ["FNSTCW"], [OPT.MEM], IFlag.MODRM_REQUIRED)
 		Set("d9 //c0", ["FLD"], [OPT.FPU_SI], IFlag.GEN_BLOCK)
 		Set("d9 //c8", ["FXCH"], [OPT.FPU_SI], IFlag.GEN_BLOCK)
 		Set("d9 //c9", ["FXCH"], [], IFlag.INST_FLAGS_NONE)
