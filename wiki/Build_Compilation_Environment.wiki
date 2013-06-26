@@ -78,7 +78,7 @@ For installing the Python module manually, follow these instructions:
  # Download the diStorm source code, or check out using SVN.
  # Compile the dynamic library project of diStorm, either .SO or .DLL.
  # Create a directory for diStorm in the Python\Lib\site-packages directory, name it 'distorm3'.
- # Copy the Python/__init__.py and the compiled library to the new directory.
+ # Copy python/distorm3/__init__.py and the compiled library to the new directory.
 
 And you're done, launch Python and run "import distorm3".
 
