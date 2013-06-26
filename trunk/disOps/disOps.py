@@ -192,7 +192,7 @@ def DumpMnemonics():
 
 	# Used for Python/Java dictionary of opcodeIds-->mnemonics.
 	#CreatePythonDict(mnemonicsIds)
-	CreateJavaDict(mnemonicsIds)
+	#CreateJavaDict(mnemonicsIds)
 
 O_NONE = 0
 # REG standalone
