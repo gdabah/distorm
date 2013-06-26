@@ -263,7 +263,7 @@ typedef struct {
 	/* Meta defines the instruction set class, and the flow control flags. Use META macros. */
 	uint8_t meta;
 	/* The CPU flags that the instruction operates upon. */
-	uint8_t modifiedFlagsMask, testedFlagsMask, undefinedFlagsMask;
+	uint16_t modifiedFlagsMask, testedFlagsMask, undefinedFlagsMask;
 } _DInst;
 
 #ifndef DISTORM_LIGHT
@@ -310,15 +310,15 @@ typedef struct {
  * For now R8 - R15 are not supported and non general purpose registers map into same RM.
  */
 
-/* CPU Flags that instructions modify, test or undefine. */
-#define D_ZF 1 /* Zero */
-#define D_SF 2 /* Sign */
-#define D_CF 4 /* Carry */
-#define D_OF 8 /* Overflow */
-#define D_PF 0x10 /* Parity */
-#define D_AF 0x20 /* Auxilary */
-#define D_DF 0x40 /* Direction */
-#define D_IF 0x80 /* Interrupt */
+/* CPU flags that instructions modify, test or undefine (are EFLAGS compatible!). */
+#define D_CF 1		/* Carry */
+#define D_PF 4		/* Parity */
+#define D_AF 0x10	/* Auxiliary */
+#define D_ZF 0x40	/* Zero */
+#define D_SF 0x80	/* Sign */
+#define D_IF 0x200	/* Interrupt */
+#define D_DF 0x400	/* Direction */
+#define D_OF 0x800	/* Overflow */
 
 /*
  * Instructions Set classes:

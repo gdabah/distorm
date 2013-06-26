@@ -235,14 +235,13 @@ class NodeType:
 	) = range(0, 7)
 
 class CPUFlags:
-	""" Specifies all the flags that the x86/x64 CPU supports. """
-	(ZF, # 0
-	SF,  # 1
-	CF,  # 2
-	OF,  # 3
-	PF,  # 4
-	AF,  # 5
-	DF,  # 6
-	IF   # 7
+	""" Specifies all the flags that the x86/x64 CPU supports, in a special compact order. """
+	(CF, # 0
+	IF,  # 1
+	PF,  # 2
+	DF,  # 3
+	AF,  # 4
+	OF,  # 5
+	ZF,  # 6
+	SF   # 7
 	) = [1 << i for i in xrange(8)]
-

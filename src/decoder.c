@@ -78,6 +78,12 @@ static _DecodeType decode_get_effective_op_size(_DecodeType dt, _iflags decodedP
 	return dt;
 }
 
+/* A helper macro to convert from diStorm's CPU flags to EFLAGS. */
+#define CONVERT_FLAGS_TO_EFLAGS(dst, src, field) dst->field = ((src->field & D_COMPACT_SAME_FLAGS) | \
+	((src->field & D_COMPACT_IF) ? D_IF : 0) | \
+	((src->field & D_COMPACT_DF) ? D_DF : 0) | \
+	((src->field & D_COMPACT_OF) ? D_OF : 0));
+
 static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 {
 	/* Remember whether the instruction is privileged. */
@@ -374,9 +380,9 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	if (di->base != R_NONE) di->usedRegistersMask |= _REGISTERTORCLASS[di->base];
 
 	/* Copy CPU affected flags. */
-	di->modifiedFlagsMask = isi->modifiedFlags;
-	di->testedFlagsMask = isi->testedFlags;
-	di->undefinedFlagsMask = isi->undefinedFlags;
+	CONVERT_FLAGS_TO_EFLAGS(di, isi, modifiedFlagsMask);
+	CONVERT_FLAGS_TO_EFLAGS(di, isi, testedFlagsMask);
+	CONVERT_FLAGS_TO_EFLAGS(di, isi, undefinedFlagsMask);
 
 	/* Calculate the size of the instruction we've just decoded. */
 	di->size = (uint8_t)((ci->code - startCode) & 0xff);
@@ -414,6 +420,8 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 	_PrefixState ps;
 	unsigned int prefixSize;
 	_CodeInfo ci;
+	unsigned int features;
+	unsigned int mfc;
 
 	_OffsetType codeOffset = _ci->codeOffset;
 	const uint8_t* code = _ci->code;
@@ -622,14 +630,16 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 		_ci->nextOffset = codeOffset;
 
 		/* Check whether we need to stop on any flow control instruction. */
-		if ((decodeResult == DECRES_SUCCESS) && (_ci->features & DF_STOP_ON_FLOW_CONTROL)) {
-			if (((_ci->features & DF_STOP_ON_CALL) && (META_GET_FC(pdi->meta) == FC_CALL)) ||
-				((_ci->features & DF_STOP_ON_RET) && (META_GET_FC(pdi->meta) == FC_RET)) ||
-				((_ci->features & DF_STOP_ON_SYS) && (META_GET_FC(pdi->meta) == FC_SYS)) ||
-				((_ci->features & DF_STOP_ON_UNC_BRANCH) && (META_GET_FC(pdi->meta) == FC_UNC_BRANCH)) ||
-				((_ci->features & DF_STOP_ON_CND_BRANCH) && (META_GET_FC(pdi->meta) == FC_CND_BRANCH)) ||
-				((_ci->features & DF_STOP_ON_INT) && (META_GET_FC(pdi->meta) == FC_INT)) ||
-				((_ci->features & DF_STOP_ON_CMOV) && (META_GET_FC(pdi->meta) == FC_CMOV)))
+		features = _ci->features;
+		mfc = META_GET_FC(pdi->meta);
+		if ((decodeResult == DECRES_SUCCESS) && (features & DF_STOP_ON_FLOW_CONTROL)) {
+			if (((features & DF_STOP_ON_CALL) && (mfc == FC_CALL)) ||
+				((features & DF_STOP_ON_RET) && (mfc == FC_RET)) ||
+				((features & DF_STOP_ON_SYS) && (mfc == FC_SYS)) ||
+				((features & DF_STOP_ON_UNC_BRANCH) && (mfc == FC_UNC_BRANCH)) ||
+				((features & DF_STOP_ON_CND_BRANCH) && (mfc == FC_CND_BRANCH)) ||
+				((features & DF_STOP_ON_INT) && (mfc == FC_INT)) ||
+				((features & DF_STOP_ON_CMOV) && (mfc == FC_CMOV)))
 				return DECRES_SUCCESS;
 		}
 	}
