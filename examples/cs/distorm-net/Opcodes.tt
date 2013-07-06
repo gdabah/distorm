@@ -1,0 +1,37 @@
+﻿<#@ template debug="true" hostSpecific="true" #>
+<#@ output extension=".cs" #>
+<#@ Assembly Name="System.Core" #>
+<#@ Assembly Name="System.Windows.Forms" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Diagnostics" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Collections" #>
+<#@ import namespace="System.Collections.Generic" #> 
+<#@ import namespace="System.Text.RegularExpressions" #> 
+// This file was auto generated from the distrom opcodes.h file
+// on <#= DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.FFF") #>
+<#
+  var mnemonics = File.ReadAllText(Host.ResolvePath(@"..\..\..\include\mnemonics.h"));
+  var instRe = new Regex("typedef enum {(.+)} _InstructionType;", RegexOptions.Singleline);
+  var regRe = new Regex("typedef enum {(.+)} _RegisterType;", RegexOptions.Singleline);
+  var m = instRe.Match(mnemonics);
+  var insts = m.Groups[1].Value.Split(',').Select(x => new { 
+    Name = x.Split('=')[0].Trim().Substring(2),
+    Value = x.Split('=')[1].Trim(),
+  }).ToArray();  
+  m = regRe.Match(mnemonics, m.Index + m.Length);
+  var regs = m.Groups[1].Value.Split(',').Select(x => x.Trim()).ToArray();
+#>
+namespace diStorm
+{
+	public enum Opcode : ushort {
+		<# foreach (var i in insts) { #>
+		<#= i.Name #> = <#= i.Value #>,<# } #>
+	}
+
+	public enum Register {
+		<# foreach (var r in regs) { #>
+		<#= r #>,<# } #>
+	}
+}
