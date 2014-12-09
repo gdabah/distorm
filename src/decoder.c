@@ -446,10 +446,15 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 
 #ifdef DISTORM_LIGHT
 	supportOldIntr; /* Unreferenced. */
-#endif
 
+	/*
+	 * Only truncate address if we are using the decompose interface.
+	 * Otherwise, we use the textual interface which needs full addresses for formatting bytes output.
+	 * So distorm_format will truncate later.
+	 */
 	if (_ci->features & DF_MAXIMUM_ADDR32) addrMask = 0xffffffff;
 	else if (_ci->features & DF_MAXIMUM_ADDR16) addrMask = 0xffff;
+#endif
 
 	/* No entries are used yet. */
 	*usedInstructionsCount = 0;
