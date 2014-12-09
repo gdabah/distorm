@@ -159,10 +159,11 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 
 	/* Copy other fields. */
 	result->size = di->size;
-	result->offset = di->addr & addrMask;
+	result->offset = di->addr;
 
 	if (di->flags == FLAG_NOT_DECODABLE) {
 		str = &result->mnemonic;
+		result->offset &= addrMask;
 		strclear_WS(&result->operands);
 		strcpy_WSN(str, "DB ");
 		str_code_hb(str, di->imm.byte);
@@ -173,8 +174,12 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 
 	str = &result->instructionHex;
 	strclear_WS(str);
+	/* Gotta have full address for (di->addr - ci->codeOffset) to work in all modes. */
 	for (i = 0; i < di->size; i++)
 		str_hex_b(str, ci->code[(unsigned int)(di->addr - ci->codeOffset + i)]);
+
+	/* Truncate address now. */
+	result->offset &= addrMask;
 
 	str = &result->mnemonic;
 	switch (FLAG_GET_PREFIX(di->flags))
