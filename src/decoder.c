@@ -115,7 +115,7 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	 */
 	int lockable = FALSE;
 
-	/* Calcualte (and cache) effective-operand-size and effective-address-size only once. */
+	/* Calculate (and cache) effective-operand-size and effective-address-size only once. */
 	_DecodeType effOpSz, effAdrSz;
 	_iflags instFlags;
 
@@ -148,8 +148,8 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	 * Which practically means, don't allow 32 bits instructions in 16 bits decoding mode, but do allow
 	 * 16 bits instructions in 32 bits decoding mode, of course...
 
-	 * NOTE: Make sure the instruction set for 32 bits has explicitly this specfic flag set.
-	 * NOTE2: Make sure the instruction set for 64 bits has explicitly this specfic flag set.
+	 * NOTE: Make sure the instruction set for 32 bits has explicitly this specific flag set.
+	 * NOTE2: Make sure the instruction set for 64 bits has explicitly this specific flag set.
 
 	 * If this is the case, drop what we've got and restart all over after DB'ing that byte.
 
@@ -276,7 +276,7 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	else if ((instFlags & (INST_PRE_ADDR_SIZE | INST_NATIVE)) == (INST_PRE_ADDR_SIZE | INST_NATIVE)) {
 		di->opcode = ii->opcodeId;
 
-		/* If LOOPxx gets here from 64bits, it must be Decode32Bits because Address Size perfix is set. */
+		/* If LOOPxx gets here from 64bits, it must be Decode32Bits because Address Size prefix is set. */
 		ps->usedPrefixes |= INST_PRE_ADDR_SIZE;
 	}
 	/*
@@ -349,10 +349,10 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 		 * Therefore, we use another table to fix the offset.
 		 */
 		if (instFlags & INST_PRE_VEX) {
-			/* Use the AVX pesudo compare mnemonics table. */
+			/* Use the AVX pseudo compare mnemonics table. */
 			di->opcode = ii->opcodeId + VCmpMnemonicOffsets[cmpType];
 		} else {
-			/* Use the SSE psuedo compare mnemonics table. */
+			/* Use the SSE pseudo compare mnemonics table. */
 			di->opcode = ii->opcodeId + CmpMnemonicOffsets[cmpType];
 		}
 	}
