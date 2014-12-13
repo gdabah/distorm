@@ -477,7 +477,7 @@ DF_STOP_ON_CND_BRANCH  = 0x80
 DF_STOP_ON_INT  = 0x100
 DF_STOP_ON_CMOV  = 0x200
 DF_STOP_ON_FLOW_CONTROL = (DF_STOP_ON_CALL | DF_STOP_ON_RET | DF_STOP_ON_SYS | \
-	DF_STOP_ON_UNC_BRANCH | DF_STOP_ON_CND_BRANCH | DF_STOP_ON_INT | DF_STOP_ON_CMOV)
+    DF_STOP_ON_UNC_BRANCH | DF_STOP_ON_CND_BRANCH | DF_STOP_ON_INT | DF_STOP_ON_CMOV)
 
 def DecodeGenerator(codeOffset, code, dt):
     """
@@ -695,6 +695,7 @@ class Operand (object):
         self.disp = 0
         self.dispSize = 0
         self.base = 0
+        self.segment = 0
         if type == OPERAND_IMMEDIATE:
             self.value = int(args[0])
             self.size = args[1]
@@ -709,10 +710,12 @@ class Operand (object):
             self.scale = args[3] if args[3] > 1 else 1
             self.disp = int(args[4])
             self.dispSize = args[5]
+            self.segment = args[6]
         elif type == OPERAND_ABSOLUTE_ADDRESS:
             self.size = args[0]
             self.disp = int(args[1])
             self.dispSize = args[2]
+            self.segment = args[3]
         elif type == OPERAND_FAR_MEMORY:
             self.size = args[2]
             self.seg = args[0]
@@ -811,11 +814,11 @@ class Instruction (object):
         elif operand.type == O_REG:
             return Operand(OPERAND_REGISTER, operand.index, operand.size)
         elif operand.type == O_MEM:
-            return Operand(OPERAND_MEMORY, di.base, operand.index, operand.size, di.scale, _unsignedToSigned(di.disp), di.dispSize)
+            return Operand(OPERAND_MEMORY, di.base, operand.index, operand.size, di.scale, _unsignedToSigned(di.disp), di.dispSize, self.segment)
         elif operand.type == O_SMEM:
-            return Operand(OPERAND_MEMORY, None, operand.index, operand.size, di.scale, _unsignedToSigned(di.disp), di.dispSize)
+            return Operand(OPERAND_MEMORY, None, operand.index, operand.size, di.scale, _unsignedToSigned(di.disp), di.dispSize, self.segment)
         elif operand.type == O_DISP:
-            return Operand(OPERAND_ABSOLUTE_ADDRESS, operand.size, di.disp, di.dispSize)
+            return Operand(OPERAND_ABSOLUTE_ADDRESS, operand.size, di.disp, di.dispSize, self.segment)
         elif operand.type == O_PC:
             return Operand(OPERAND_IMMEDIATE, _unsignedToSigned(di.imm.addr) + self.address + self.size, operand.size)
         elif operand.type == O_PTR:
