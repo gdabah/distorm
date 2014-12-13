@@ -789,7 +789,7 @@ def main():
 	f.write(lists)
 	f.close()
 
-	#DumpMnemonics()
+	DumpMnemonics()
 
 	print "The file output.txt was written successfully"
 main()
