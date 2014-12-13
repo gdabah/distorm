@@ -783,7 +783,7 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 			if (ps->prefixExtType) {
 				/*
 				 * If REX prefix is valid then we will have to use low bytes.
-				 * This is a PASSIVE behaviour changer of REX prefix, it affects operands even if its value is 0x40 !
+				 * This is a PASSIVE behavior changer of REX prefix, it affects operands even if its value is 0x40 !
 				 */
 				ps->usedPrefixes |= INST_PRE_REX;
 				op->index = (uint8_t)operands_fix_8bit_rex_base(reg + ((vrex & PREFIX_EX_R) ? EX_GPR_BASE : 0));

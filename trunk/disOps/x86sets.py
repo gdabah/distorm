@@ -473,7 +473,7 @@ class Instructions:
 		""" Exported instruction are special instruction that create a collision in the DB.
 		Therefore they are exported directly so diStorm can use them manually in the
 		insts.c instruction look-up code.
-		Note that they ignore their opcodes here.
+		Note that their opcodes are totally ignored here.
 		Also the path to the instruction in the trie has to be defined by any instruction with same opcode!
 		So for instance, NOP|PAUSE|XCHG -> XHG is really defined, the rest are exported.
 		Inside diStorm it will know which one to use. """
@@ -499,6 +499,12 @@ class Instructions:
 
 		# Wait instruction is needed, but it can be a prefix. See next page for more info.
 		Set("9b", ["WAIT"], [], IFlag.EXPORTED)
+
+		# VMPTRLD and RDRAND use same 2 first bytes and 06 as group (thus 2.3 bytes).
+		# When MOD is 3 it's the RDRAND instruction and for the rest it's VMPTRLD.
+		# The problem is that they have different operands, so a hack is required in the lookup instruction code.
+		# Plus remember that this opcode is prefixed (because of VMCLEAR) sometimes and therefore will be part of a prefixed table!
+		Set("0f, c7 /06", ["RDRAND"], [OPT.RM_FULL], IFlag._32BITS | IFlag.MODRM_INCLUDED | IFlag.MODRM_REQUIRED | IFlag._64BITS | IFlag.EXPORTED)
 
 		Set = lambda *args: self.SetCallback(ISetClass._3DNOW, *args)
 		# This is not really an instruction, but a gateway to all 3dnow instructions.
@@ -1164,7 +1170,8 @@ class Instructions:
 		# In 64bits the operands are promoted to 64bits automatically.
 		Set("0f, 78", ["VMREAD"], [OPT.RM32_64, OPT.REG32_64], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag._64BITS)
 		Set("0f, 79", ["VMWRITE"], [OPT.REG32_64, OPT.RM32_64], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag._64BITS)
-		# See RDRAND for VMPTRLD below.
+		# VMPTRLD collides with RDRAND (see exported instructions).
+		Set("0f, c7 /06", ["VMPTRLD"], [OPT.MEM], IFlag.MODRM_REQUIRED | IFlag._32BITS)
 		Set("0f, c7 /07", ["VMPTRST"], [OPT.MEM64], IFlag.MODRM_REQUIRED | IFlag._32BITS)
 		Set("66, 0f, c7 /06", ["VMCLEAR"], [OPT.MEM64], IFlag.MODRM_REQUIRED | IFlag._32BITS)
 		Set("f3, 0f, c7 /06", ["VMXON"], [OPT.MEM64], IFlag.MODRM_REQUIRED | IFlag._32BITS)
@@ -1175,7 +1182,6 @@ class Instructions:
 
 		# New instructions from Intel December 2011.
 		Set("0f, 01 //d4", ["VMFUNC"], [], IFlag._32BITS)
-		Set("0f, c7 /06", ["RDRAND", "VMPTRLD"], [OPT.MEM_OPT], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.USE_EXMNEMONIC | IFlag.MNEMONIC_MODRM_BASED)
 
 		Set("66, 0f, 38, 82", ["INVPCID"], [OPT.REG32_64, OPT.MEM128], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag._64BITS)
 		# Can be prefixed with 0x66, see LZCNT.
