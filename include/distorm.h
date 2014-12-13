@@ -206,7 +206,7 @@ typedef struct {
 #define FLAG_HINT_TAKEN (1 << 3)
 /* Indicates there is a hint non-taken for Jcc instructions only. */
 #define FLAG_HINT_NOT_TAKEN (1 << 4)
-/* The Imm value is signed extended. */
+/* The Imm value is signed extended (E.G in 64 bit decoding mode, a 32 bit imm is usually sign extended into 64 bit imm). */
 #define FLAG_IMM_SIGNED (1 << 5)
 /* The destination operand is writable. */
 #define FLAG_DST_WR (1 << 6)

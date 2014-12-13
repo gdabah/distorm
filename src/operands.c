@@ -728,8 +728,12 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 		case OT_IMM32:
 			op->type = O_IMM;
 			if (ci->dt == Decode64Bits) {
-				/* Imm32 is sign extended to 64 bits! */
-				op->size = 64;
+				/*
+				 * Imm32 is sign extended to 64 bits!
+				 * Originally the op size was 64, but later was changed to reflect real size of imm.
+				 */
+				op->size = 32;
+				/* Use this as an indicator that it should be signed extended. */
 				di->flags |= FLAG_IMM_SIGNED;
 				if (!read_stream_safe_sint(ci, &di->imm.sqword, sizeof(int32_t))) return FALSE;
 			} else {
