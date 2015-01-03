@@ -232,25 +232,25 @@ def main():
 
     # Metadata
     'name'              : 'distorm3',
-    'version'           : '3',
+    'version'           : '3.3.0',
     'description'       : 'The goal of diStorm3 is to decode x86/AMD64' \
                           ' binary streams and return a structure that' \
                           ' describes each instruction.',
     'long_description'  : (
                         'Powerful Disassembler Library For AMD64\n'
-                        'by Gil Dabah (arkon@ragestorm.net)\n'
+                        'by Gil Dabah (distorm@gmail.com)\n'
                         '\n'
                         'Python bindings by Mario Vilas (mvilas@gmail.com)'
                         ),
     'author'            : 'Gil Dabah',
-    'author_email'      : 'arkon'+chr(64)+'ragestorm'+chr(0x2e)+'net',
+    'author_email'      : 'distorm'+chr(64)+'gmail'+chr(0x2e)+'com',
     'maintainer'        : 'Gil Dabah',
-    'maintainer_email'  : 'arkon'+chr(64)+'ragestorm'+chr(0x2e)+'net',
+    'maintainer_email'  : 'distorm'+chr(64)+'gmail'+chr(0x2e)+'com',
     'url'               : 'http://code.google.com/p/distorm/',
     'download_url'      : 'http://code.google.com/p/distorm/',
     'platforms'         : ['cygwin', 'win', 'linux', 'macosx'],
     'classifiers'       : [
-                        'License :: OSI Approved :: GPLv3 License',
+                        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
                         'Development Status :: 5 - Production/Stable',
                         'Intended Audience :: Developers',
                         'Natural Language :: English',
