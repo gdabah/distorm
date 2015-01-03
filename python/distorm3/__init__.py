@@ -841,7 +841,7 @@ def DecomposeGenerator(codeOffset, code, dt, features = 0):
         This is B{not} an offset into the code!
         It's the actual memory address where it was read from.
 
-    @type  code: str
+    @type  code: str, in Py3 bytes
     @param code: Code to disassemble.
 
     @type  dt: int
@@ -891,7 +891,7 @@ def DecomposeGenerator(codeOffset, code, dt, features = 0):
             break
 
         delta = 0
-        for index in xrange(used):
+        for index in range(used):
             di = result[index]
             yield Instruction(di, code[instruction_off : instruction_off + di.size], dt)
             delta += di.size
@@ -913,7 +913,7 @@ def Decompose(offset, code, type = Decode32Bits, features = 0):
         This is B{not} an offset into the code!
         It's the actual memory address where it was read from.
 
-    @type  code: str
+    @type  code: str, in Py3 bytes
     @param code: Code to disassemble.
 
     @type  type: int
