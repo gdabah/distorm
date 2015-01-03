@@ -21,7 +21,7 @@ namespace diStorm
       internal byte* code;
       internal int codeLen; /* Using signed integer makes it easier to detect an underflow. */
       internal DecodeType dt;
-      internal int features;    
+      internal int features;
     };
 
     
@@ -193,7 +193,7 @@ namespace diStorm
       ci->code = (byte*) gch.AddrOfPinnedObject().ToPointer();
       ci->codeLen = nci._code.Length;
       ci->dt = nci._decodeType;
-      ci->features = nci._features;      
+      ci->features = nci._features;
       return ci;
     }
 
@@ -209,7 +209,7 @@ namespace diStorm
     }
 
     private static unsafe void Memset(void *p, int v, int sz)
-    {      
+    {
     }
 
 
@@ -405,7 +405,7 @@ namespace diStorm
         if (ci != null)
           Free(ci);
       }
-      return di;         
+      return di;
     }
   }
 }
