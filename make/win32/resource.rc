@@ -70,7 +70,7 @@ BEGIN
             VALUE "FileDescription", "diStorm3 module"
             VALUE "FileVersion", "3.3.0.0"
             VALUE "InternalName", "diStorm3"
-            VALUE "LegalCopyright", "Copyright (C) 2003-2012 Gil Dabah"
+            VALUE "LegalCopyright", "Copyright (C) 2003-2015 Gil Dabah"
             VALUE "OriginalFilename", "distorm3.dll"
             VALUE "ProductName", "diStorm3 Disassembler Library"
             VALUE "ProductVersion", "3.3.0.0"
