@@ -29,11 +29,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 
 /* Maps a register to its register-class mask. */
-uint16_t _REGISTERTORCLASS[] = /* Based on _RegisterType enumeration! */
-{RM_AX, RM_CX, RM_DX, RM_BX, RM_SP, RM_BP, RM_SI, RM_DI, 0, 0, 0, 0, 0, 0, 0, 0,
- RM_AX, RM_CX, RM_DX, RM_BX, RM_SP, RM_BP, RM_SI, RM_DI, 0, 0, 0, 0, 0, 0, 0, 0,
- RM_AX, RM_CX, RM_DX, RM_BX, RM_SP, RM_BP, RM_SI, RM_DI, 0, 0, 0, 0, 0, 0, 0, 0,
- RM_AX, RM_CX, RM_DX, RM_BX, RM_AX, RM_CX, RM_DX, RM_BX, 0, 0, 0, 0, 0, 0, 0, 0,
+uint32_t _REGISTERTORCLASS[] = /* Based on _RegisterType enumeration! */
+{RM_AX, RM_CX, RM_DX, RM_BX, RM_SP, RM_BP, RM_SI, RM_DI, RM_R8, RM_R9, RM_R10, RM_R11, RM_R12, RM_R13, RM_R14, RM_R15,
+ RM_AX, RM_CX, RM_DX, RM_BX, RM_SP, RM_BP, RM_SI, RM_DI, RM_R8, RM_R9, RM_R10, RM_R11, RM_R12, RM_R13, RM_R14, RM_R15,
+ RM_AX, RM_CX, RM_DX, RM_BX, RM_SP, RM_BP, RM_SI, RM_DI, RM_R8, RM_R9, RM_R10, RM_R11, RM_R12, RM_R13, RM_R14, RM_R15,
+ RM_AX, RM_CX, RM_DX, RM_BX, RM_AX, RM_CX, RM_DX, RM_BX, RM_R8, RM_R9, RM_R10, RM_R11, RM_R12, RM_R13, RM_R14, RM_R15,
  RM_SP, RM_BP, RM_SI, RM_DI,
  0, 0, 0, 0, 0, 0,
  0,

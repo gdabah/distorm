@@ -250,7 +250,7 @@ typedef struct {
 	/* Unused prefixes mask, for each bit that is set that prefix is not used (LSB is byte [addr + 0]). */
 	uint16_t unusedPrefixesMask;
 	/* Mask of registers that were used in the operands, only used for quick look up, in order to know *some* operand uses that register class. */
-	uint16_t usedRegistersMask;
+	uint32_t usedRegistersMask;
 	/* ID of opcode in the global opcode table. Use for mnemonic look up. */
 	uint16_t opcode;
 	/* Up to four operands per instruction, ignored if ops[n].type == O_NONE. */
@@ -307,6 +307,15 @@ typedef struct {
 #define RM_AVX 0x800 /* YMM0 - YMM15 */
 #define RM_CR 0x1000 /* CR0, CR2, CR3, CR4, CR8 */
 #define RM_DR 0x2000 /* DR0, DR1, DR2, DR3, DR6, DR7 */
+#define RM_R8 0x4000 /* R8B, R8W, R8D, R8 */
+#define RM_R9 0x8000 /* R9B, R9W, R9D, R9 */
+#define RM_R10 0x10000 /* R10B, R10W, R10D, R10 */
+#define RM_R11 0x20000 /* R11B, R11W, R11D, R11 */
+#define RM_R12 0x40000 /* R12B, R12W, R12D, R12 */
+#define RM_R13 0x80000 /* R13B, R13W, R13D, R13 */
+#define RM_R14 0x100000 /* R14B, R14W, R14D, R14 */
+#define RM_R15 0x200000 /* R15B, R15W, R15D, R15 */
+
 /* RIP should be checked using the 'flags' field and FLAG_RIP_RELATIVE.
  * Segments should be checked using the segment macros.
  * For now R8 - R15 are not supported and non general purpose registers map into same RM.
