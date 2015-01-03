@@ -10,7 +10,7 @@
  
  
 // This file was auto generated from the distrom opcodes.h file
-// on 2013-07-06 15:11:33.142
+// on 2015-01-03 15:05:06.323
 
 namespace diStorm
 {
@@ -376,7 +376,7 @@ namespace diStorm
 		MOVSLDUP = 2176,
 		MOVSS = 2103,
 		MOVSX = 939,
-		MOVSXD = 10013,
+		MOVSXD = 10005,
 		MOVUPD = 2095,
 		MOVUPS = 2087,
 		MOVZX = 927,
@@ -413,7 +413,7 @@ namespace diStorm
 		PALIGNR = 9410,
 		PAND = 6607,
 		PANDN = 6665,
-		PAUSE = 10021,
+		PAUSE = 10013,
 		PAVGB = 6680,
 		PAVGUSB = 2078,
 		PAVGW = 6725,
@@ -563,7 +563,7 @@ namespace diStorm
 		RDGSBASE = 9912,
 		RDMSR = 600,
 		RDPMC = 607,
-		RDRAND = 9980,
+		RDRAND = 10026,
 		RDTSC = 593,
 		RDTSCP = 1864,
 		RET = 325,
@@ -896,7 +896,7 @@ namespace diStorm
 		VMAXSD = 3604,
 		VMAXSS = 3596,
 		VMCALL = 1719,
-		VMCLEAR = 9997,
+		VMCLEAR = 9989,
 		VMFUNC = 1787,
 		VMINPD = 3468,
 		VMINPS = 3460,
@@ -931,7 +931,7 @@ namespace diStorm
 		VMOVUPD = 2126,
 		VMOVUPS = 2117,
 		VMPSADBW = 9637,
-		VMPTRLD = 9988,
+		VMPTRLD = 9980,
 		VMPTRST = 6385,
 		VMREAD = 4128,
 		VMRESUME = 1737,
@@ -943,7 +943,7 @@ namespace diStorm
 		VMULSS = 3207,
 		VMWRITE = 4152,
 		VMXOFF = 1747,
-		VMXON = 10006,
+		VMXON = 9998,
 		VORPD = 3066,
 		VORPS = 3059,
 		VPABSB = 7695,
@@ -1100,7 +1100,7 @@ namespace diStorm
 		VXORPS = 3087,
 		VZEROALL = 4118,
 		VZEROUPPER = 4106,
-		WAIT = 10028,
+		WAIT = 10020,
 		WBINVD = 561,
 		WRFSBASE = 9931,
 		WRGSBASE = 9960,
