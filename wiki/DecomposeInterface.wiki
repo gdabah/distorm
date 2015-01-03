@@ -201,7 +201,7 @@ typedef struct {
 	*/
 	uint8_t index;
 
-	/* Size of:
+	/* Size in bits of:
 	O_REG: register
 	O_IMM: instruction.imm
 	O_IMM1: instruction.imm.ex.i1
