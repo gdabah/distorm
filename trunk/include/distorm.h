@@ -104,6 +104,8 @@ typedef unsigned __int8		uint8_t;
 #define FLAG_GET_ADDRSIZE(flags) (((flags) >> 10) & 3)
 /* To get the LOCK/REPNZ/REP prefixes. */
 #define FLAG_GET_PREFIX(flags) ((flags) & 7)
+/* Indicates whether the instruction is privileged. */
+#define FLAG_GET_PRIVILEGED(flags) (((flags) & FLAG_PRIVILEGED_INSTRUCTION) != 0)
 
 /*
  * Macros to extract segment registers from 'segment':
@@ -179,7 +181,7 @@ typedef struct {
 	*/
 	uint8_t index;
 
-	/* Size of:
+	/* Size in bits of:
 		O_REG: register
 		O_IMM: instruction.imm
 		O_IMM1: instruction.imm.ex.i1
@@ -253,7 +255,7 @@ typedef struct {
 	uint16_t opcode;
 	/* Up to four operands per instruction, ignored if ops[n].type == O_NONE. */
 	_Operand ops[OPERANDS_NO];
-	/* Size of the whole instruction. */
+	/* Size of the whole instruction in bytes. */
 	uint8_t size;
 	/* Segment information of memory indirection, default segment, or overriden one, can be -1. Use SEGMENT macros. */
 	uint8_t segment;
@@ -284,7 +286,7 @@ typedef struct {
 	_WString mnemonic; /* Mnemonic of decoded instruction, prefixed if required by REP, LOCK etc. */
 	_WString operands; /* Operands of the decoded instruction, up to 3 operands, comma-seperated. */
 	_WString instructionHex; /* Hex dump - little endian, including prefixes. */
-	unsigned int size; /* Size of decoded instruction. */
+	unsigned int size; /* Size of decoded instruction in bytes. */
 	_OffsetType offset; /* Start offset of the decoded instruction. */
 } _DecodedInst;
 
@@ -431,6 +433,15 @@ typedef enum { DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, D
  *               array you passed, this function will try to use as much entries as possible!
  * Notes:  1)The minimal size of maxInstructions is 15.
  *         2)You will have to synchronize the offset,code and length by yourself if you pass code fragments and not a complete code block!
+ */
+ 
+/* distorm_decompose
+ * There is lots of documentation about diStorm at https://code.google.com/p/distorm/wiki
+ *
+ * Please read https://code.google.com/p/distorm/wiki/DecomposeInterface
+ *
+ * And also see https://code.google.com/p/distorm/wiki/TipsnTricks
+ *
  */
 #ifdef SUPPORT_64BIT_OFFSET
 
