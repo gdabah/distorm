@@ -156,7 +156,7 @@ class _DInst (Structure):
         ('addr',  _OffsetType),
         ('flags',  c_uint16), # -1 if invalid. See C headers for more info
         ('unusedPrefixesMask', c_uint16),
-        ('usedRegistersMask', c_uint16), # used registers mask.
+        ('usedRegistersMask', c_uint32), # used registers mask.
         ('opcode', c_uint16),  # look up in opcode table
         ('ops', _Operand*4),
         ('size', c_ubyte),
