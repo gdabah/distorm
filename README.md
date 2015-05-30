@@ -1,4 +1,3 @@
-# distorm
 Powerful Disassembler Library For x86/AMD64
 -----------
 
