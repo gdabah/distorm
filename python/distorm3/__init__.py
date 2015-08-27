@@ -27,12 +27,15 @@ __all__ = [
 
 from ctypes import *
 from os.path import split, join
+import sys
 
 #==============================================================================
 # Load the diStorm DLL
 
 # Guess the DLL filename and load the library.
 _distorm_path = split(__file__)[0]
+if hasattr(sys, '_MEIPASS'):
+    _distorm_path = sys._MEIPASS
 potential_libs = ['distorm3.dll', 'libdistorm3.dll', 'libdistorm3.so', 'libdistorm3.dylib']
 lib_was_found = False
 for i in potential_libs:
