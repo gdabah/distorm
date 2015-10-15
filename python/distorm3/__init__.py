@@ -43,6 +43,7 @@ for i in potential_libs:
         _distorm_file = join(_distorm_path, i)
         _distorm = cdll.LoadLibrary(_distorm_file)
         lib_was_found = True
+        break
     except OSError:
         pass
 
