@@ -710,6 +710,11 @@ class Instructions:
 		Set("db //d8", ["FCMOVNU"], [OPT.FPU_SSI], IFlag._32BITS | IFlag.GEN_BLOCK)
 		Set("db //f0", ["FCOMI"], [OPT.FPU_SSI], IFlag._32BITS | IFlag.GEN_BLOCK)
 
+		# Transactional
+		Set("0f, 01, d5", ["XEND"], [], IFlag._64BITS)
+		Set("c6, f8", ["XABORT"], [OPT.IMM8], IFlag._64BITS)
+		Set("c7, f8", ["XBEGIN"], [OPT.RELC_FULL], IFlag._64BITS)
+		
 	def init_MMX(self):
 		Set = lambda *args: self.SetCallback(ISetClass.MMX, *args)
 
