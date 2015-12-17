@@ -27,6 +27,7 @@ __all__ = [
 
 from ctypes import *
 from os.path import split, join
+from os import name as os_name
 import sys
 
 #==============================================================================
@@ -36,13 +37,16 @@ import sys
 _distorm_path = split(__file__)[0]
 if hasattr(sys, '_MEIPASS'):
     _distorm_path = sys._MEIPASS
-potential_libs = ['distorm3.dll', 'libdistorm3.dll', 'libdistorm3.so', 'libdistorm3.dylib']
+potential_libs = ['libdistorm3.so', 'libdistorm3.dylib']
+if os_name == 'nt':
+    potential_libs = ['distorm3.dll', 'libdistorm3.dll']
 lib_was_found = False
 for i in potential_libs:
     try:
         _distorm_file = join(_distorm_path, i)
         _distorm = cdll.LoadLibrary(_distorm_file)
         lib_was_found = True
+        break
     except OSError:
         pass
 
