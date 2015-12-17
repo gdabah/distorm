@@ -343,8 +343,8 @@ class Instructions:
 		Set("c3", ["RET"], [], IFlag._64BITS)
 		Set("c4", ["LES"], [OPT.REG_FULL, OPT.MEM16_FULL], IFlag.MODRM_REQUIRED | IFlag.INVALID_64BITS)
 		Set("c5", ["LDS"], [OPT.REG_FULL, OPT.MEM16_FULL], IFlag.MODRM_REQUIRED | IFlag.INVALID_64BITS)
-		Set("c6 /00", ["MOV"], [OPT.RM8, OPT.IMM8], IFlag.MODRM_REQUIRED)
-		Set("c7 /00", ["MOV"], [OPT.RM_FULL, OPT.IMM_FULL], IFlag.MODRM_REQUIRED)
+		Set("c6 //00", ["MOV"], [OPT.RM8, OPT.IMM8], IFlag.MODRM_REQUIRED)
+		Set("c7 //00", ["MOV"], [OPT.RM_FULL, OPT.IMM_FULL], IFlag.MODRM_REQUIRED)
 		Set("c8", ["ENTER"], [OPT.IMM16_1, OPT.IMM8_2], IFlag._64BITS)
 		Set("c9", ["LEAVE"], [], IFlag._64BITS)
 
@@ -712,8 +712,8 @@ class Instructions:
 
 		# Transactional
 		Set("0f, 01, d5", ["XEND"], [], IFlag._64BITS)
-		Set("c6, f8", ["XABORT"], [OPT.IMM8], IFlag._64BITS)
-		Set("c7, f8", ["XBEGIN"], [OPT.RELC_FULL], IFlag._64BITS)
+		Set("c6 //f8", ["XABORT"], [OPT.IMM8], IFlag._64BITS)
+		Set("c7 //f8", ["XBEGIN"], [OPT.RELC_FULL], IFlag._64BITS)
 		
 	def init_MMX(self):
 		Set = lambda *args: self.SetCallback(ISetClass.MMX, *args)
