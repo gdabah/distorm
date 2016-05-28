@@ -247,7 +247,7 @@ def main():
     'download_url'      : 'http://code.google.com/p/distorm/',
     'platforms'         : ['cygwin', 'win', 'linux', 'macosx'],
     'classifiers'       : [
-                        'License :: OSI Approved :: BSD',
+                        'License :: OSI Approved :: BSD License',
                         'Development Status :: 5 - Production/Stable',
                         'Intended Audience :: Developers',
                         'Natural Language :: English',
