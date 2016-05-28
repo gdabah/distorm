@@ -1,5 +1,5 @@
 # Mario Vilas, http://breakingcode.wordpress.com
-# Licensed Under GPLv3
+# Licensed under BSD in 2016
 
 # Example code
 

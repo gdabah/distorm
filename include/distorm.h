@@ -1,4 +1,4 @@
-/* diStorm3 3.3 */
+/* diStorm 3.3.3 */
 
 /*
 distorm.h
@@ -6,20 +6,8 @@ distorm.h
 diStorm3 - Powerful disassembler for X86/AMD64
 http://ragestorm.net/distorm/
 distorm at gmail dot com
-Copyright (C) 2003-2015 Gil Dabah
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>
+Copyright (C) 2003-2016 Gil Dabah
+This library is licensed under the BSD license. See the file COPYING.
 */
 
 
@@ -445,11 +433,7 @@ typedef enum { DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, D
  */
  
 /* distorm_decompose
- * There is lots of documentation about diStorm at https://code.google.com/p/distorm/wiki
- *
- * Please read https://code.google.com/p/distorm/wiki/DecomposeInterface
- *
- * And also see https://code.google.com/p/distorm/wiki/TipsnTricks
+ * See more documentation online at the GitHub project's wiki.
  *
  */
 #ifdef SUPPORT_64BIT_OFFSET

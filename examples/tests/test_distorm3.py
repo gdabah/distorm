@@ -43,7 +43,7 @@ def Assemble(text, mode):
 		mode = "amd64"
 	else:
 		mode = "x86"
-	os.system("c:\\yasm.exe -m%s 1.asm" % mode)
+	os.system("yasm.exe -m%s 1.asm" % mode)
 	return open("1", "rb").read()
 
 class InstBin(unittest.TestCase):
@@ -667,7 +667,8 @@ class TestMode64(unittest.TestCase):
 	def test_imm16(self):
 		I64("ret 0x1122").check_imm(0, 0x1122, 16)
 	def test_imm_full(self):
-		I64("push 0x12345678").check_imm(0, 0x12345678, 64)
+		I64("push 0x12345678").check_imm(0, 0x12345678, 32)
+		I64("mov rax, 0x1234567812345678").check_imm(1, 0x1234567812345678, 64)
 	def test_imm_aadm(self):
 		#I64("aam").check_imm(0, 0xa, 8)
 		#I64("aam 0x15").check_imm(0, 0x15, 8)
@@ -984,6 +985,21 @@ class TestInstTable(unittest.TestCase):
 	    The bad tests should not find an instruction, so they should fail on purpose,
 	    to see we don't crash the diassembler.
 	    Also test for some end-cases with nop and wait. """
+	def test_c7_opcode(self):
+		IB32("c7f8aaaaaaaa").check_mnemonic("XBEGIN")
+		IB64("c7f8aaaaaaaa").check_mnemonic("XBEGIN")
+		IB32("C7C108000000").check_mnemonic("MOV")
+		IB64("C7C108000000").check_mnemonic("MOV")
+		IB64("48C7C000000000").check_mnemonic("MOV")
+	def test_tx(self):
+		IB64("0f01d5").check_mnemonic("XEND")
+		IB64("c6f8bb").check_mnemonic("XABORT")
+		IB64("c7f800000000").check_mnemonic("XBEGIN")
+	def test_fuzz_9b_and_c7(self):
+		for i in xrange(10000):
+			s = "%02x%02x" % (i & 0xff, random.randint(0, 255))
+			IB32("9b%sffffffff" % s)
+			IB32("c7%sffffffff" % s)
 	def test_ol1(self):
 		IB32("00c0").check_mnemonic("ADD")
 	def test_ol13(self):

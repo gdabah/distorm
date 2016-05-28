@@ -119,7 +119,6 @@ public class Opcodes {
 		mOpcodes.put(0xd0b, OpcodeEnum.CVTPS2DQ);
 		mOpcodes.put(0x24c5, OpcodeEnum.PBLENDW);
 		mOpcodes.put(0x21c4, OpcodeEnum.VFMSUBADD213PS);
-		mOpcodes.put(0x2558, OpcodeEnum.VPINSRB);
 		mOpcodes.put(0xe8c, OpcodeEnum.PCMPGTB);
 		mOpcodes.put(0xeb2, OpcodeEnum.PCMPGTD);
 		mOpcodes.put(0x23ed, OpcodeEnum.VAESENC);
@@ -161,6 +160,7 @@ public class Opcodes {
 		mOpcodes.put(0x145, OpcodeEnum.RET);
 		mOpcodes.put(0x1010, OpcodeEnum.VPCMPEQD);
 		mOpcodes.put(0x1fd9, OpcodeEnum.VPMINSD);
+		mOpcodes.put(0x2558, OpcodeEnum.VPINSRB);
 		mOpcodes.put(0xfea, OpcodeEnum.VPCMPEQB);
 		mOpcodes.put(0x1910, OpcodeEnum.ADDSUBPD);
 		mOpcodes.put(0x22bc, OpcodeEnum.VFMADDSUB231PS);
@@ -544,7 +544,6 @@ public class Opcodes {
 		mOpcodes.put(0x581, OpcodeEnum.FUCOMPP);
 		mOpcodes.put(0x864, OpcodeEnum.VMOVUPD);
 		mOpcodes.put(0x82c, OpcodeEnum.PSWAPD);
-		mOpcodes.put(0x2495, OpcodeEnum.VROUNDSD);
 		mOpcodes.put(0x1c49, OpcodeEnum.PADDW);
 		mOpcodes.put(0x1b86, OpcodeEnum.PSLLD);
 		mOpcodes.put(0x756, OpcodeEnum.SWAPGS);
@@ -857,6 +856,7 @@ public class Opcodes {
 		mOpcodes.put(0x13e7, OpcodeEnum.VCMPTRUE_USPS);
 		mOpcodes.put(0x782, OpcodeEnum.PI2FD);
 		mOpcodes.put(0x1e1e, OpcodeEnum.PABSB);
+		mOpcodes.put(0x2495, OpcodeEnum.VROUNDSD);
 		mOpcodes.put(0x1a26, OpcodeEnum.VPANDN);
 		mOpcodes.put(0xe6b, OpcodeEnum.VPUNPCKLDQ);
 		mOpcodes.put(0x63a, OpcodeEnum.FDIVP);

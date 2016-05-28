@@ -4,20 +4,8 @@ instructions.c
 diStorm3 - Powerful disassembler for X86/AMD64
 http://ragestorm.net/distorm/
 distorm at gmail dot com
-Copyright (C) 2003-2012 Gil Dabah
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>
+Copyright (C) 2003-2016 Gil Dabah
+This library is licensed under the BSD license. See the file COPYING.
 */
 
 
@@ -434,7 +422,23 @@ _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps)
 
 	/* Try single byte instruction + reg byte OR one whole byte (OCST_1dBYTES). */
 	if (instType == INT_LIST_DIVIDED) {
-		/* OCST_1dBYTES is relatively similar to OCST_2dBYTES, since it's really divided at 0xc0. */
+
+		/* Checking for inst by REG bits is higher priority if it's found not to be divided instruction. */
+		{
+			_InstNode in2 = InstructionsTree[INST_NODE_INDEX(in) + ((tmpIndex1 >> 3) & 7)];
+			/*
+			 * Do NOT check for NULL here, since we do a bit of a guess work,
+			 * hence we don't override 'in', cause we might still need it.
+			 */
+			instType = INST_NODE_TYPE(in2);
+
+			if (instType == INT_INFO) ii = &InstInfos[INST_NODE_INDEX(in2)];
+			else if (instType == INT_INFOEX) ii = (_InstInfo*)&InstInfosEx[INST_NODE_INDEX(in2)];
+			if ((ii != NULL) && (INST_INFO_FLAGS(ii) & INST_NOT_DIVIDED)) return ii;
+			/* ii is reset below. */
+		}
+
+		/* Continue normally because of wait prefix. */
 		if (tmpIndex1 < INST_DIVIDED_MODRM) {
 			/* An instruction which requires a ModR/M byte. Thus it's 1.3 bytes long instruction. */
 			tmpIndex1 = (tmpIndex1 >> 3) & 7; /* Isolate the 3 REG/OPCODE bits. */

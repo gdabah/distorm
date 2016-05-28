@@ -112,21 +112,21 @@ def CreatePythonDict(mnemonicsIds):
 		s += "0x%x: \"%s\", " % (mnemonicsIds[i], i)
 		if len(s) - s.rfind("\n") >= 76:
 			s = s[:-1] + "\n"
-	print s
+	open("python_output.txt", "w").write(s)
 
 def CreateJavaDict(mnemonicsIds):
 	""" Create the opcodes dictionary/enum for Java. """
 	s = "\nmOpcodes.put(0, OpcodeEnum.UNDEFINED);\n"
 	for i in mnemonicsIds:
 		s += "mOpcodes.put(0x%x, OpcodeEnum.%s);\n" % (mnemonicsIds[i], i.replace(" ", "_").replace(",", ""))
-	print s
+	open("java_enums.txt", "w").write(s)
 
 	s = "\nUNDEFINED, "
 	for i in mnemonicsIds:
 		s += "%s, " % (i.replace(" ", "_").replace(",", ""))
 		if len(s) - s.rfind("\n") >= 76:
 			s = s[:-1] + "\n"
-	print s
+	open("java_mnemonics.txt", "w").write(s)
 
 def DumpMnemonics():
 	global mnemonicsIds
@@ -191,8 +191,8 @@ def DumpMnemonics():
 	f.close()
 
 	# Used for Python/Java dictionary of opcodeIds-->mnemonics.
-	#CreatePythonDict(mnemonicsIds)
-	#CreateJavaDict(mnemonicsIds)
+	CreatePythonDict(mnemonicsIds)
+	CreateJavaDict(mnemonicsIds)
 
 O_NONE = 0
 # REG standalone

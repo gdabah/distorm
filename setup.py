@@ -4,7 +4,7 @@
 # Rob Ruana 2010
 # Gil Dabah
 # All rights reserved.
-# Licensed under GPLv3.
+# Licensed under BSD.
 #
 
 __revision__ = "$Id: setup.py 603 2010-01-31 00:11:05Z qvasimodo $"
@@ -81,10 +81,7 @@ class custom_build_clib(build_clib):
         if (sources is None or 
             type(sources) not in (ListType, TupleType) or 
             len(sources) == 0):
-            raise DistutilsSetupError, \
-                  ("in 'libraries' option (library '%s'), "
-                   "'sources' must be present and must be "
-                   "a list of source filenames") % lib_name
+            raise DistutilsSetupError ("in 'libraries' option (library '%s'), 'sources' must be present and must be a list of source filenames") % lib_name
         return sources
 
     def get_source_files(self):
@@ -232,7 +229,7 @@ def main():
 
     # Metadata
     'name'              : 'distorm3',
-    'version'           : '3.3.0',
+    'version'           : '3.3.3',
     'description'       : 'The goal of diStorm3 is to decode x86/AMD64' \
                           ' binary streams and return a structure that' \
                           ' describes each instruction.',
@@ -250,7 +247,7 @@ def main():
     'download_url'      : 'http://code.google.com/p/distorm/',
     'platforms'         : ['cygwin', 'win', 'linux', 'macosx'],
     'classifiers'       : [
-                        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+                        'License :: OSI Approved :: BSD',
                         'Development Status :: 5 - Production/Stable',
                         'Intended Audience :: Developers',
                         'Natural Language :: English',

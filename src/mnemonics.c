@@ -4,20 +4,8 @@ mnemonics.c
 diStorm3 - Powerful disassembler for X86/AMD64
 http://ragestorm.net/distorm/
 distorm at gmail dot com
-Copyright (C) 2003-2012 Gil Dabah
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>
+Copyright (C) 2003-2016 Gil Dabah
+This library is licensed under the BSD license. See the file COPYING.
 */
 
 
@@ -278,19 +266,19 @@ const unsigned char _MNEMONICS[] =
 "\x06" "_3DNOW\0";
 
 const _WRegister _REGISTERS[] = {
-	{3, "RAX"}, {3, "RCX"}, {3, "RDX"}, {3, "RBX"}, {3, "RSP"}, {3, "RBP"}, {3, "RSI"}, {3, "RDI"}, {2, "R8"}, {2, "R9"}, {3, "R10"}, {3, "R11"}, {3, "R12"}, {3, "R13"}, {3, "R14"}, {3, "R15"},
-	{3, "EAX"}, {3, "ECX"}, {3, "EDX"}, {3, "EBX"}, {3, "ESP"}, {3, "EBP"}, {3, "ESI"}, {3, "EDI"}, {3, "R8D"}, {3, "R9D"}, {4, "R10D"}, {4, "R11D"}, {4, "R12D"}, {4, "R13D"}, {4, "R14D"}, {4, "R15D"},
-	{2, "AX"}, {2, "CX"}, {2, "DX"}, {2, "BX"}, {2, "SP"}, {2, "BP"}, {2, "SI"}, {2, "DI"}, {3, "R8W"}, {3, "R9W"}, {4, "R10W"}, {4, "R11W"}, {4, "R12W"}, {4, "R13W"}, {4, "R14W"}, {4, "R15W"},
-	{2, "AL"}, {2, "CL"}, {2, "DL"}, {2, "BL"}, {2, "AH"}, {2, "CH"}, {2, "DH"}, {2, "BH"}, {3, "R8B"}, {3, "R9B"}, {4, "R10B"}, {4, "R11B"}, {4, "R12B"}, {4, "R13B"}, {4, "R14B"}, {4, "R15B"},
-	{3, "SPL"}, {3, "BPL"}, {3, "SIL"}, {3, "DIL"},
-	{2, "ES"}, {2, "CS"}, {2, "SS"}, {2, "DS"}, {2, "FS"}, {2, "GS"},
-	{3, "RIP"},
-	{3, "ST0"}, {3, "ST1"}, {3, "ST2"}, {3, "ST3"}, {3, "ST4"}, {3, "ST5"}, {3, "ST6"}, {3, "ST7"},
-	{3, "MM0"}, {3, "MM1"}, {3, "MM2"}, {3, "MM3"}, {3, "MM4"}, {3, "MM5"}, {3, "MM6"}, {3, "MM7"},
-	{4, "XMM0"}, {4, "XMM1"}, {4, "XMM2"}, {4, "XMM3"}, {4, "XMM4"}, {4, "XMM5"}, {4, "XMM6"}, {4, "XMM7"}, {4, "XMM8"}, {4, "XMM9"}, {5, "XMM10"}, {5, "XMM11"}, {5, "XMM12"}, {5, "XMM13"}, {5, "XMM14"}, {5, "XMM15"},
-	{4, "YMM0"}, {4, "YMM1"}, {4, "YMM2"}, {4, "YMM3"}, {4, "YMM4"}, {4, "YMM5"}, {4, "YMM6"}, {4, "YMM7"}, {4, "YMM8"}, {4, "YMM9"}, {5, "YMM10"}, {5, "YMM11"}, {5, "YMM12"}, {5, "YMM13"}, {5, "YMM14"}, {5, "YMM15"},
-	{3, "CR0"}, {0, ""}, {3, "CR2"}, {3, "CR3"}, {3, "CR4"}, {0, ""}, {0, ""}, {0, ""}, {3, "CR8"},
-	{3, "DR0"}, {3, "DR1"}, {3, "DR2"}, {3, "DR3"}, {0, ""}, {0, ""}, {3, "DR6"}, {3, "DR7"}
+	{ 3, "RAX" }, { 3, "RCX" }, { 3, "RDX" }, { 3, "RBX" }, { 3, "RSP" }, { 3, "RBP" }, { 3, "RSI" }, { 3, "RDI" }, { 2, "R8" }, { 2, "R9" }, { 3, "R10" }, { 3, "R11" }, { 3, "R12" }, { 3, "R13" }, { 3, "R14" }, { 3, "R15" },
+	{ 3, "EAX" }, { 3, "ECX" }, { 3, "EDX" }, { 3, "EBX" }, { 3, "ESP" }, { 3, "EBP" }, { 3, "ESI" }, { 3, "EDI" }, { 3, "R8D" }, { 3, "R9D" }, { 4, "R10D" }, { 4, "R11D" }, { 4, "R12D" }, { 4, "R13D" }, { 4, "R14D" }, { 4, "R15D" },
+	{ 2, "AX" }, { 2, "CX" }, { 2, "DX" }, { 2, "BX" }, { 2, "SP" }, { 2, "BP" }, { 2, "SI" }, { 2, "DI" }, { 3, "R8W" }, { 3, "R9W" }, { 4, "R10W" }, { 4, "R11W" }, { 4, "R12W" }, { 4, "R13W" }, { 4, "R14W" }, { 4, "R15W" },
+	{ 2, "AL" }, { 2, "CL" }, { 2, "DL" }, { 2, "BL" }, { 2, "AH" }, { 2, "CH" }, { 2, "DH" }, { 2, "BH" }, { 3, "R8B" }, { 3, "R9B" }, { 4, "R10B" }, { 4, "R11B" }, { 4, "R12B" }, { 4, "R13B" }, { 4, "R14B" }, { 4, "R15B" },
+	{ 3, "SPL" }, { 3, "BPL" }, { 3, "SIL" }, { 3, "DIL" },
+	{ 2, "ES" }, { 2, "CS" }, { 2, "SS" }, { 2, "DS" }, { 2, "FS" }, { 2, "GS" },
+	{ 3, "RIP" },
+	{ 3, "ST0" }, { 3, "ST1" }, { 3, "ST2" }, { 3, "ST3" }, { 3, "ST4" }, { 3, "ST5" }, { 3, "ST6" }, { 3, "ST7" },
+	{ 3, "MM0" }, { 3, "MM1" }, { 3, "MM2" }, { 3, "MM3" }, { 3, "MM4" }, { 3, "MM5" }, { 3, "MM6" }, { 3, "MM7" },
+	{ 4, "XMM0" }, { 4, "XMM1" }, { 4, "XMM2" }, { 4, "XMM3" }, { 4, "XMM4" }, { 4, "XMM5" }, { 4, "XMM6" }, { 4, "XMM7" }, { 4, "XMM8" }, { 4, "XMM9" }, { 5, "XMM10" }, { 5, "XMM11" }, { 5, "XMM12" }, { 5, "XMM13" }, { 5, "XMM14" }, { 5, "XMM15" },
+	{ 4, "YMM0" }, { 4, "YMM1" }, { 4, "YMM2" }, { 4, "YMM3" }, { 4, "YMM4" }, { 4, "YMM5" }, { 4, "YMM6" }, { 4, "YMM7" }, { 4, "YMM8" }, { 4, "YMM9" }, { 5, "YMM10" }, { 5, "YMM11" }, { 5, "YMM12" }, { 5, "YMM13" }, { 5, "YMM14" }, { 5, "YMM15" },
+	{ 3, "CR0" }, { 0, "" }, { 3, "CR2" }, { 3, "CR3" }, { 3, "CR4" }, { 0, "" }, { 0, "" }, { 0, "" }, { 3, "CR8" },
+	{ 3, "DR0" }, { 3, "DR1" }, { 3, "DR2" }, { 3, "DR3" }, { 0, "" }, { 0, "" }, { 3, "DR6" }, { 3, "DR7" }
 };
 
 #endif /* DISTORM_LIGHT */
