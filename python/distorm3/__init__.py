@@ -537,6 +537,15 @@ def DecodeGenerator(codeOffset, code, dt):
     p_result        = byref(result)
     instruction_off = 0
 
+    # Support cross Python compatibility
+    toUnicode = lambda s: s
+    spaceCh = b" "
+    if sys.version_info[0] >= 3:
+        if sys.version_info[1] > 0:
+            toUnicode = lambda s: s.decode()
+        else:
+            spaceCh = " "
+
     while codeLen > 0:
 
         usedInstructionsCount = c_uint(0)
@@ -553,8 +562,8 @@ def DecodeGenerator(codeOffset, code, dt):
             di   = result[index]
             asm  = di.mnemonic.p
             if len(di.operands.p):
-                asm += b" " + di.operands.p
-            pydi = (di.offset, di.size, asm, di.instructionHex.p)
+                asm += spaceCh + di.operands.p
+            pydi = (di.offset, di.size, toUnicode(asm), toUnicode(di.instructionHex.p))
             instruction_off += di.size
             yield pydi
 
