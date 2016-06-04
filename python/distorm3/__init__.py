@@ -7,7 +7,7 @@
 #
 
 info = (
-    "diStorm3 by Gil Dabah, http://code.google.com/p/distorm/\n"
+    "diStorm3 by Gil Dabah, https://github.com/gdabah/distorm/\n"
     "Based on diStorm64 Python binding by Mario Vilas, http://breakingcode.wordpress.com/\n"
 )
 
@@ -554,7 +554,7 @@ def DecodeGenerator(codeOffset, code, dt):
             asm  = di.mnemonic.p
             if len(di.operands.p):
                 asm += b" " + di.operands.p
-            pydi = (di.offset, di.size, asm.decode(), di.instructionHex.p.decode())
+            pydi = (di.offset, di.size, asm, di.instructionHex.p)
             instruction_off += di.size
             yield pydi
 

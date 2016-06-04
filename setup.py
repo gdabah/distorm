@@ -63,7 +63,7 @@ class custom_build_clib(build_clib):
                                    ('force', 'force'))
 
         self.libraries = self.distribution.libraries
-        if self.libraries:
+        if self.libraries: # In Python 3.0 they have a bug in check_library_list, comment it out then.
             self.check_library_list(self.libraries)
 
         if self.include_dirs is None:
@@ -74,7 +74,7 @@ class custom_build_clib(build_clib):
 
     def get_source_files_for_lib(self, lib_name, build_info):
         sources = build_info.get('sources', [])
-        if callable(sources):
+        if hasattr(sources, '__call__'):
             sources = sources()
         if (sources is None or
             type(sources) not in (list, tuple) or
@@ -241,8 +241,8 @@ def main():
     'author_email'      : 'distorm'+chr(64)+'gmail'+chr(0x2e)+'com',
     'maintainer'        : 'Gil Dabah',
     'maintainer_email'  : 'distorm'+chr(64)+'gmail'+chr(0x2e)+'com',
-    'url'               : 'http://code.google.com/p/distorm/',
-    'download_url'      : 'http://code.google.com/p/distorm/',
+    'url'               : 'https://github.com/gdabah/distorm/',
+    'download_url'      : 'https://github.com/gdabah/distorm/',
     'platforms'         : ['cygwin', 'win', 'linux', 'macosx'],
     'classifiers'       : [
                         'License :: OSI Approved :: BSD License',
