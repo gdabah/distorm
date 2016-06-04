@@ -30,6 +30,9 @@ from os.path import split, join
 from os import name as os_name
 import sys
 
+if sys.version_info[0] >= 3:
+    xrange = range
+
 #==============================================================================
 # Load the diStorm DLL
 
@@ -550,8 +553,8 @@ def DecodeGenerator(codeOffset, code, dt):
             di   = result[index]
             asm  = di.mnemonic.p
             if len(di.operands.p):
-                asm += " " + di.operands.p
-            pydi = (di.offset, di.size, asm, di.instructionHex.p)
+                asm += b" " + di.operands.p
+            pydi = (di.offset, di.size, asm.decode(), di.instructionHex.p.decode())
             instruction_off += di.size
             yield pydi
 
@@ -677,7 +680,7 @@ def _getFC(metaflags):
     try:
         return FlowControlFlags[realvalue]
     except IndexError:
-        print ("Bad meta-flags: %d", realvalue)
+        print ("Bad meta-flags: {}".format(realvalue))
         raise
 
 def _getMnem(opcode):

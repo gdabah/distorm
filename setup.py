@@ -26,8 +26,6 @@ from distutils.command.sdist import sdist
 from distutils.core import setup, Extension
 from distutils.errors import DistutilsSetupError
 
-from types import ListType, StringType, TupleType
-
 from shutil import ignore_patterns
 
 def get_sources():
@@ -70,7 +68,7 @@ class custom_build_clib(build_clib):
 
         if self.include_dirs is None:
             self.include_dirs = self.distribution.include_dirs or []
-        if type(self.include_dirs) is StringType:
+        if type(self.include_dirs) in (bytes, str):
             self.include_dirs = string.split(self.include_dirs,
                                              os.pathsep)
 
@@ -78,8 +76,8 @@ class custom_build_clib(build_clib):
         sources = build_info.get('sources', [])
         if callable(sources):
             sources = sources()
-        if (sources is None or 
-            type(sources) not in (ListType, TupleType) or 
+        if (sources is None or
+            type(sources) not in (list, tuple) or
             len(sources) == 0):
             raise DistutilsSetupError ("in 'libraries' option (library '%s'), 'sources' must be present and must be a list of source filenames") % lib_name
         return sources
