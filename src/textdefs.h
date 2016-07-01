@@ -43,8 +43,6 @@ Naming Convention:
 * all numbers are in HEX.
 */
 
-extern int8_t TextBTable[256][4];
-
 void _FASTCALL_ str_hex_b(_WString* s, unsigned int x);
 void _FASTCALL_ str_code_hb(_WString* s, unsigned int x);
 void _FASTCALL_ str_code_hdw(_WString* s, uint32_t x);
