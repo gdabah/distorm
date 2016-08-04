@@ -183,7 +183,7 @@ def main():
                                 '"/D _MBCS"', '/GF', '/Gm', '/Zi', '/EHsc',
                                 '/MT', '/Gy', '/W4', '/nologo', '/c', '/TC',
                                 '/Fdbuild\\vc90.pdb'],
-            extra_link_args=['/MANIFEST']))]
+            extra_link_args=['/MANIFEST', '/DLL']))]
     elif 'darwin' in system or 'macosx' in system:
         libraries = [(
             'distorm3', dict(
