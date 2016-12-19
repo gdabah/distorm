@@ -10,3 +10,5 @@ diStorm3 is super lightweight (~45KB), ultra fast and easy to use (a single API)
 "We benchmarked five popular open-source disassembly libraries and chose diStorm3, which had the best performance (and furthermore, has complete 64-bit support).", July 2014, Quoting David Williams-King in his Thesis about Binary Shuffling.
 
 diStorm3.3.3 is now licensed under BSD!
+
+RTFM, the wiki has plenty of info.
