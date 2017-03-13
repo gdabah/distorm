@@ -79,7 +79,7 @@ class custom_build_clib(build_clib):
         if (sources is None or
             type(sources) not in (list, tuple) or
             len(sources) == 0):
-            raise DistutilsSetupError ("in 'libraries' option (library '%s'), 'sources' must be present and must be a list of source filenames") % lib_name
+            raise DistutilsSetupError ("in 'libraries' option (library '%s'), 'sources' must be present and must be a list of source filenames" % lib_name)
         return sources
 
     def get_source_files(self):
