@@ -28,6 +28,34 @@ from distutils.errors import DistutilsSetupError
 
 from shutil import ignore_patterns
 
+import subprocess as sp
+import re
+def compile_vc(solution_path, config, platform):
+    match_vs = re.compile('vs(\d+)comntools$', re.I).match
+    compilers = [
+        m.group(1, 0) for m in (match_vs(k) for k in os.environ.keys())
+        if m is not None
+    ]
+
+    msbuild = [
+        'msbuild',
+            '/p:Configuration=%s' % config,
+            '/p:Platform=%s' % platform,
+            solution_path
+    ]
+    for ver, var in sorted(compilers, key=lambda v: -int(v[0])):
+        bat = os.path.join(os.environ[var], r'..\..\vc\vcvarsall.bat')
+        try:
+            log.info('compiling with %s: %s', var, ' '.join(msbuild))
+            sp.check_call(['call', bat, '&&'] + msbuild, shell=True)
+            return
+        except sp.CalledProcessError:
+            log.info('compilation with %s failed', var)
+    raise DistutilsSetupError(
+        'failed to compile "%s" with any available compiler' % solution_path
+    )
+
+
 def get_sources():
     """Returns a list of C source files that should be compiled to 
     create the libdistorm3 library.
@@ -40,6 +68,10 @@ class custom_build(build):
     """Customized build command"""
     def run(self):
         log.info('running custom_build')
+        if 'windows' in platform.system().lower():
+            bits = 'x64' if sys.maxsize > 2**32 else 'win32'
+            compile_vc('make/win32/distorm.sln', 'dll', bits)
+            self.copy_file('distorm3.dll', 'python/distorm3')
         build.run(self)
 
 
@@ -175,18 +207,9 @@ def main():
     # Setup the library
     ext_modules = None
     libraries = None
+    package_data = []
     if 'windows' in system:
-        libraries = [(
-            'distorm3', dict(
-            package='distorm3',
-            sources=get_sources,
-            include_dirs=['src', 'include'],
-            extra_compile_args=['/Ox', '/Ob1', '/Oy', '"/D WIN32"',
-                                '"/D DISTORM_DYNAMIC"', '"/D SUPPORT_64BIT_OFFSET"',
-                                '"/D _MBCS"', '/GF', '/Gm', '/Zi', '/EHsc',
-                                '/MT', '/Gy', '/W4', '/nologo', '/c', '/TC',
-                                '/Fdbuild\\vc90.pdb'],
-            extra_link_args=['/MANIFEST', '/DLL']))]
+        package_data = ['distorm3.dll']
     elif 'darwin' in system or 'macosx' in system:
         libraries = [(
             'distorm3', dict(
@@ -227,6 +250,7 @@ def main():
                             'clean' : custom_clean, 
                             'sdist' : custom_sdist },
     'libraries'         : libraries,
+    'package_data'      : {'distorm3': package_data},
 
     # Metadata
     'name'              : 'distorm3',
