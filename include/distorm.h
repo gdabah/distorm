@@ -386,7 +386,8 @@ typedef struct {
 #define DF_STOP_ON_CMOV 0x200
 /* The decoder will stop and return to the caller when any flow control instruction was decoded. */
 #define DF_STOP_ON_FLOW_CONTROL (DF_STOP_ON_CALL | DF_STOP_ON_RET | DF_STOP_ON_SYS | DF_STOP_ON_UNC_BRANCH | DF_STOP_ON_CND_BRANCH | DF_STOP_ON_INT | DF_STOP_ON_CMOV)
-
+/*The decoder will not synchronize to the byte after the previosuly decoded instruction, it will start decoding at the next byte instead*/
+#define DF_SINGLE_BYTE_STEP 0x400
 /* Indicates the instruction is not a flow-control instruction. */
 #define FC_NONE 0
 /* Indicates the instruction is one of: CALL, CALL FAR. */

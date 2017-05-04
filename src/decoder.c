@@ -581,9 +581,17 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 			codeOffset = startInstOffset + prefixSize;
 		} else {
 			/* Advance to next instruction. */
-			codeLen -= pdi->size;
-			codeOffset += pdi->size;
-			code += pdi->size;
+			if ( _ci->features & DF_SINGLE_BYTE_STEP ) {
+				/*Walk back the prefix sizes since we want to start decoding at the next byte, not the next instruction*/
+				codeLen += prefixSize - 1;
+				codeOffset = codeOffset - prefixSize + 1;
+				code = code - prefixSize + 1;
+			}
+			else {
+				codeLen -= pdi->size;
+				codeOffset += pdi->size;
+				code += pdi->size;
+			}
 
 			/* Instruction's size should include prefixes. */
 			pdi->size += (uint8_t)prefixSize;
