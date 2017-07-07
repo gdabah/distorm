@@ -43,14 +43,21 @@ def Assemble(text, mode):
 		mode = "amd64"
 	else:
 		mode = "x86"
-	os.system("yasm.exe -m%s 1.asm" % mode)
+	os.system("yasm -m%s 1.asm" % mode)
 	return open("1", "rb").read()
 
-class InstBin(unittest.TestCase):
+class Test(unittest.TestCase):
+	def __init__(self):
+		unittest.TestCase.__init__(self, "test_dummy")
+	def test_dummy(self):
+		self.fail("dummy")
+
+class InstBin(Test):
 	def __init__(self, bin, mode):
+		Test.__init__(self)
 		bin = bin.decode("hex")
 		#fbin[mode].write(bin)
-		self.insts = Decompose(0, bin, mode) 
+		self.insts = Decompose(0, bin, mode)
 		self.inst = self.insts[0]
 	def check_valid(self, instsNo = 1):
 		self.assertNotEqual(self.inst.rawFlags, 65535)
@@ -61,8 +68,9 @@ class InstBin(unittest.TestCase):
 		self.assertNotEqual(self.inst.rawFlags, 65535)
 		self.assertEqual(self.insts[instNo].mnemonic, mnemonic)
 
-class Inst(unittest.TestCase):
+class Inst(Test):
 	def __init__(self, instText, mode, instNo, features):
+		Test.__init__(self)
 		modeSize = [16, 32, 64][mode]
 		bin = Assemble(instText, modeSize)
 		#print map(lambda x: hex(ord(x)), bin)
@@ -311,12 +319,12 @@ class TestMode16(unittest.TestCase):
 		I16("fxch st4").check_reg(0, Regs.ST4, 32)
 	def test_fpu_ssi(self):
 		a = I16("fcmovnbe st0, st3")
-		a.check_reg(0, Regs.ST0, 32) 
-		a.check_reg(1, Regs.ST3, 32) 
+		a.check_reg(0, Regs.ST0, 32)
+		a.check_reg(1, Regs.ST3, 32)
 	def test_fpu_sis(self):
 		a = I16("fadd st3, st0")
-		a.check_reg(0, Regs.ST3, 32) 
-		a.check_reg(1, Regs.ST0, 32) 
+		a.check_reg(0, Regs.ST3, 32)
+		a.check_reg(1, Regs.ST0, 32)
 	def test_mm(self):
 		I16("pand mm0, mm7").check_reg(0, Regs.MM0, 64)
 	def test_mm_rm(self):
@@ -540,12 +548,12 @@ class TestMode32(unittest.TestCase):
 		I32("fxch st4").check_reg(0, Regs.ST4, 32)
 	def test_fpu_ssi(self):
 		a = I32("fcmovnbe st0, st3")
-		a.check_reg(0, Regs.ST0, 32) 
-		a.check_reg(1, Regs.ST3, 32) 
+		a.check_reg(0, Regs.ST0, 32)
+		a.check_reg(1, Regs.ST3, 32)
 	def test_fpu_sis(self):
 		a = I32("fadd st3, st0")
-		a.check_reg(0, Regs.ST3, 32) 
-		a.check_reg(1, Regs.ST0, 32) 
+		a.check_reg(0, Regs.ST3, 32)
+		a.check_reg(1, Regs.ST0, 32)
 	def test_mm(self):
 		I32("pand mm0, mm7").check_reg(0, Regs.MM0, 64)
 	def test_mm_rm(self):
@@ -840,12 +848,12 @@ class TestMode64(unittest.TestCase):
 		I64("fxch st4").check_reg(0, Regs.ST4, 32)
 	def test_fpu_ssi(self):
 		a = I64("fcmovnbe st0, st3")
-		a.check_reg(0, Regs.ST0, 32) 
-		a.check_reg(1, Regs.ST3, 32) 
+		a.check_reg(0, Regs.ST0, 32)
+		a.check_reg(1, Regs.ST3, 32)
 	def test_fpu_sis(self):
 		a = I64("fadd st3, st0")
-		a.check_reg(0, Regs.ST3, 32) 
-		a.check_reg(1, Regs.ST0, 32) 
+		a.check_reg(0, Regs.ST3, 32)
+		a.check_reg(1, Regs.ST0, 32)
 	def test_mm(self):
 		I64("pand mm0, mm7").check_reg(0, Regs.MM0, 64)
 	def test_mm_rm(self):
