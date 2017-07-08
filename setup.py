@@ -9,13 +9,16 @@
 
 __revision__ = "$Id: setup.py 603 2010-01-31 00:11:05Z qvasimodo $"
 
+import re
 import os
 import platform
 import string
 import shutil
 import sys
+import subprocess as sp
 
 from glob import glob
+from shutil import ignore_patterns
 
 from distutils import log
 from distutils.command.build import build
@@ -26,10 +29,6 @@ from distutils.command.sdist import sdist
 from distutils.core import setup, Extension
 from distutils.errors import DistutilsSetupError
 
-from shutil import ignore_patterns
-
-import subprocess as sp
-import re
 def compile_vc(solution_path, config, platform):
     match_vs = re.compile('vs(\d+)comntools$', re.I).match
     compilers = [
@@ -43,26 +42,23 @@ def compile_vc(solution_path, config, platform):
             '/p:Platform=%s' % platform,
             solution_path
     ]
-    for ver, var in sorted(compilers, key=lambda v: -int(v[0])):
+    for ver, var in sorted(compilers, key = lambda v: -int(v[0])):
         bat = os.path.join(os.environ[var], r'..\..\vc\vcvarsall.bat')
         try:
-            log.info('compiling with %s: %s', var, ' '.join(msbuild))
-            sp.check_call(['call', bat, '&&'] + msbuild, shell=True)
+            log.info('Compiling with %s: %s', var, ' '.join(msbuild))
+            sp.check_call(['call', bat, '&&'] + msbuild, shell = True)
             return
         except sp.CalledProcessError:
             log.info('compilation with %s failed', var)
     raise DistutilsSetupError(
-        'failed to compile "%s" with any available compiler' % solution_path
+        'Failed to compile "%s" with any available compiler' % solution_path
     )
-
 
 def get_sources():
     """Returns a list of C source files that should be compiled to 
     create the libdistorm3 library.
     """
-
-    return glob('src/*.c')
-
+    return sorted(glob('src/*.c'))
 
 class custom_build(build):
     """Customized build command"""
@@ -73,7 +69,6 @@ class custom_build(build):
             compile_vc('make/win32/distorm.sln', 'dll', bits)
             self.copy_file('distorm3.dll', 'python/distorm3')
         build.run(self)
-
 
 class custom_build_clib(build_clib):
     """Customized build_clib command
