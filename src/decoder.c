@@ -91,7 +91,7 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 
 	/* Holds the info about the current found instruction. */
 	_InstInfo* ii = NULL;
-	_InstInfo ii_c;
+	_InstInfo iip; /* Privileged instruction cache. */
 	_InstSharedInfo* isi = NULL;
 
 	/* Used only for special CMP instructions which have pseudo opcodes suffix. */
@@ -114,15 +114,15 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	instFlags = FlagsTable[isi->flagsIndex];
 	privilegedFlag = ii->opcodeId & OPCODE_ID_PRIVILEGED;
 
-	if ( privilegedFlag ) {
+	if (privilegedFlag) {
 		/*
 		 * Copy the privileged instruction info so we can remove the privileged bit
-		 * from the opcodeId field ASAP. This makes sure we're not modifying what's
-		 * in the tables in case we lookup another privileged instruction later
+		 * from the opcodeId field. This makes sure we're not modifying the tables
+		 * in case we lookup this privileged instruction later.
 		 */
-		ii_c = *ii;
-		ii_c.opcodeId &= ~OPCODE_ID_PRIVILEGED;
-		ii = &ii_c;
+		iip = *ii;
+		iip.opcodeId &= ~OPCODE_ID_PRIVILEGED;
+		ii = &iip;
 	}
 
 	/*
