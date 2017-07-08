@@ -91,6 +91,7 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 
 	/* Holds the info about the current found instruction. */
 	_InstInfo* ii = NULL;
+	_InstInfo iip; /* Privileged instruction cache. */
 	_InstSharedInfo* isi = NULL;
 
 	/* Used only for special CMP instructions which have pseudo opcodes suffix. */
@@ -111,10 +112,18 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	if (ii == NULL) goto _Undecodable;
 	isi = &InstSharedInfoTable[ii->sharedIndex];
 	instFlags = FlagsTable[isi->flagsIndex];
-
-	/* Copy the privileged bit and remove it from the opcodeId field ASAP. */
 	privilegedFlag = ii->opcodeId & OPCODE_ID_PRIVILEGED;
-	ii->opcodeId &= ~OPCODE_ID_PRIVILEGED;
+
+	if (privilegedFlag) {
+		/*
+		 * Copy the privileged instruction info so we can remove the privileged bit
+		 * from the opcodeId field. This makes sure we're not modifying the tables
+		 * in case we lookup this privileged instruction later.
+		 */
+		iip = *ii;
+		iip.opcodeId &= ~OPCODE_ID_PRIVILEGED;
+		ii = &iip;
+	}
 
 	/*
 	 * If both REX and OpSize are available we will have to disable the OpSize, because REX has precedence.
