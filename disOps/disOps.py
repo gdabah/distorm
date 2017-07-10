@@ -585,7 +585,8 @@ def FormatInstruction(ii):
 	ops = ii.operands + [OperandType.NONE, OperandType.NONE, OperandType.NONE, OperandType.NONE]
 
 	# Is it an extended structure?
-	if ii.flags & InstFlag.EXTENDED:
+	isExtended = (ii.flags & InstFlag.EXTENDED) != 0
+	if isExtended:
 		# Since there's a second and/or a third mnemonic, use the the InstInfoEx structure.
 		type = "_InstInfoEx"
 		flagsEx = 0
@@ -620,6 +621,8 @@ def FormatInstruction(ii):
 		raise "SharedInfoIndex exceeded its 16 bits. Change type of sharedInfoIndex in _InstInfo!"
 
 	fields = "0x%x, %d" % (sharedInfoIndex, mnems[0])
+	if (ii.flags & InstFlag.EXTENDED):
+		fields = "{%s}" % fields # Extra parentheses for sub structure in case it's InstInfoEx.
 	# "Structure-Name" = II_Bytes-Code {Fields + Optional-Fields}.
 	return ("\t/*II%s*/ {%s%s}" % (ii.tag, fields, optFields), (ii.flags & InstFlag.EXTENDED) != 0)
 
