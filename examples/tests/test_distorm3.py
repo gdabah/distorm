@@ -38,13 +38,15 @@ def Assemble(text, mode):
 	if mode is None:
 		mode = 32
 	lines = ("bits %d\r\n" % mode) + lines
-	open("1.asm", "wb").write(lines)
+	open("1.asm", "wb").write(lines.encode())
 	if mode == 64:
 		mode = "amd64"
 	else:
 		mode = "x86"
-	os.system("yasm -m%s 1.asm" % mode)
-	return open("1", "rb").read()
+	os.system("c:\\yasm -m%s 1.asm" % mode)
+	s = open("1", "rb").read()
+	#if (not isinstance(s, str)):
+	return s
 
 class Test(unittest.TestCase):
 	def __init__(self):
@@ -55,7 +57,10 @@ class Test(unittest.TestCase):
 class InstBin(Test):
 	def __init__(self, bin, mode):
 		Test.__init__(self)
-		bin = bin.decode("hex")
+		try:
+			bin = bin.decode("hex")
+		except:
+			bin = bytes.fromhex(bin)
 		#fbin[mode].write(bin)
 		self.insts = Decompose(0, bin, mode)
 		self.inst = self.insts[0]
@@ -1004,7 +1009,7 @@ class TestInstTable(unittest.TestCase):
 		IB64("c6f8bb").check_mnemonic("XABORT")
 		IB64("c7f800000000").check_mnemonic("XBEGIN")
 	def test_fuzz_9b_and_c7(self):
-		for i in xrange(10000):
+		for i in range(10000):
 			s = "%02x%02x" % (i & 0xff, random.randint(0, 255))
 			IB32("9b%sffffffff" % s)
 			IB32("c7%sffffffff" % s)
@@ -1590,7 +1595,7 @@ class TestPrefixes(unittest.TestCase):
 
 class TestInvalid(unittest.TestCase):
 	def align(self):
-		for i in xrange(15):
+		for i in range(15):
 			IB32("90")
 	def test_filter_mem(self):
 		#cmpxchg8b eax
