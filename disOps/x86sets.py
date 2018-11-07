@@ -117,8 +117,8 @@ class Instructions:
 		Set("0f, ad", ["SHRD"], [OPT.RM_FULL, OPT.REG_FULL, OPT.REGCL], IFlag.MODRM_REQUIRED | IFlag._32BITS)
 		Set("0f, ae /00", ["FXSAVE", "", "FXSAVE64"], [OPT.MEM], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag._64BITS | IFlag.PRE_REX | IFlag.USE_EXMNEMONIC2)
 		Set("0f, ae /01", ["FXRSTOR", "", "FXRSTOR64"], [OPT.MEM], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag._64BITS | IFlag.PRE_REX | IFlag.USE_EXMNEMONIC2)
-		Set("0f, ae /02", ["LDMXCSR"], [OPT.MEM], IFlag.MODRM_REQUIRED | IFlag._32BITS)
-		Set("0f, ae /03", ["STMXCSR"], [OPT.MEM], IFlag.MODRM_REQUIRED | IFlag._32BITS)
+		Set("0f, ae /02", ["LDMXCSR"], [OPT.MEM32], IFlag.MODRM_REQUIRED | IFlag._32BITS)
+		Set("0f, ae /03", ["STMXCSR"], [OPT.MEM32], IFlag.MODRM_REQUIRED | IFlag._32BITS)
 
 		# MFENCE and XSAVEOPT share the same opcode 0f ae /6. It's MFENCE when MOD=11, else XSAVEOPT or XSAVEOPT64 in 64.
 		Set("0f, ae /06", ["MFENCE", "XSAVEOPT", "XSAVEOPT64"], [OPT.MEM_OPT], IFlag.MODRM_REQUIRED | IFlag._32BITS | IFlag.USE_EXMNEMONIC | IFlag.MNEMONIC_MODRM_BASED | IFlag._64BITS | IFlag.PRE_REX | IFlag.USE_EXMNEMONIC2)

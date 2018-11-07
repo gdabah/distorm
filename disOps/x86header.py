@@ -178,7 +178,7 @@ class InstFlag:
 	VEX_V_UNUSED,           # 38
 	GEN_BLOCK,              # 39 From here on: internal to disOps.
 	EXPORTED                # 40
-	) = [1 << i for i in xrange(41)]
+	) = [1 << i for i in range(41)]
 	# Nodes are extended if they have any of the following flags:
 	EXTENDED = (PRE_VEX | USE_EXMNEMONIC | USE_EXMNEMONIC2 | USE_OP3 | USE_OP4)
 	SEGMENTS = (PRE_CS | PRE_SS | PRE_DS | PRE_ES | PRE_FS | PRE_FS)
@@ -244,4 +244,4 @@ class CPUFlags:
 	OF,  # 5
 	ZF,  # 6
 	SF   # 7
-	) = [1 << i for i in xrange(8)]
+	) = [1 << i for i in range(8)]

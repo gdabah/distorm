@@ -66,7 +66,7 @@ class InstructionInfo:
 		if isModRMIncluded:
 			self.flags |= InstFlag.MODRM_INCLUDED
 		# Does it use any of the VEX.vvvv field to describe an operand?
-		if len(filter(lambda x: x in [OperandType.VXMM, OperandType.VYMM, OperandType.VYXMM], self.operands)) == 0:
+		if len(list(filter(lambda x: x in [OperandType.VXMM, OperandType.VYMM, OperandType.VYXMM], self.operands))) == 0:
 			self.flags |= InstFlag.VEX_V_UNUSED
 		self.VEXtag = ""
 		# Special treatment for VEX instructions:
@@ -122,7 +122,7 @@ class InstructionsTable:
 		self.__iterIndex = -1
 		return self
 
-	def next(self):
+	def __next__(self):
 		""" This is the core of the iterator, return the next instruction or halt. """
 		# Get next instruction.
 		self.__iterIndex += 1
@@ -136,11 +136,14 @@ class InstructionsTable:
 			raise StopIteration
 		# If we have the key return its corresponding opcode,
 		# it might be that we return an object of another nested InstructionTable as well.
-		if self.list.has_key(self.__iterIndex):
+		if self.__iterIndex in self.list:
 			item = self.list[self.__iterIndex]
 			return item
 		# In case no InstructionInfo or InstructionsTable were found, return None (this doesn't stop the iteration!).
 		return None
+
+	# Fix for Python2.x
+	next = __next__
 
 class GenBlock:
 	""" There are some special instructions which have the operand encoded in the code byte itself.
@@ -171,7 +174,7 @@ class GenBlock:
 		self.list.__iter__()
 		return self
 
-	def next(self):
+	def __next__(self):
 		# Get next item from internal iterator.
 		i = self.list.next()
 		# If there's an item set, it means we hit the special opcode before.
@@ -195,6 +198,9 @@ class GenBlock:
 		# Return the instruction we read from the real list.
 		return i
 
+	# Fix for Python2.x
+	next = __next__
+
 class InstructionsDB:
 	""" The Instructions Data Base holds all instructions under it.
 	The self.root is where all instructions begin, so instructions that are 1 byte long, will be set directly there.
@@ -216,12 +222,12 @@ class InstructionsDB:
 		if ii.flags & InstFlag.PRE_VEX:
 			ii.tag = "_%s%s" % (ii.VEXtag, ii.tag)
 		# If there is nothing at this index, create a prefixed table.
-		if o.list.has_key(pos[0]) == False:
+		if pos[0] not in o.list:
 			o.list[pos[0]] = InstructionsTable(InstructionsTable.Prefixed, tag, "")
 		# If there's a table constructred already (doesn't matter if by last line).
 		if isinstance(o.list[pos[0]], InstructionsTable) and o.list[pos[0]].type == NodeType.LIST_PREFIXED:
 			# Check for obvious collision.
-			if o.list[pos[0]].list.has_key(ii.entryNo):
+			if ii.entryNo in o.list[pos[0]].list:
 				raise DBException("Collision in prefix table.")
 			# Link the instruction to its index.
 			o.list[pos[0]].list[ii.entryNo] = ii
@@ -311,7 +317,7 @@ class InstructionsDB:
 			if ii.prefixed:
 				self.HandleMandatoryPrefix(type, o, pos, ii, tag)
 				return
-			if o.list.has_key(pos[0]) == True:
+			if pos[0] in o.list:
 				self.HandleMandatoryPrefix(type, o, pos, ii, tag)
 				return
 			# Link the instruction info in its place.
@@ -319,7 +325,7 @@ class InstructionsDB:
 			# Stop recursion.
 			return
 		# See whether we have to create a nested table.
-		if o.list.has_key(pos[0]) == False:
+		if pos[0] not in o.list:
 			# All tables are full sized.
 			tableType = InstructionsTable.Full
 			if type == OpcodeLength.OL_13:

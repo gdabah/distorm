@@ -43,6 +43,7 @@
 #
 
 import time
+import functools
 
 import x86sets
 import x86db
@@ -79,7 +80,7 @@ def TranslateMnemonics(pseudoClassType, mnems):
 			# Set them to zero to keep the order of the list.
 			l.append(0) # Undefined instruction.
 			continue
-		if mnemonicsIds.has_key(i):
+		if i in mnemonicsIds:
 			l.append(mnemonicsIds[i])
 		else:
 			mnemonicsIds[i] = idsCounter
@@ -178,8 +179,8 @@ def DumpMnemonics():
 
 	# Mnemonics are sorted by insertion order. (Psuedo mnemonics depend on this!)
 	s = "const unsigned char _MNEMONICS[] =\n\"\\x09\" \"UNDEFINED\\0\" "
-	l = zip(mnemonicsIds.keys(), mnemonicsIds.values())
-	l.sort(lambda x, y: x[1] - y[1])
+	l = list(zip(mnemonicsIds.keys(), mnemonicsIds.values()))
+	l = sorted(l, key=functools.cmp_to_key(lambda x, y: x[1] - y[1]))
 	for i in l:
 		s += "\"\\x%02x\" \"%s\\0\" " % (len(i[0]), i[0])
 		if len(s) - s.rfind("\n") >= 76:
@@ -310,11 +311,11 @@ _OPT2T = {OperandType.NONE : O_NONE,
 def CheckOTCollisions(ii):
 	""" Checks whether an instruction has two or more operands that use the same fields in the diStorm3 structure.
 	E.G: ENTER 0x10, 0x1 --> This instruction uses two OT_IMM, which will cause a collision and use the same field twice which is bougs. """
-	types = map(lambda x: _OPT2T[x], ii.operands)
+	types = list(map(lambda x: _OPT2T[x], ii.operands))
 	# Regs cannot cause a collision, since each register is stored inside the operand itself.
 	for i in types:
 		if i != O_REG and types.count(i) > 1:
-			print "**WARNING: Operand type collision for instruction: " + ii.mnemonics[0], ii.tag
+			print("**WARNING: Operand type collision for instruction: " + ii.mnemonics[0], ii.tag)
 			break
 
 # This fucntion for certain flow control related instructions will set their type.
@@ -511,7 +512,7 @@ def UpdateInstructionAffectedFlags(ii):
 	}
 	# Check for mnemonics in the above table.
 	for i in ii.mnemonics:
-		if InstByMnem.has_key(i) and (ii.flags & InstFlag.PSEUDO_OPCODE) == 0:
+		if i in InstByMnem and (ii.flags & InstFlag.PSEUDO_OPCODE) == 0:
 			SetInstructionAffectedFlags(ii, InstByMnem[i])
 			return
 
@@ -604,7 +605,7 @@ def FormatInstruction(ii):
 	# Notice we filter out internal bits from flags.
 	flags = ii.flags & ((1 << InstFlag.FLAGS_EX_START_INDEX)-1)
 	# Allocate a slot for this flag if needed.
-	if not flagsDict.has_key(flags):
+	if flags not in flagsDict:
 		flagsDict[flags] = len(flagsDict)
 	# Get the flags-index.
 	flagsIndex = flagsDict[flags]
@@ -613,7 +614,7 @@ def FormatInstruction(ii):
 
 	# InstSharedInfo:
 	sharedInfo = (flagsIndex, ops[1], ops[0], (ii.classType << 3) | ii.flowControl, ii.modifiedFlags, ii.testedFlags, ii.undefinedFlags)
-	if not sharedInfoDict.has_key(sharedInfo):
+	if sharedInfo not in sharedInfoDict:
 		sharedInfoDict[sharedInfo] = len(sharedInfoDict)
 	# Get the shared-info-index.
 	sharedInfoIndex = sharedInfoDict[sharedInfo]
@@ -637,12 +638,12 @@ def GeneratePseudoMnemonicOffsets():
 	to the indexed one.
 	"""
 	# Lengths of pesudo mnemonics (SSE=CMPxxxYY + null + lengthByte)
-	lengths = map(lambda x: 3 + len(x) + 2 + 2, SSECmpTypes)
-	s = "uint16_t CmpMnemonicOffsets[8] = {\n" + ", ".join([str(sum(lengths[:i] or [0])) for i in xrange(len(lengths))]) + "\n};\n";
+	lengths = list(map(lambda x: 3 + len(x) + 2 + 2, SSECmpTypes))
+	s = "uint16_t CmpMnemonicOffsets[8] = {\n" + ", ".join([str(sum(lengths[:i] or [0])) for i in range(len(lengths))]) + "\n};\n";
 
 	# (AVX=VCMPxxxYY + null + lengthByte).
-	lengths = map(lambda x: 4 + len(x) + 2 + 2, AVXCmpTypes)
-	s += "uint16_t VCmpMnemonicOffsets[32] = {\n" + ", ".join([str(sum(lengths[:i] or [0])) for i in xrange(len(lengths))]) + "\n};";
+	lengths = list(map(lambda x: 4 + len(x) + 2 + 2, AVXCmpTypes))
+	s += "uint16_t VCmpMnemonicOffsets[32] = {\n" + ", ".join([str(sum(lengths[:i] or [0])) for i in range(len(lengths))]) + "\n};";
 	return s
 
 def CreateTables(db):
@@ -794,5 +795,5 @@ def main():
 
 	DumpMnemonics()
 
-	print "The file output.txt was written successfully"
+	print("The file output.txt was written successfully")
 main()
