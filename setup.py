@@ -222,7 +222,8 @@ def main():
             include_dirs=['src', 'include'],
             extra_compile_args=['-fPIC', '-O2', '-Wall', 
                                 '-DSUPPORT_64BIT_OFFSET', 
-                                '-DDISTORM_STATIC']))]
+                                '-DDISTORM_STATIC',
+                                '-Wl,-soname,libdistorm3.so.3']))]
     else:
         libraries = [(
             'distorm3', dict(
@@ -231,7 +232,8 @@ def main():
             include_dirs=['src', 'include'],
             extra_compile_args=['-fPIC', '-O2', '-Wall', 
                                 '-DSUPPORT_64BIT_OFFSET', 
-                                '-DDISTORM_STATIC']))]
+                                '-DDISTORM_STATIC',
+                                '-Wl,-soname,libdistorm3.so.3']))]
     
     options = {
 
@@ -260,9 +262,9 @@ def main():
                         'Python bindings by Mario Vilas (mvilas@gmail.com)'
                         ),
     'author'            : 'Gil Dabah',
-    'author_email'      : 'distorm'+chr(64)+'gmail'+chr(0x2e)+'com',
+    'author_email'      : 'distorm@gmail.com',
     'maintainer'        : 'Gil Dabah',
-    'maintainer_email'  : 'distorm'+chr(64)+'gmail'+chr(0x2e)+'com',
+    'maintainer_email'  : 'distorm@gmail.com',
     'url'               : 'https://github.com/gdabah/distorm/',
     'download_url'      : 'https://github.com/gdabah/distorm/',
     'platforms'         : ['cygwin', 'win', 'linux', 'macosx'],
