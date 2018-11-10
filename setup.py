@@ -267,7 +267,7 @@ def main():
 
     # Metadata
     'name'              : 'distorm3',
-    'version'           : '3.3.5',
+    'version'           : '3.3.6',
     'description'       : 'The goal of diStorm3 is to decode x86/AMD64' \
                           ' binary streams and return a structure that' \
                           ' describes each instruction.',

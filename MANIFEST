@@ -23,3 +23,8 @@ src\textdefs.h
 src\wstring.c
 src\wstring.h
 src\x86defs.h
+make\win32\cdistorm.vcxproj
+make\win32\cdistorm.vcxproj.filters
+make\win32\distorm.sln
+make\win32\resource.h
+make\win32\Resource.rc
