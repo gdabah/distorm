@@ -14,6 +14,6 @@ diStorm3 is licensed under BSD!
 Installing diStorm3 -
 Clone repo locally and then 'python setup.py install' or alternatively: 'python -m pip install distorm3'.
 
-For Windows, use these pre-built installers in https://pypi.org/manage/project/distorm3/release/3.3.7/.
+For Windows, use these pre-built installers in https://pypi.org/manage/project/distorm3/release/3.3.8/.
 
 RTFM, the wiki has plenty of info.
