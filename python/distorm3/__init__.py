@@ -3,7 +3,7 @@
 # Initial support for decompose API added by Roee Shenberg
 # Licensed under BSD in 2016.
 #
-# Compatible with Python2.6 and above.
+# Compatible with Python2.x and 3.x.
 #
 
 info = (

@@ -4,7 +4,7 @@ config.h
 diStorm3 - Powerful disassembler for X86/AMD64
 http://ragestorm.net/distorm/
 distorm at gmail dot com
-Copyright (C) 2003-2016 Gil Dabah
+Copyright (C) 2003-2018 Gil Dabah
 This library is licensed under the BSD license. See the file COPYING.
 */
 
@@ -13,7 +13,7 @@ This library is licensed under the BSD license. See the file COPYING.
 #define CONFIG_H
 
 /* diStorm version number. */
-#define __DISTORMV__ 0x030304
+#define __DISTORMV__ 0x030305
 
 #include <string.h> /* memset, memcpy - can be easily self implemented for libc independency. */
 
