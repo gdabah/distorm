@@ -12,7 +12,6 @@ diStorm3 is super lightweight (~45KB), ultra fast and easy to use (a single API)
 diStorm3 is licensed under BSD!
 
 Installing diStorm3 -
-Clone repo locally and then 'python setup.py install'
-Or alternatively: 'python -m pip install distorm'
+Clone repo locally and then 'python setup.py install' or alternatively: 'python -m pip install distorm'.
 
 RTFM, the wiki has plenty of info.
