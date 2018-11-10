@@ -11,6 +11,7 @@ __revision__ = "$Id: setup.py 603 2010-01-31 00:11:05Z qvasimodo $"
 
 import re
 import os
+import os.path
 import platform
 import string
 import shutil
@@ -28,6 +29,15 @@ from distutils.command.install_lib import install_lib
 from distutils.command.sdist import sdist
 from distutils.core import setup, Extension
 from distutils.errors import DistutilsSetupError
+
+def scanfor_vc_all():
+ fname = "vcvarsall.bat"
+ startDir = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community"
+ print("searching for %s" % fname)
+ for dirpath, dirnames, filenames in os.walk(startDir):
+  for f in filenames:
+   if f == fname:
+    return os.path.join(dirpath, f)
 
 def compile_vc(solution_path, config, platform):
     match_vs = re.compile('vs(\d+)comntools$', re.I).match
@@ -49,7 +59,13 @@ def compile_vc(solution_path, config, platform):
             sp.check_call(['call', bat, '&&'] + msbuild, shell = True)
             return
         except sp.CalledProcessError:
-            log.info('compilation with %s failed', var)
+            try:
+                bat = scanfor_vc_all()
+                log.info('Compiling with %s' % bat)
+                sp.check_call(['call', bat, '&&'] + msbuild, shell = True)
+                return
+            except sp.CalledProcessError:
+                log.info('compilation with %s failed', var)
     raise DistutilsSetupError(
         'Failed to compile "%s" with any available compiler' % solution_path
     )
