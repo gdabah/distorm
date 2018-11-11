@@ -32,7 +32,7 @@ from distutils.errors import DistutilsSetupError
 
 def scanfor_vc_all():
  fname = "vcvarsall.bat"
- startDir = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community"
+ startDir = "C:\\Program Files (x86)\\Microsoft Visual Studio\\"
  print("searching for %s" % fname)
  for dirpath, dirnames, filenames in os.walk(startDir):
   for f in filenames:
@@ -45,7 +45,6 @@ def compile_vc(solution_path, config, platform):
         m.group(1, 0) for m in (match_vs(k) for k in os.environ.keys())
         if m is not None
     ]
-
     msbuild = [
         'msbuild',
             '/p:Configuration=%s' % config,
@@ -59,13 +58,16 @@ def compile_vc(solution_path, config, platform):
             sp.check_call(['call', bat, '&&'] + msbuild, shell = True)
             return
         except sp.CalledProcessError:
-            try:
-                bat = scanfor_vc_all()
-                log.info('Compiling with %s' % bat)
-                sp.check_call(['call', bat, '&&'] + msbuild, shell = True)
-                return
-            except sp.CalledProcessError:
-                log.info('compilation with %s failed', var)
+            log.info('compilation with %s failed', var)
+    # Try brute force find the batch file for VS env
+    try:
+        bat = scanfor_vc_all()
+        log.info('Compiling with %s' % bat)
+        sp.check_call(['call', bat, 'x86_amd64' if platform=='x64' else 'x86', '&&'] + msbuild, shell = True)
+        return
+    except sp.CalledProcessError:
+        log.info('compilation failed')
+
     raise DistutilsSetupError(
         'Failed to compile "%s" with any available compiler' % solution_path
     )
@@ -81,7 +83,11 @@ class custom_build(build):
     def run(self):
         log.info('running custom_build')
         if 'windows' in platform.system().lower():
-            bits = 'x64' if sys.maxsize > 2**32 else 'win32'
+            bits = 'win32' # x86 by default
+            # If x64 is specified in command line, change it here
+            for i in sys.argv:
+                if i.find("--plat-name=win-amd64") != -1:
+                     bits = 'x64'
             compile_vc('make/win32/distorm.sln', 'dll', bits)
             self.copy_file('distorm3.dll', 'python/distorm3')
         build.run(self)
@@ -267,7 +273,7 @@ def main():
 
     # Metadata
     'name'              : 'distorm3',
-    'version'           : '3.3.7',
+    'version'           : '3.3.8',
     'description'       : 'The goal of diStorm3 is to decode x86/AMD64' \
                           ' binary streams and return a structure that' \
                           ' describes each instruction.',

@@ -11,8 +11,8 @@ PREFIX	= /usr/local
 # The lib SONAME version:
 LIB_S_VERSION = 3
 # The lib real version:
-LIB_R_VERSION = 3.3.4
-CFLAGS += -Wl,-soname=${TARGET}.${LIB_S_VERSION}
+LIB_R_VERSION = 3.3.8
+LDFLAGS += -Wl,-soname,${TARGET}.${LIB_S_VERSION}
 DESTDIR	=
 
 all: clib
@@ -21,7 +21,7 @@ clean:
 	/bin/rm -rf ../../src/*.o ${TARGET} ../../distorm3.a ./../*.o
 
 clib: ${COBJS}
-	${CC} ${CFLAGS} ${VERSION} ${COBJS} ${LDFLAGS} ${SONAME} -o ${TARGET}
+	${CC} ${CFLAGS} ${VERSION} ${COBJS} ${LDFLAGS} -o ${TARGET}
 	ar rs ../../distorm3.a ${COBJS}
 
 install: libdistorm3.so
