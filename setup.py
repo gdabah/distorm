@@ -216,10 +216,10 @@ def main():
     cwd = os.path.dirname(__file__)
     if cwd:
         os.chdir(cwd)
-    
+
     # Get the target platform
     system  = platform.system().lower()
-    
+
     # Setup the extension module
     # Setup the library
     ext_modules = None
@@ -244,19 +244,18 @@ def main():
             include_dirs=['src', 'include'],
             extra_compile_args=['-fPIC', '-O2', '-Wall', 
                                 '-DSUPPORT_64BIT_OFFSET', 
-                                '-DDISTORM_STATIC',
-                                '-Wl,-soname,libdistorm3.so.3']))]
+                                '-DDISTORM_STATIC']))]
     else:
         libraries = [(
             'distorm3', dict(
             package='distorm3',
             sources=get_sources,
             include_dirs=['src', 'include'],
+            extra_link_args=['-Wl,-soname,libdistorm3.so.3'],
             extra_compile_args=['-fPIC', '-O2', '-Wall', 
                                 '-DSUPPORT_64BIT_OFFSET', 
-                                '-DDISTORM_STATIC',
-                                '-Wl,-soname,libdistorm3.so.3']))]
-    
+                                '-DDISTORM_STATIC']))]
+
     options = {
 
     # Setup instructions
