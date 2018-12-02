@@ -471,7 +471,7 @@ typedef enum { DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, D
  *
  * Output: unsigned int - version of compiled library.
  */
-unsigned int distorm_version();
+unsigned int distorm_version(void);
 
 #endif /* DISTORM_STATIC */
 

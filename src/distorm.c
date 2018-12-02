@@ -407,7 +407,7 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 
 #endif /* DISTORM_LIGHT */
 
-_DLLEXPORT_ unsigned int distorm_version()
+_DLLEXPORT_ unsigned int distorm_version(void)
 {
 	return __DISTORMV__;
 }
