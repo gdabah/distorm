@@ -233,8 +233,8 @@ def main():
             package='distorm3',
             sources=get_sources,
             include_dirs=['src', 'include'],
-            extra_compile_args=['-arch', 'i386', '-arch', 'x86_64', '-O2', 
-                                '-Wall', '-fPIC', '-DSUPPORT_64BIT_OFFSET', 
+            extra_compile_args=['-arch', 'i386', '-arch', 'x86_64', '-O2',
+                                '-Wall', '-fPIC', '-DSUPPORT_64BIT_OFFSET',
                                 '-DDISTORM_DYNAMIC']))]
     elif 'cygwin' in system:
         libraries = [(
@@ -242,8 +242,8 @@ def main():
             package='distorm3',
             sources=get_sources,
             include_dirs=['src', 'include'],
-            extra_compile_args=['-fPIC', '-O2', '-Wall', 
-                                '-DSUPPORT_64BIT_OFFSET', 
+            extra_compile_args=['-fPIC', '-O2', '-Wall',
+                                '-DSUPPORT_64BIT_OFFSET',
                                 '-DDISTORM_STATIC']))]
     else:
         libraries = [(
@@ -252,8 +252,8 @@ def main():
             sources=get_sources,
             include_dirs=['src', 'include'],
             extra_link_args=['-Wl,-soname,libdistorm3.so.3'],
-            extra_compile_args=['-fPIC', '-O2', '-Wall', 
-                                '-DSUPPORT_64BIT_OFFSET', 
+            extra_compile_args=['-fPIC', '-O2', '-Wall',
+                                '-DSUPPORT_64BIT_OFFSET',
                                 '-DDISTORM_STATIC']))]
 
     options = {
@@ -272,7 +272,7 @@ def main():
 
     # Metadata
     'name'              : 'distorm3',
-    'version'           : '3.3.8',
+    'version'           : '3.4.0',
     'description'       : 'The goal of diStorm3 is to decode x86/AMD64' \
                           ' binary streams and return a structure that' \
                           ' describes each instruction.',
