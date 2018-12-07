@@ -20,11 +20,12 @@ import subprocess as sp
 
 from glob import glob
 from shutil import ignore_patterns
-
+from setuptools import dist
 from distutils import log
 from distutils.command.build import build
 from distutils.command.build_clib import build_clib
 from distutils.command.clean import clean
+from setuptools.command.install import install
 from distutils.command.install_lib import install_lib
 from distutils.command.sdist import sdist
 from distutils.core import setup, Extension
@@ -100,7 +101,7 @@ class custom_build_clib(build_clib):
     libraries alongside the python packages, to facilitate the use of ctypes. 
     """
 
-    def finalize_options (self):
+    def finalize_options(self):
         # We want build-clib to default to build-lib as defined by the 
         # "build" command.  This is so the compiled library will be put 
         # in the right place along side the python code.
@@ -146,7 +147,7 @@ class custom_build_clib(build_clib):
         log.info('running custom_build_clib')
         build_clib.run(self)
 
-    def build_libraries (self, libraries):
+    def build_libraries(self, libraries):
         for (lib_name, build_info) in libraries:
             sources = self.get_source_files_for_lib(lib_name, build_info)
             sources = list(sources)
@@ -203,13 +204,22 @@ class custom_clean(clean):
 
         clean.run(self)
 
-
 class custom_sdist(sdist):
     """Customized sdist command"""
     def run(self):
         log.info('running custom_sdist')
         sdist.run(self)
 
+class BinaryDistribution(dist.Distribution):
+    def is_pure(self):
+        return False
+    def has_ext_modules(self):
+        return True
+
+class custom_install(install):
+    def finalize_options(self):
+        install.finalize_options(self)
+        self.install_lib = self.install_platlib
 
 def main():
     # Just in case we are being called from a different directory
@@ -266,9 +276,11 @@ def main():
     'cmdclass'          : { 'build' : custom_build,
                             'build_clib' : custom_build_clib,
                             'clean' : custom_clean, 
-                            'sdist' : custom_sdist },
+                            'sdist' : custom_sdist,
+                            'install' : custom_install },
     'libraries'         : libraries,
     'package_data'      : {'distorm3': package_data},
+    'distclass'         : BinaryDistribution,
 
     # Metadata
     'name'              : 'distorm3',
