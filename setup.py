@@ -17,6 +17,7 @@ import string
 import shutil
 import sys
 import subprocess as sp
+import struct 
 
 from glob import glob
 from shutil import ignore_patterns
@@ -31,14 +32,28 @@ from distutils.command.sdist import sdist
 from distutils.core import setup, Extension
 from distutils.errors import DistutilsSetupError
 
+def quick_get_vcvars():
+    try:
+        vswhere = sp.check_output(r"echo %ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe", shell=1).strip()
+        print("vswhere: {}".format(vswhere))
+        installationPath = sp.check_output(r"{} -latest -prerelease -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath".format(vswhere)).strip()
+        print("installationPath: {}".format(installationPath))
+        vcvars = installationPath + r"\vc\Auxiliary\Build\vcvarsall.bat"
+        print("vcvars: {}".format(vcvars))
+        if os.path.exists(vcvars):
+            return vcvars
+    except CalledProcessError:
+        log.info('quick_get_vcvars() failed to locate vcvarsall.bat path')
+
+
 def scanfor_vc_all():
- fname = "vcvarsall.bat"
- startDir = "C:\\Program Files (x86)\\Microsoft Visual Studio\\"
- print("searching for %s" % fname)
- for dirpath, dirnames, filenames in os.walk(startDir):
-  for f in filenames:
-   if f == fname:
-    return os.path.join(dirpath, f)
+    fname = "vcvarsall.bat"
+    startDir = "C:\\Program Files (x86)\\Microsoft Visual Studio\\"
+    print("searching for %s" % fname)
+    for dirpath, dirnames, filenames in os.walk(startDir):
+        for f in filenames:
+            if f == fname:
+                return os.path.join(dirpath, f)
 
 def compile_vc(solution_path, config, platform):
     match_vs = re.compile('vs(\d+)comntools$', re.I).match
@@ -52,6 +67,16 @@ def compile_vc(solution_path, config, platform):
             '/p:Platform=%s' % platform,
             solution_path
     ]
+    # Try a super-quick method to find vcvarsall.bat
+    try:
+        bat = quick_get_vcvars()
+        log.info('Compiling with %s' % bat)
+        sp.check_call(['call', bat, 'x86_amd64' if platform=='x64' else 'x86', '&&'] + msbuild, shell = True)
+        return
+    except sp.CalledProcessError:
+        log.info('compilation with vswhere failed')
+
+    # Else, proceed with the previous scheme...
     for ver, var in sorted(compilers, key = lambda v: -int(v[0])):
         bat = os.path.join(os.environ[var], r'..\..\vc\vcvarsall.bat')
         try:
@@ -85,10 +110,17 @@ class custom_build(build):
         log.info('running custom_build')
         if 'windows' in platform.system().lower():
             bits = 'win32' # x86 by default
-            # If x64 is specified in command line, change it here
+            bitsize = 8 * struct.calcsize("P")
+            if bitsize == 32:
+                bits = 'win32'
+            elif bitsize == 64:
+                bits = 'x64'
+            # If win32/x64 is specified in command line, change it here
             for i in sys.argv:
                 if i.find("--plat-name=win-amd64") != -1:
                      bits = 'x64'
+                if i.find("--plat-name=win32") != -1:
+                     bits = 'win32'
             compile_vc('make/win32/distorm.sln', 'dll', bits)
             self.copy_file('distorm3.dll', 'python/distorm3')
         build.run(self)
@@ -194,7 +226,7 @@ class custom_clean(clean):
                             pass
 
         # Remove generated directories
-        for dir in ['build', 'dist']:
+        for dir in ['build', 'dist', 'make/win32/.vs', 'make/win32/dll', 'make/win32/x64', 'python/distorm3.egg-info']:
             if os.path.exists(dir):
                 log.info("removing '%s' (and everything under it)"%dir)
                 try:
