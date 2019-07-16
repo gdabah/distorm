@@ -70,9 +70,10 @@ def compile_vc(solution_path, config, platform):
     # Try a super-quick method to find vcvarsall.bat
     try:
         bat = quick_get_vcvars()
-        log.info('Compiling with %s' % bat)
-        sp.check_call(['call', bat, 'x86_amd64' if platform=='x64' else 'x86', '&&'] + msbuild, shell = True)
-        return
+        if bat is not None:
+            log.info('Compiling with %s' % bat)
+            sp.check_call(['call', bat, 'x86_amd64' if platform=='x64' else 'x86', '&&'] + msbuild, shell = True)
+            return
     except sp.CalledProcessError:
         log.info('compilation with vswhere failed')
 
