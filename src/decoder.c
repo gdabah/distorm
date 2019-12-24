@@ -641,7 +641,9 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 				((features & DF_STOP_ON_UNC_BRANCH) && (mfc == FC_UNC_BRANCH)) ||
 				((features & DF_STOP_ON_CND_BRANCH) && (mfc == FC_CND_BRANCH)) ||
 				((features & DF_STOP_ON_INT) && (mfc == FC_INT)) ||
-				((features & DF_STOP_ON_CMOV) && (mfc == FC_CMOV)))
+				((features & DF_STOP_ON_CMOV) && (mfc == FC_CMOV)) ||
+				((features & DF_STOP_ON_HLT) && (mfc == FC_HLT)))
+
 				return DECRES_SUCCESS;
 		}
 	}

@@ -67,10 +67,10 @@ typedef unsigned __int8		uint8_t;
 /* ***  Helper Macros  *** */
 
 /* Get the ISC of the instruction, used with the definitions below. */
-#define META_GET_ISC(meta) (((meta) >> 3) & 0x1f)
-#define META_SET_ISC(di, isc) (((di)->meta) |= ((isc) << 3))
+#define META_GET_ISC(meta) (((meta) >> 8) & 0x1f)
+#define META_SET_ISC(di, isc) (((di)->meta) |= ((isc) << 8))
 /* Get the flow control flags of the instruction, see 'features for decompose' below. */
-#define META_GET_FC(meta) ((meta) & 0x7)
+#define META_GET_FC(meta) ((meta) & 0xF)
 
 /* Get the target address of a branching instruction. O_PC operand type. */
 #define INSTRUCTION_GET_TARGET(di) ((_OffsetType)(((di)->addr + (di)->imm.addr + (di)->size)))
@@ -251,7 +251,7 @@ typedef struct {
 	uint8_t base, scale;
 	uint8_t dispSize;
 	/* Meta defines the instruction set class, and the flow control flags. Use META macros. */
-	uint8_t meta;
+	uint16_t meta;
 	/* The CPU flags that the instruction operates upon. */
 	uint16_t modifiedFlagsMask, testedFlagsMask, undefinedFlagsMask;
 } _DInst;
@@ -285,7 +285,7 @@ typedef struct {
 #define RM_CX 2     /* CL, CH, CX, ECX, RCX */
 #define RM_DX 4     /* DL, DH, DX, EDX, RDX */
 #define RM_BX 8     /* BL, BH, BX, EBX, RBX */
-#define RM_SP 0x10  /* SPL, SP, ESP, RSP */ 
+#define RM_SP 0x10  /* SPL, SP, ESP, RSP */
 #define RM_BP 0x20  /* BPL, BP, EBP, RBP */
 #define RM_SI 0x40  /* SIL, SI, ESI, RSI */
 #define RM_DI 0x80  /* DIL, DI, EDI, RDI */
@@ -384,8 +384,10 @@ typedef struct {
 #define DF_STOP_ON_INT 0x100
 /* The decoder will stop and return to the caller when any of the 'CMOVxx' instruction was decoded. */
 #define DF_STOP_ON_CMOV 0x200
+/* The decoder will stop and return to the caller when it encounters the HLT instruction */
+#define DF_STOP_ON_HLT 0x400
 /* The decoder will stop and return to the caller when any flow control instruction was decoded. */
-#define DF_STOP_ON_FLOW_CONTROL (DF_STOP_ON_CALL | DF_STOP_ON_RET | DF_STOP_ON_SYS | DF_STOP_ON_UNC_BRANCH | DF_STOP_ON_CND_BRANCH | DF_STOP_ON_INT | DF_STOP_ON_CMOV)
+#define DF_STOP_ON_FLOW_CONTROL (DF_STOP_ON_CALL | DF_STOP_ON_RET | DF_STOP_ON_SYS | DF_STOP_ON_UNC_BRANCH | DF_STOP_ON_CND_BRANCH | DF_STOP_ON_INT | DF_STOP_ON_CMOV | DF_STOP_ON_HLT)
 
 /* Indicates the instruction is not a flow-control instruction. */
 #define FC_NONE 0
@@ -406,6 +408,8 @@ typedef struct {
 #define FC_INT 6
 /* Indicates the instruction is one of: CMOVxx. */
 #define FC_CMOV 7
+/* Indicates the instruction is HLT. */
+#define FC_HLT 8
 
 /* Return code of the decoding function. */
 typedef enum { DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, DECRES_FILTERED } _DecodeResult;
@@ -431,7 +435,7 @@ typedef enum { DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, D
  * Notes:  1)The minimal size of maxInstructions is 15.
  *         2)You will have to synchronize the offset,code and length by yourself if you pass code fragments and not a complete code block!
  */
- 
+
 /* distorm_decompose
  * See more documentation online at the GitHub project's wiki.
  *

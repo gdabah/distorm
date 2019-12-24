@@ -1641,6 +1641,7 @@ class TestFeatures(unittest.TestCase):
 			(["INT 5", "db 0xf1", "INT 3", "INTO", "UD2"], FlowControl.INT),
 			(["CALL 0x50", "CALL FAR [ebx]"], FlowControl.CALL),
 			(["RET", "IRET", "RETF"], FlowControl.RET),
+			(["HLT"], FlowControl.HLT),
 			(["SYSCALL", "SYSENTER", "SYSRET", "SYSEXIT"], FlowControl.SYS),
 			(["JMP 0x50", "JMP FAR [ebx]"], FlowControl.BRANCH),
 			(["JCXZ 0x50", "JO 0x50", "JNO 0x50", "JB 0x50", "JAE 0x50",
@@ -1652,7 +1653,7 @@ class TestFeatures(unittest.TestCase):
 			for j in i[0]:
 				a = I32(j + "\nnop", DF_STOP_ON_FLOW_CONTROL)
 				self.assertEqual(len(a.insts), 1)
-				self.assertEqual(a.inst["meta"] & 7, i[1])
+				self.assertEqual(a.inst["meta"] & 0xF, i[1])
 				a = I32("push eax\nnop\n" + j, DF_RETURN_FC_ONLY)
 				self.assertEqual(len(a.insts), 1)
 				a = I32("nop\nxor eax, eax\n" + j + "\ninc eax", DF_RETURN_FC_ONLY | DF_STOP_ON_FLOW_CONTROL)

@@ -176,7 +176,8 @@ def UpdateForFlowControl(ii):
 		(["RET", "IRET", "RETF"], FlowControl.RET),
 		(["SYSCALL", "SYSENTER", "SYSRET", "SYSEXIT"], FlowControl.SYS),
 		(["JMP", "JMP FAR"], FlowControl.UNC_BRANCH),
-		(["JCXZ", "JO", "JNO", "JB", "JAE", "JZ", "JNZ", "JBE", "JA", "JS", "JNS", "JP", "JNP", "JL", "JGE", "JLE", "JG", "LOOP", "LOOPZ", "LOOPNZ"], FlowControl.CND_BRANCH)
+		(["JCXZ", "JO", "JNO", "JB", "JAE", "JZ", "JNZ", "JBE", "JA", "JS", "JNS", "JP", "JNP", "JL", "JGE", "JLE", "JG", "LOOP", "LOOPZ", "LOOPNZ"], FlowControl.CND_BRANCH),
+		(["HLT"], FlowControl.HLT)
 	]
 	ii.flowControl = 0
 	for p in pairs:
@@ -235,7 +236,7 @@ def UpdatePrivilegedInstruction(opcodeIds, ii):
 		"IN", "INS", "OUT", "OUTS", "CLI", "STI", "IRET"
 	]
 	for i in enumerate(ii.mnemonics):
-		if (i[1] in privileged) or IsPrivilegedMov(ii):	
+		if (i[1] in privileged) or IsPrivilegedMov(ii):
 			opcodeIds[i[0]] |= 0x8000
 
 def SetInstructionAffectedFlags(ii, flagsTuple):
@@ -458,7 +459,7 @@ def FormatInstruction(ii, mnemonicsIds):
 		raise Exception("FlagsIndex exceeded its 8 bits. Change flags of _InstInfo to be uint16!")
 
 	# InstSharedInfo:
-	sharedInfo = (flagsIndex, ops[1], ops[0], (ii.classType << 3) | ii.flowControl, ii.modifiedFlags, ii.testedFlags, ii.undefinedFlags)
+	sharedInfo = (flagsIndex, ops[1], ops[0], (ii.classType << 8) | ii.flowControl, ii.modifiedFlags, ii.testedFlags, ii.undefinedFlags)
 	if sharedInfo not in sharedInfoDict:
 		sharedInfoDict[sharedInfo] = len(sharedInfoDict)
 	# Get the shared-info-index.
@@ -528,7 +529,7 @@ def CreateTables(db):
 	So instead of generating the following old data layout:
 	{&II_00, &II_01, &II_02, NULL, NULL, &II_05, &II_06, NULL}
 	(Actually the old layout is a bit more complicated and consumes another byte for indicating the type of node.)
-	
+
 	Anyways, we can generate the follow table:
 	{1, 2, 3, 0, 0, 4, 5, 0}
 	This time the table is in bytes, a byte is enough to index 256 instructions (which is a Full sized table).
