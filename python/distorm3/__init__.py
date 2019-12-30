@@ -174,7 +174,7 @@ class _DInst (Structure):
         ('base', c_ubyte),    # base register for indirections
         ('scale', c_ubyte),   # ignore for values 0, 1 (other valid values - 2,4,8)
         ('dispSize', c_ubyte),
-        ('meta', c_ubyte), # meta flags - instruction set class, etc. See C headers again...
+        ('meta', c_uint16), # meta flags - instruction set class, etc. See C headers again...
         ('modifiedFlagsMask', c_uint16), # CPU modified (output) flags by instruction.
         ('testedFlagsMask', c_uint16), # CPU tested (input) flags by instruction.
         ('undefinedFlagsMask', c_uint16) # CPU undefined flags by instruction.
@@ -485,8 +485,10 @@ DF_STOP_ON_UNC_BRANCH  = 0x40
 DF_STOP_ON_CND_BRANCH  = 0x80
 DF_STOP_ON_INT  = 0x100
 DF_STOP_ON_CMOV  = 0x200
+DF_STOP_ON_HLT  = 0x400
 DF_STOP_ON_FLOW_CONTROL = (DF_STOP_ON_CALL | DF_STOP_ON_RET | DF_STOP_ON_SYS | \
-    DF_STOP_ON_UNC_BRANCH | DF_STOP_ON_CND_BRANCH | DF_STOP_ON_INT | DF_STOP_ON_CMOV)
+    DF_STOP_ON_UNC_BRANCH | DF_STOP_ON_CND_BRANCH | DF_STOP_ON_INT | DF_STOP_ON_CMOV | \
+    DF_STOP_ON_HLT)
 
 def DecodeGenerator(codeOffset, code, dt):
     """
@@ -671,22 +673,28 @@ FlowControlFlags = [
 # Indiciates the instruction is one of: INT, INT1, INT 3, INTO, UD2.
 "FC_INT",
 # Indicates the instruction is one of: CMOVxx.
-"FC_CMOV"
+"FC_CMOV",
+# Indicates the instruction is HLT
+"FC_HLT",
 ]
 
 def _getOpSize(flags):
     return ((flags >> 7) & 3)
 
 def _getISC(metaflags):
-    realvalue = ((metaflags >> 3) & 0x1f)
-    return InstructionSetClasses[realvalue]
+    realvalue = ((metaflags >> 8) & 0x1f)
+    try:
+        return InstructionSetClasses[realvalue]
+    except IndexError:
+        print ("Bad ISC flags in meta member: {}".format(realvalue))
+        raise
 
 def _getFC(metaflags):
-    realvalue = (metaflags & 0x7)
+    realvalue = (metaflags & 0xF)
     try:
         return FlowControlFlags[realvalue]
     except IndexError:
-        print ("Bad meta-flags: {}".format(realvalue))
+        print ("Bad FlowControl flags in meta member: {}".format(realvalue))
         raise
 
 def _getMnem(opcode):
@@ -897,7 +905,7 @@ def DecomposeGenerator(codeOffset, code, dt, features = 0):
     instruction_off = 0
 
     while codeLen > 0:
-        
+
         usedInstructionsCount = c_uint(0)
         codeInfo = _CodeInfo(_OffsetType(codeOffset), _OffsetType(0), cast(p_code, c_char_p), codeLen, dt, features)
         status = internal_decompose(byref(codeInfo), byref(result), MAX_INSTRUCTIONS, byref(usedInstructionsCount))
@@ -920,7 +928,7 @@ def DecomposeGenerator(codeOffset, code, dt, features = 0):
         codeOffset = codeOffset + delta
         p_code     = byref(code_buf, instruction_off)
         codeLen    = codeLen - delta
-        
+
         if (features & DF_STOP_ON_FLOW_CONTROL) != 0:
             break # User passed a stop flag.
 

@@ -132,7 +132,7 @@ class OpcodeLength:
 class InstFlag:
 	""" Instruction Flag contains all bit mask constants for describing an instruction.
 	You can bitwise-or the flags. See diStorm's documentation for more explanation.
-	
+
 	The GEN_BLOCK is a special flag, it is used in the tables generator only;
 	See GenBlock class inside x86db.py. """
 	FLAGS_EX_START_INDEX = 32
@@ -207,7 +207,7 @@ class ISetClass:
 	AES) = range(1, 20)
 
 class FlowControl:
-	""" The flow control instruction will be flagged in the lo nibble of the 'meta' field in _InstInfo of diStorm.
+	""" The flow control instruction will be flagged in the lo byte of the 'meta' field in _InstInfo of diStorm.
 	They are used to distinguish between flow control instructions (such as: ret, call, jmp, jz, etc) to normal ones. """
 	(CALL,
 	RET,
@@ -215,7 +215,8 @@ class FlowControl:
 	UNC_BRANCH,
 	CND_BRANCH,
 	INT,
-	CMOV) = range(1, 8)
+	CMOV,
+	HLT) = range(1, 9)
 
 class NodeType:
 	""" A node can really be an object holder for an instruction-info object or

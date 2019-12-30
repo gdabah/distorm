@@ -127,7 +127,7 @@ typedef enum OpType {
 	 * We need this to detect whether an operand size prefix is used.
 	 */
 	OT_SEG,
-	
+
 	/* Use AL */
 	OT_ACC8,
 	/* Use AX (FSTSW) */
@@ -399,7 +399,7 @@ typedef enum {ONT_NONE = -1, ONT_1 = 0, ONT_2 = 1, ONT_3 = 2, ONT_4 = 3} _Operan
 typedef struct {
 	uint8_t flagsIndex; /* An index into FlagsTables */
 	uint8_t s, d; /* OpType. */
-	uint8_t meta; /* Hi 5 bits = Instruction set class | Lo 3 bits = flow control flags. */
+	uint16_t meta; /* High byte = Instruction set class | Low byte = flow control flags. */
 	/*
 	 * The following are CPU flag masks that the instruction changes.
 	 * The flags are compacted so 8 bits representation is enough.
@@ -461,3 +461,4 @@ _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps);
 _InstInfo* inst_lookup_3dnow(_CodeInfo* ci);
 
 #endif /* INSTRUCTIONS_H */
+

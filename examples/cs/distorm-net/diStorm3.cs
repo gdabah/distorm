@@ -24,7 +24,7 @@ namespace diStorm
       internal int features;
     };
 
-    
+
     public struct _WString
     {
       public const int MAX_TEXT_SIZE = 48;
@@ -33,7 +33,7 @@ namespace diStorm
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
-    public struct _DecodedInst 
+    public struct _DecodedInst
     {
 	    public _WString mnemonic; /* Mnemonic of decoded instruction, prefixed if required by REP, LOCK etc. */
 	    public _WString operands; /* Operands of the decoded instruction, up to 3 operands, comma-seperated. */
@@ -154,7 +154,7 @@ namespace diStorm
       internal byte ibase, scale;
       internal byte dispSize;
       /* Meta defines the instruction set class, and the flow control flags. Use META macros. */
-      internal byte meta;
+      internal ushort meta;
       /* The CPU flags that the instruction operates upon. */
       internal byte modifiedFlagsMask, testedFlagsMask, undefinedFlagsMask;
     };
@@ -214,7 +214,7 @@ namespace diStorm
 
 
     public static unsafe void Decompose(CodeInfo nci, DecomposedResult ndr)
-    {	    
+    {
 	    _CodeInfo* ci = null;
       _DInst* insts = null;
       var gch = new GCHandle();
@@ -222,7 +222,7 @@ namespace diStorm
 
       try
       {
-        if ((ci = AcquireCodeInfoStruct(nci, out gch)) == null)        
+        if ((ci = AcquireCodeInfoStruct(nci, out gch)) == null)
           throw new OutOfMemoryException();
 
         var maxInstructions = ndr.MaxInstructions;
@@ -255,7 +255,7 @@ namespace diStorm
 
           /* Immediate variant. */
           var immVariant = new DecomposedInst.ImmVariant {
-            Imm = insts[i].imm.qword, 
+            Imm = insts[i].imm.qword,
             Size = 0
           };
           /* The size of the immediate is in one of the operands, if at all. Look for it below. Zero by default. */
@@ -329,14 +329,14 @@ namespace diStorm
 
         if ((insts = (_DecodedInst*) Malloc(maxInstructions*sizeof (_DecodedInst))) == null)
           throw new OutOfMemoryException();
-        
+
         distorm_decode64(ci->codeOffset, ci->code, ci->codeLen, ci->dt, insts, (uint) maxInstructions,
                          &usedInstructionsCount);
 
         var dinsts = new DecodedInst[usedInstructionsCount];
-        
+
         for (var i = 0; i < usedInstructionsCount; i++)
-          dinsts[i] = CreateDecodedInstObj(&insts[i]);           
+          dinsts[i] = CreateDecodedInstObj(&insts[i]);
         dr.Instructions = dinsts;
       }
       finally {
@@ -347,12 +347,12 @@ namespace diStorm
           Free(ci);
         if (insts != null)
           Free(insts);
-      }      
+      }
     }
 
 
     public static unsafe DecodedInst Format(CodeInfo nci, DecomposedInst ndi)
-    {    	
+    {
       var input = new _DInst();
       _CodeInfo *ci = null;
       var gch = new GCHandle();
@@ -372,10 +372,10 @@ namespace diStorm
         input.scale = (byte) ndi.Scale;
         input.opcode = (ushort) ndi.Opcode;
         /* unusedPrefixesMask is unused indeed, lol. */
-        input.meta = (byte) ndi.Meta;
+        input.meta = (ushort) ndi.Meta;
         /* Nor usedRegistersMask. */
 
-        int opsCount = ndi.Operands.Length;        
+        int opsCount = ndi.Operands.Length;
         for (var i = 0; i < opsCount; i++) {
           var op = ndi.Operands[i];
           if (op == null) continue;
