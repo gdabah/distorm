@@ -42,7 +42,7 @@ def quick_get_vcvars():
         print("vcvars: {}".format(vcvars))
         if os.path.exists(vcvars):
             return vcvars
-    except CalledProcessError:
+    except sp.CalledProcessError:
         log.info('quick_get_vcvars() failed to locate vcvarsall.bat path')
 
 
