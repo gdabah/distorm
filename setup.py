@@ -45,7 +45,6 @@ def quick_get_vcvars():
     except sp.CalledProcessError:
         log.info('quick_get_vcvars() failed to locate vcvarsall.bat path')
 
-
 def scanfor_vc_all():
     fname = "vcvarsall.bat"
     startDir = "C:\\Program Files (x86)\\Microsoft Visual Studio\\"

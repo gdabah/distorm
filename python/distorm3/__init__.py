@@ -37,7 +37,14 @@ if sys.version_info[0] >= 3:
 # Load the diStorm DLL
 
 # Guess the DLL filename and load the library.
-_distorm_path = split(__file__)[0]
+_distorm_path = None
+try:
+    _distorm_path = split(__file__)[0]
+except NameError:
+    # In some containers __file__ isn't set.
+    pass
+if hasattr(sys, "oxidized"):
+    _distorm_path = ""
 if hasattr(sys, '_MEIPASS'):
     _distorm_path = sys._MEIPASS
 potential_libs = ['libdistorm3.so', 'libdistorm3.dylib']
