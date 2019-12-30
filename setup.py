@@ -17,7 +17,7 @@ import string
 import shutil
 import sys
 import subprocess as sp
-import struct 
+import struct
 
 from glob import glob
 from shutil import ignore_patterns
@@ -34,9 +34,9 @@ from distutils.errors import DistutilsSetupError
 
 def quick_get_vcvars():
     try:
-        vswhere = sp.check_output(r"echo %ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe", shell=1).strip()
+        vswhere = os.fsdecode(sp.check_output(r"echo %ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe", shell=1).strip())
         print("vswhere: {}".format(vswhere))
-        installationPath = sp.check_output(r"{} -latest -prerelease -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath".format(vswhere)).strip()
+        installationPath = os.fsdecode(sp.check_output(r"{} -latest -prerelease -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath".format(vswhere)).strip())
         print("installationPath: {}".format(installationPath))
         vcvars = installationPath + r"\vc\Auxiliary\Build\vcvarsall.bat"
         print("vcvars: {}".format(vcvars))
