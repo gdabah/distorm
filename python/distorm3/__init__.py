@@ -486,6 +486,8 @@ DF_STOP_ON_CND_BRANCH  = 0x80
 DF_STOP_ON_INT  = 0x100
 DF_STOP_ON_CMOV  = 0x200
 DF_STOP_ON_HLT  = 0x400
+DF_STOP_ON_PRIVILEGED = 0x800
+DF_SINGLE_BYTE_STEP = 0x1000
 DF_STOP_ON_FLOW_CONTROL = (DF_STOP_ON_CALL | DF_STOP_ON_RET | DF_STOP_ON_SYS | \
     DF_STOP_ON_UNC_BRANCH | DF_STOP_ON_CND_BRANCH | DF_STOP_ON_INT | DF_STOP_ON_CMOV | \
     DF_STOP_ON_HLT)
@@ -674,9 +676,22 @@ FlowControlFlags = [
 "FC_INT",
 # Indicates the instruction is one of: CMOVxx.
 "FC_CMOV",
-# Indicates the instruction is HLT
+# Indicates the instruction is HLT.
 "FC_HLT",
 ]
+
+# TODO: put FlowControlFlags together in one class with _repr_.
+class FlowControl:
+	""" The flow control instruction will be flagged in the lo byte of the 'meta' field in _InstInfo of diStorm.
+	They are used to distinguish between flow control instructions (such as: ret, call, jmp, jz, etc) to normal ones. """
+	(CALL,
+	RET,
+	SYS,
+	UNC_BRANCH,
+	CND_BRANCH,
+	INT,
+	CMOV,
+	HLT) = range(1, 9)
 
 def _getOpSize(flags):
     return ((flags >> 7) & 3)
@@ -690,7 +705,7 @@ def _getISC(metaflags):
         raise
 
 def _getFC(metaflags):
-    realvalue = (metaflags & 0xF)
+    realvalue = (metaflags & 0xf)
     try:
         return FlowControlFlags[realvalue]
     except IndexError:
@@ -786,6 +801,7 @@ class Instruction (object):
         self.operands = []
         self.flags = []
         self.rawFlags = di.flags
+        self.meta = 0
         self.instructionClass = _getISC(0)
         self.flowControl = _getFC(0)
         self.address = di.addr
@@ -820,6 +836,7 @@ class Instruction (object):
 
         # decode the meta-flags
         metas = di.meta
+        self.meta = di.meta
         self.instructionClass = _getISC(metas)
         self.flowControl = _getFC(metas)
 
@@ -920,8 +937,10 @@ def DecomposeGenerator(codeOffset, code, dt, features = 0):
         for index in range(used):
             di = result[index]
             yield Instruction(di, code[instruction_off : instruction_off + di.size], dt)
-            delta += di.size
-            instruction_off += di.size
+
+            # Take into account filtered out instructions.
+            delta += di.size + codeInfo.nextOffset - codeOffset
+            instruction_off += di.size + codeInfo.nextOffset - codeOffset
 
         if delta <= 0:
             break

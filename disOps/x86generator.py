@@ -169,7 +169,6 @@ def UpdateForFlowControl(ii):
 		ii.flowControl = FlowControl.CMOV
 		return
 
-	# Should I include SYSCALL ?
 	pairs = [
 		(["INT", "INT1", "INT 3", "INTO", "UD2"], FlowControl.INT),
 		(["CALL", "CALL FAR"], FlowControl.CALL),

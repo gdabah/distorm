@@ -55,14 +55,14 @@ class Test(unittest.TestCase):
 		self.fail("dummy")
 
 class InstBin(Test):
-	def __init__(self, bin, mode):
+	def __init__(self, bin, mode, features):
 		Test.__init__(self)
 		try:
 			bin = bin.decode("hex")
 		except:
 			bin = bytes.fromhex(bin)
 		#fbin[mode].write(bin)
-		self.insts = Decompose(0, bin, mode)
+		self.insts = Decompose(0, bin, mode, features)
 		self.inst = self.insts[0]
 	def check_valid(self, instsNo = 1):
 		self.assertNotEqual(self.inst.rawFlags, 65535)
@@ -80,7 +80,7 @@ class Inst(Test):
 		bin = Assemble(instText, modeSize)
 		#print map(lambda x: hex(ord(x)), bin)
 		#fbin[mode].write(bin)
-		self.insts = Decompose(0, bin, mode)
+		self.insts = Decompose(0, bin, mode, features)
 		self.inst = self.insts[instNo]
 
 	def check_mnemonic(self, mnemonic):
@@ -142,14 +142,14 @@ def I16(instText, instNo = 0, features = 0):
 def I32(instText, features = 0):
 	return Inst(instText, Decode32Bits, 0, features)
 
-def IB32(bin):
-	return InstBin(bin, Decode32Bits)
+def IB32(bin, features = 0):
+	return InstBin(bin, Decode32Bits, features)
 
 def I64(instText, features = 0):
 	return Inst(instText, Decode64Bits, 0, features)
 
-def IB64(bin):
-	return InstBin(bin, Decode64Bits)
+def IB64(bin, features = 0):
+	return InstBin(bin, Decode64Bits, features)
 
 def ABS64(x):
 	return x
@@ -160,7 +160,7 @@ class TestMode16(unittest.TestCase):
 	DerefsInfo = [(Regs.BX, Regs.SI), (Regs.BX, Regs.DI), (Regs.BP, Regs.SI), (Regs.BP, Regs.DI),
 				  (Regs.SI,), (Regs.DI,), (Regs.BP,), (Regs.BX,)]
 	def test_none(self):
-		self.failIf(len(I16("cbw").inst.operands) > 0)
+		self.assertFalse(len(I16("cbw").inst.operands) > 0)
 	def test_imm8(self):
 		I16("int 0x55").check_imm(0, 0x55, 8)
 	def test_imm16(self):
@@ -177,11 +177,11 @@ class TestMode16(unittest.TestCase):
 		a = I16("push -6")
 		self.assertEqual(a.inst.size, 2)
 		a.check_type_size(0, distorm3.OPERAND_IMMEDIATE, 8)
-		self.failIf(ABS64(a.inst.operands[0].value) != -6)
+		self.assertFalse(ABS64(a.inst.operands[0].value) != -6)
 		a = I16("db 0x66\n push -5")
 		self.assertEqual(a.inst.size, 3)
 		a.check_type_size(0, distorm3.OPERAND_IMMEDIATE, 32)
-		self.failIf(ABS64(a.inst.operands[0].value) != -5)
+		self.assertFalse(ABS64(a.inst.operands[0].value) != -5)
 	def test_imm16_1_imm8_2(self):
 		a = I16("enter 0x1234, 0x40")
 		a.check_imm(0, 0x1234, 16)
@@ -312,8 +312,8 @@ class TestMode16(unittest.TestCase):
 	def test_regi_ebxal(self):
 		a = I16("xlatb")
 		a.check_type_size(0, distorm3.OPERAND_MEMORY, 8)
-		self.failIf(a.inst.operands[0].index != Regs.AL)
-		self.failIf(a.inst.operands[0].base != Regs.BX)
+		self.assertFalse(a.inst.operands[0].index != Regs.AL)
+		self.assertFalse(a.inst.operands[0].base != Regs.BX)
 	def test_regi_eax(self):
 		I16("vmrun [ax]").check_simple_deref(0, Regs.AX, 16)
 	def test_regdx(self):
@@ -355,8 +355,8 @@ class TestMode16(unittest.TestCase):
 	def test_disp_only(self):
 		a = I16("add [0x1234], bx")
 		a.check_type_size(0, distorm3.OPERAND_ABSOLUTE_ADDRESS, 16)
-		self.failIf(a.inst.operands[0].dispSize != 16)
-		self.failIf(a.inst.operands[0].disp != 0x1234)
+		self.assertFalse(a.inst.operands[0].dispSize != 16)
+		self.assertFalse(a.inst.operands[0].disp != 0x1234)
 	def test_modrm(self):
 		texts = ["ADD [%s], AX" % i for i in self.Derefs]
 		for i in enumerate(texts):
@@ -373,8 +373,8 @@ class TestMode16(unittest.TestCase):
 				a.check_deref(0, self.DerefsInfo[i[0]][1], self.DerefsInfo[i[0]][0], 16)
 			else:
 				a.check_simple_deref(0, self.DerefsInfo[i[0]][0], 16)
-			self.failIf(a.inst.operands[0].dispSize != 8)
-			self.failIf(a.inst.operands[0].disp != 0x55)
+			self.assertFalse(a.inst.operands[0].dispSize != 8)
+			self.assertFalse(a.inst.operands[0].disp != 0x55)
 	def test_modrm_disp16(self):
 		texts = ["ADD [%s + 0x3322], AX" % i for i in self.Derefs]
 		for i in enumerate(texts):
@@ -383,14 +383,14 @@ class TestMode16(unittest.TestCase):
 				a.check_deref(0, self.DerefsInfo[i[0]][1], self.DerefsInfo[i[0]][0], 16)
 			else:
 				a.check_simple_deref(0, self.DerefsInfo[i[0]][0], 16)
-			self.failIf(a.inst.operands[0].dispSize != 16)
-			self.failIf(a.inst.operands[0].disp != 0x3322)
+			self.assertFalse(a.inst.operands[0].dispSize != 16)
+			self.assertFalse(a.inst.operands[0].disp != 0x3322)
 
 class TestMode32(unittest.TestCase):
 	Derefs = ["EAX", "ECX", "EDX", "EBX", "EBP", "ESI", "EDI"]
 	DerefsInfo = [Regs.EAX, Regs.ECX, Regs.EDX, Regs.EBX, Regs.EBP, Regs.ESI, Regs.EDI]
 	def test_none(self):
-		self.failIf(len(I32("cdq").inst.operands) > 0)
+		self.assertFalse(len(I32("cdq").inst.operands) > 0)
 	def test_imm8(self):
 		I32("int 0x55").check_imm(0, 0x55, 8)
 	def test_imm16(self):
@@ -407,11 +407,11 @@ class TestMode32(unittest.TestCase):
 		a = I32("push -7")
 		self.assertEqual(a.inst.size, 2)
 		a.check_type_size(0, distorm3.OPERAND_IMMEDIATE, 8)
-		self.failIf(ABS64(a.inst.operands[0].value) != -7)
+		self.assertFalse(ABS64(a.inst.operands[0].value) != -7)
 		a = I32("db 0x66\n push -5")
 		self.assertEqual(a.inst.size, 3)
 		a.check_type_size(0, distorm3.OPERAND_IMMEDIATE, 16)
-		self.failIf(ABS64(a.inst.operands[0].value) != -5)
+		self.assertFalse(ABS64(a.inst.operands[0].value) != -5)
 	def test_imm16_1_imm8_2(self):
 		a = I32("enter 0x1234, 0x40")
 		a.check_imm(0, 0x1234, 16)
@@ -541,8 +541,8 @@ class TestMode32(unittest.TestCase):
 	def test_regi_ebxal(self):
 		a = I32("xlatb")
 		a.check_type_size(0, distorm3.OPERAND_MEMORY, 8)
-		self.failIf(a.inst.operands[0].index != Regs.AL)
-		self.failIf(a.inst.operands[0].base != Regs.EBX)
+		self.assertFalse(a.inst.operands[0].index != Regs.AL)
+		self.assertFalse(a.inst.operands[0].base != Regs.EBX)
 	def test_regi_eax(self):
 		I32("vmrun [eax]").check_simple_deref(0, Regs.EAX, 32)
 	def test_regdx(self):
@@ -586,8 +586,8 @@ class TestMode32(unittest.TestCase):
 	def test_disp_only(self):
 		a = I32("add [0x12345678], ebx")
 		a.check_type_size(0, distorm3.OPERAND_ABSOLUTE_ADDRESS, 32)
-		self.failIf(a.inst.operands[0].dispSize != 32)
-		self.failIf(a.inst.operands[0].disp != 0x12345678)
+		self.assertFalse(a.inst.operands[0].dispSize != 32)
+		self.assertFalse(a.inst.operands[0].disp != 0x12345678)
 	def test_modrm(self):
 		texts = ["ADD [%s], EDI" % i for i in self.Derefs]
 		for i in enumerate(texts):
@@ -598,28 +598,28 @@ class TestMode32(unittest.TestCase):
 		for i in enumerate(texts):
 			a = I32(i[1])
 			a.check_simple_deref(0, self.DerefsInfo[i[0]], 32)
-			self.failIf(a.inst.operands[0].dispSize != 8)
-			self.failIf(a.inst.operands[0].disp != 0x55)
+			self.assertFalse(a.inst.operands[0].dispSize != 8)
+			self.assertFalse(a.inst.operands[0].disp != 0x55)
 	def test_modrm_disp32(self):
 		texts = ["ADD [%s + 0x33221144], EDX" % i for i in self.Derefs]
 		for i in enumerate(texts):
 			a = I32(i[1])
 			a.check_simple_deref(0, self.DerefsInfo[i[0]], 32)
-			self.failIf(a.inst.operands[0].dispSize != 32)
-			self.failIf(a.inst.operands[0].disp != 0x33221144)
+			self.assertFalse(a.inst.operands[0].dispSize != 32)
+			self.assertFalse(a.inst.operands[0].disp != 0x33221144)
 	def test_base_ebp(self):
 		a = I32("mov [ebp+0x55], eax")
 		a.check_simple_deref(0, Regs.EBP, 32)
-		self.failIf(a.inst.operands[0].dispSize != 8)
-		self.failIf(a.inst.operands[0].disp != 0x55)
+		self.assertFalse(a.inst.operands[0].dispSize != 8)
+		self.assertFalse(a.inst.operands[0].disp != 0x55)
 		a = I32("mov [ebp+0x55+eax], eax")
 		a.check_deref(0, Regs.EAX, Regs.EBP, 32)
-		self.failIf(a.inst.operands[0].dispSize != 8)
-		self.failIf(a.inst.operands[0].disp != 0x55)
+		self.assertFalse(a.inst.operands[0].dispSize != 8)
+		self.assertFalse(a.inst.operands[0].disp != 0x55)
 		a = I32("mov [ebp+0x55443322], eax")
 		a.check_simple_deref(0, Regs.EBP, 32)
-		self.failIf(a.inst.operands[0].dispSize != 32)
-		self.failIf(a.inst.operands[0].disp != 0x55443322)
+		self.assertFalse(a.inst.operands[0].dispSize != 32)
+		self.assertFalse(a.inst.operands[0].disp != 0x55443322)
 	Bases = ["EAX", "ECX", "EDX", "EBX", "ESP", "ESI", "EDI"]
 	BasesInfo = [Regs.EAX, Regs.ECX, Regs.EDX, Regs.EBX, Regs.ESP, Regs.ESI, Regs.EDI]
 	Indices = ["EAX", "ECX", "EDX", "EBX", "EBP", "ESI", "EDI"]
@@ -632,15 +632,15 @@ class TestMode32(unittest.TestCase):
 		for i in enumerate(self.Bases):
 			a = I32("cmp ebp, [%s+0x12345678]" % (i[1]))
 			a.check_simple_deref(1, self.BasesInfo[i[0]], 32)
-			self.failIf(a.inst.operands[1].dispSize != 32)
-			self.failIf(a.inst.operands[1].disp != 0x12345678)
+			self.assertFalse(a.inst.operands[1].dispSize != 32)
+			self.assertFalse(a.inst.operands[1].disp != 0x12345678)
 	def test_scales(self):
 		for i in enumerate(self.Indices):
 			# A scale of 2 causes the scale to be omitted and changed from reg*2 to reg+reg.
 			for s in [4, 8]:
 				a = I32("and bp, [%s*%d]" % (i[1], s))
 				a.check_deref(1, self.IndicesInfo[i[0]], None, 16)
-				self.failIf(a.inst.operands[1].scale != s)
+				self.assertFalse(a.inst.operands[1].scale != s)
 	def test_sib(self):
 		for i in enumerate(self.Indices):
 			for j in enumerate(self.Bases):
@@ -648,33 +648,33 @@ class TestMode32(unittest.TestCase):
 					a = I32("or bp, [%s*%d + %s]" % (i[1], s, j[1]))
 					a.check_deref(1, self.IndicesInfo[i[0]], self.BasesInfo[j[0]], 16)
 					if s != 1:
-						self.failIf(a.inst.operands[1].scale != s)
+						self.assertFalse(a.inst.operands[1].scale != s)
 	def test_sib_disp8(self):
 		for i in enumerate(self.Indices):
 			for j in enumerate(self.Bases):
 				for s in [1, 2, 4, 8]:
 					a = I32("xor al, [%s*%d + %s + 0x55]" % (i[1], s, j[1]))
 					a.check_deref(1, self.IndicesInfo[i[0]], self.BasesInfo[j[0]], 8)
-					self.failIf(a.inst.operands[1].dispSize != 8)
-					self.failIf(a.inst.operands[1].disp != 0x55)
+					self.assertFalse(a.inst.operands[1].dispSize != 8)
+					self.assertFalse(a.inst.operands[1].disp != 0x55)
 					if s != 1:
-						self.failIf(a.inst.operands[1].scale != s)
+						self.assertFalse(a.inst.operands[1].scale != s)
 	def test_sib_disp32(self):
 		for i in enumerate(self.Indices):
 			for j in enumerate(self.Bases):
 				for s in [1, 2, 4, 8]:
 					a = I32("sub ebp, [%s*%d + %s + 0x55aabbcc]" % (i[1], s, j[1]))
 					a.check_deref(1, self.IndicesInfo[i[0]], self.BasesInfo[j[0]], 32)
-					self.failIf(a.inst.operands[1].dispSize != 32)
-					self.failIf(a.inst.operands[1].disp != 0x55aabbcc)
+					self.assertFalse(a.inst.operands[1].dispSize != 32)
+					self.assertFalse(a.inst.operands[1].disp != 0x55aabbcc)
 					if s != 1:
-						self.failIf(a.inst.operands[1].scale != s)
+						self.assertFalse(a.inst.operands[1].scale != s)
 
 class TestMode64(unittest.TestCase):
 	Derefs = ["RAX", "RCX", "RDX", "RBX", "RBP", "RSI", "RDI"]
 	DerefsInfo = [Regs.RAX, Regs.RCX, Regs.RDX, Regs.RBX, Regs.RBP, Regs.RSI, Regs.RDI]
 	def test_none(self):
-		self.failIf(len(I64("cdq").inst.operands) > 0)
+		self.assertFalse(len(I64("cdq").inst.operands) > 0)
 	def test_imm8(self):
 		I64("int 0x55").check_imm(0, 0x55, 8)
 	def test_imm16(self):
@@ -693,7 +693,7 @@ class TestMode64(unittest.TestCase):
 		a = I64("push -7")
 		self.assertEqual(a.inst.size, 2)
 		a.check_type_size(0, distorm3.OPERAND_IMMEDIATE, 8)
-		self.failIf(ABS64(a.inst.operands[0].value) != -7)
+		self.assertFalse(ABS64(a.inst.operands[0].value) != -7)
 	def test_imm16_1_imm8_2(self):
 		a = I64("enter 0x1234, 0x40")
 		a.check_imm(0, 0x1234, 16)
@@ -840,8 +840,8 @@ class TestMode64(unittest.TestCase):
 	def test_regi_ebxal(self):
 		a = I64("xlatb")
 		a.check_type_size(0, distorm3.OPERAND_MEMORY, 8)
-		self.failIf(a.inst.operands[0].index != Regs.AL)
-		self.failIf(a.inst.operands[0].base != Regs.RBX)
+		self.assertFalse(a.inst.operands[0].index != Regs.AL)
+		self.assertFalse(a.inst.operands[0].base != Regs.RBX)
 	def test_regi_eax(self):
 		I64("vmrun [rax]").check_simple_deref(0, Regs.RAX, 64)
 	def test_regdx(self):
@@ -887,8 +887,8 @@ class TestMode64(unittest.TestCase):
 	def test_disp_only(self):
 		a = I64("add [0x12345678], rbx")
 		a.check_type_size(0, distorm3.OPERAND_ABSOLUTE_ADDRESS, 64)
-		self.failIf(a.inst.operands[0].dispSize != 32)
-		self.failIf(a.inst.operands[0].disp != 0x12345678)
+		self.assertFalse(a.inst.operands[0].dispSize != 32)
+		self.assertFalse(a.inst.operands[0].disp != 0x12345678)
 	def test_modrm(self):
 		texts = ["ADD [%s], RDI" % i for i in self.Derefs]
 		for i in enumerate(texts):
@@ -899,29 +899,29 @@ class TestMode64(unittest.TestCase):
 		for i in enumerate(texts):
 			a = I64(i[1])
 			a.check_simple_deref(0, self.DerefsInfo[i[0]], 64)
-			self.failIf(a.inst.operands[0].dispSize != 8)
-			self.failIf(a.inst.operands[0].disp != 0x55)
+			self.assertFalse(a.inst.operands[0].dispSize != 8)
+			self.assertFalse(a.inst.operands[0].disp != 0x55)
 	def test_modrm_disp32(self):
 		texts = ["ADD [%s + 0x33221144], RDX" % i for i in self.Derefs]
 		for i in enumerate(texts):
 			a = I64(i[1])
 			a.check_simple_deref(0, self.DerefsInfo[i[0]], 64)
-			self.failIf(a.inst.operands[0].dispSize != 32)
-			self.failIf(a.inst.operands[0].disp != 0x33221144)
+			self.assertFalse(a.inst.operands[0].dispSize != 32)
+			self.assertFalse(a.inst.operands[0].disp != 0x33221144)
 	def test_base_rbp(self):
 		a = I64("mov [rbp+0x55], eax")
 		a.check_simple_deref(0, Regs.RBP, 32)
-		self.failIf(a.inst.operands[0].dispSize != 8)
-		self.failIf(a.inst.operands[0].disp != 0x55)
+		self.assertFalse(a.inst.operands[0].dispSize != 8)
+		self.assertFalse(a.inst.operands[0].disp != 0x55)
 		a = I64("mov [rbp+0x55443322], eax")
 		a.check_simple_deref(0, Regs.RBP, 32)
-		self.failIf(a.inst.operands[0].dispSize != 32)
-		self.failIf(a.inst.operands[0].disp != 0x55443322)
+		self.assertFalse(a.inst.operands[0].dispSize != 32)
+		self.assertFalse(a.inst.operands[0].disp != 0x55443322)
 	def test_base_rip(self):
 		a = I64("mov [rip+0x12345678], rdx")
 		a.check_simple_deref(0, Regs.RIP, 64)
-		self.failIf(a.inst.operands[0].dispSize != 32)
-		self.failIf(a.inst.operands[0].disp != 0x12345678)
+		self.assertFalse(a.inst.operands[0].dispSize != 32)
+		self.assertFalse(a.inst.operands[0].disp != 0x12345678)
 	def test_reg8_rex(self):
 		I64("mov sil, al").check_reg(0, Regs.SIL, 8)
 		I64("inc bpl").check_reg(0, Regs.BPL, 8)
@@ -952,15 +952,15 @@ class TestMode64(unittest.TestCase):
 		for i in enumerate(self.Bases):
 			a = I64("cmp rbp, [%s+0x12345678]" % (i[1]))
 			a.check_simple_deref(1, self.BasesInfo[i[0]], 64)
-			self.failIf(a.inst.operands[1].dispSize != 32)
-			self.failIf(a.inst.operands[1].disp != 0x12345678)
+			self.assertFalse(a.inst.operands[1].dispSize != 32)
+			self.assertFalse(a.inst.operands[1].disp != 0x12345678)
 	def test_scales(self):
 		for i in enumerate(self.Indices):
 			# A scale of 2 causes the scale to be omitted and changed from reg*2 to reg+reg.
 			for s in [4, 8]:
 				a = I64("and rbp, [%s*%d]" % (i[1], s))
 				a.check_deref(1, self.IndicesInfo[i[0]], None, 64)
-				self.failIf(a.inst.operands[1].scale != s)
+				self.assertFalse(a.inst.operands[1].scale != s)
 	def test_sib(self):
 		for i in enumerate(self.Indices):
 			for j in enumerate(self.Bases):
@@ -968,27 +968,27 @@ class TestMode64(unittest.TestCase):
 					a = I64("or rbp, [%s*%d + %s]" % (i[1], s, j[1]))
 					a.check_deref(1, self.IndicesInfo[i[0]], self.BasesInfo[j[0]], 64)
 					if s != 1:
-						self.failIf(a.inst.operands[1].scale != s)
+						self.assertFalse(a.inst.operands[1].scale != s)
 	def test_sib_disp8(self):
 		for i in enumerate(self.Indices):
 			for j in enumerate(self.Bases):
 				for s in [1, 2, 4, 8]:
 					a = I64("xor al, [%s*%d + %s + 0x55]" % (i[1], s, j[1]))
 					a.check_deref(1, self.IndicesInfo[i[0]], self.BasesInfo[j[0]], 8)
-					self.failIf(a.inst.operands[1].dispSize != 8)
-					self.failIf(a.inst.operands[1].disp != 0x55)
+					self.assertFalse(a.inst.operands[1].dispSize != 8)
+					self.assertFalse(a.inst.operands[1].disp != 0x55)
 					if s != 1:
-						self.failIf(a.inst.operands[1].scale != s)
+						self.assertFalse(a.inst.operands[1].scale != s)
 	def test_sib_disp32(self):
 		for i in enumerate(self.Indices):
 			for j in enumerate(self.Bases):
 				for s in [1, 2, 4, 8]:
 					a = I64("sub rdx, [%s*%d + %s + 0x55aabbcc]" % (i[1], s, j[1]))
 					a.check_deref(1, self.IndicesInfo[i[0]], self.BasesInfo[j[0]], 64)
-					self.failIf(a.inst.operands[1].dispSize != 32)
-					self.failIf(a.inst.operands[1].disp != 0x55aabbcc)
+					self.assertFalse(a.inst.operands[1].dispSize != 32)
+					self.assertFalse(a.inst.operands[1].disp != 0x55aabbcc)
 					if s != 1:
-						self.failIf(a.inst.operands[1].scale != s)
+						self.assertFalse(a.inst.operands[1].scale != s)
 	def test_base32(self):
 		I64("mov eax, [ebx]").check_simple_deref(1, Regs.EBX, 32)
 
@@ -1162,7 +1162,7 @@ class TestAVXOperands(unittest.TestCase):
 	def test_xmm_imm(self):
 		I32("vpblendvb xmm1, xmm2, xmm3, xmm4").check_reg(3, Regs.XMM4, 128)
 		# Force XMM15, but high bit is ignored in 32bits.
-		self.failIf(IB32("c4e3694ccbf0").inst.operands[3].index != Regs.XMM7)
+		self.assertFalse(IB32("c4e3694ccbf0").inst.operands[3].index != Regs.XMM7)
 		I64("vpblendvb xmm1, xmm2, xmm3, xmm15").check_reg(3, Regs.XMM15, 128)
 	def test_yxmm(self):
 		I32("vaddsubpd ymm2, ymm4, ymm6").check_reg(0, Regs.YMM2, 256)
@@ -1173,7 +1173,7 @@ class TestAVXOperands(unittest.TestCase):
 		I32("vblendvpd xmm1, xmm2, xmm3, xmm4").check_reg(3, Regs.XMM4, 128)
 		I32("vblendvpd ymm1, ymm2, ymm3, ymm4").check_reg(3, Regs.YMM4, 256)
 		# Force YMM15, but high bit is ignored in 32bits.
-		self.failIf(IB32("c4e36d4bcbf0").inst.operands[3].index != Regs.YMM7)
+		self.assertFalse(IB32("c4e36d4bcbf0").inst.operands[3].index != Regs.YMM7)
 		I64("vblendvpd xmm1, xmm2, xmm3, xmm14").check_reg(3, Regs.XMM14, 128)
 		I64("vblendvpd ymm1, ymm2, ymm3, ymm9").check_reg(3, Regs.YMM9, 256)
 	def test_ymm(self):
@@ -1378,10 +1378,10 @@ class TestMisc(unittest.TestCase):
 		self.assertEqual(a.inst.segment, Regs.GS)
 		self.assertEqual(a.inst.isSegmentDefault, False)
 	def test_branch_hints(self):
-		self.failIf("FLAG_HINT_TAKEN" not in I32("db 0x3e\n jnz 0x50").inst.flags)
-		self.failIf("FLAG_HINT_NOT_TAKEN" not in I32("db 0x2e\n jp 0x55").inst.flags)
-		self.failIf("FLAG_HINT_NOT_TAKEN" not in I32("db 0x2e\n jo 0x55000").inst.flags)
-		self.failIf(I32("db 0x2e\n loop 0x55").inst.rawFlags & 0x1f, 0)
+		self.assertFalse("FLAG_HINT_TAKEN" not in I32("db 0x3e\n jnz 0x50").inst.flags)
+		self.assertFalse("FLAG_HINT_NOT_TAKEN" not in I32("db 0x2e\n jp 0x55").inst.flags)
+		self.assertFalse("FLAG_HINT_NOT_TAKEN" not in I32("db 0x2e\n jo 0x55000").inst.flags)
+		self.assertFalse(I32("db 0x2e\n loop 0x55").inst.rawFlags & 0x1f, 0)
 	def test_mnemonic_by_vexw(self):
 		I32("vmovd xmm1, eax").check_mnemonic("VMOVD")
 		I64("vmovd xmm1, eax").check_reg(1, Regs.EAX, 32)
@@ -1555,11 +1555,11 @@ class TestPrefixes(unittest.TestCase):
 		self.assertEqual(I64("mov [gs:rip+0x12345678], eax").inst.segment, Regs.GS)
 		self.assertEqual(I64("mov [fs:0x12345678], eax").inst.segment, Regs.FS)
 	def test_lock(self):
-		self.failIf("FLAG_LOCK" not in I32("lock inc dword [eax]").inst.flags)
+		self.assertFalse("FLAG_LOCK" not in I32("lock inc dword [eax]").inst.flags)
 	def test_repnz(self):
-		self.failIf("FLAG_REPNZ" not in I32("repnz scasb").inst.flags)
+		self.assertFalse("FLAG_REPNZ" not in I32("repnz scasb").inst.flags)
 	def test_rep(self):
-		self.failIf("FLAG_REP" not in I32("rep movsb").inst.flags)
+		self.assertFalse("FLAG_REP" not in I32("rep movsb").inst.flags)
 	def test_segment_override(self):
 		self.assertEqual(I32("mov eax, [cs:eax]").inst.segment, Regs.CS)
 		self.assertEqual(I32("mov eax, [ds:eax]").inst.segment, Regs.DS)
@@ -1609,27 +1609,6 @@ class TestInvalid(unittest.TestCase):
 		# Drop prefixes when the last byte in stream is a prefix.
 		IB32("66")
 
-class FlowControl:
-	""" The flow control instruction will be flagged in the lo nibble of the 'meta' field in _InstInfo of diStorm.
-	They are used to distinguish between flow control instructions (such as: ret, call, jmp, jz, etc) to normal ones. """
-	(CALL,
-	RET,
-	SYS,
-	BRANCH,
-	COND_BRANCH,
-	INT) = range(1, 7)
-
-DF_MAXIMUM_ADDR16 = 1
-DF_MAXIMUM_ADDR32 = 2
-DF_RETURN_FC_ONLY = 4
-DF_STOP_ON_CALL = 8
-DF_STOP_ON_RET = 0x10
-DF_STOP_ON_SYS = 0x20
-DF_STOP_ON_BRANCH = 0x40
-DF_STOP_ON_COND_BRANCH = 0x80
-DF_STOP_ON_INT = 0x100
-DF_STOP_ON_FLOW_CONTROL = (DF_STOP_ON_CALL | DF_STOP_ON_RET | DF_STOP_ON_SYS | DF_STOP_ON_BRANCH | DF_STOP_ON_COND_BRANCH | DF_STOP_ON_INT)
-
 class TestFeatures(unittest.TestCase):
 	def test_addr16(self):
 		#I16("mov [-4], bx", 0, DF_MAXIMUM_ADDR16).check_disp(0, 0xfffc, 16, 16)
@@ -1638,28 +1617,53 @@ class TestFeatures(unittest.TestCase):
 		pass
 	def test_fc(self):
 		pairs = [
-			(["INT 5", "db 0xf1", "INT 3", "INTO", "UD2"], FlowControl.INT),
-			(["CALL 0x50", "CALL FAR [ebx]"], FlowControl.CALL),
-			(["RET", "IRET", "RETF"], FlowControl.RET),
-			(["HLT"], FlowControl.HLT),
-			(["SYSCALL", "SYSENTER", "SYSRET", "SYSEXIT"], FlowControl.SYS),
-			(["JMP 0x50", "JMP FAR [ebx]"], FlowControl.BRANCH),
+			(["INT 5", "db 0xf1", "INT 3", "INTO", "UD2"], distorm3.FlowControl.INT),
+			(["CALL 0x50", "CALL FAR [ebx]"], distorm3.FlowControl.CALL),
+			(["RET", "IRET", "RETF"], distorm3.FlowControl.RET),
+			(["HLT"], distorm3.FlowControl.HLT),
+			(["SYSCALL", "SYSENTER", "SYSRET", "SYSEXIT"], distorm3.FlowControl.SYS),
+			(["JMP 0x50", "JMP FAR [ebx]"], distorm3.FlowControl.UNC_BRANCH),
 			(["JCXZ 0x50", "JO 0x50", "JNO 0x50", "JB 0x50", "JAE 0x50",
 			"JZ 0x50", "JNZ 0x50", "JBE 0x50", "JA 0x50", "JS 0x50",
 			"JNS 0x50", "JP 0x50", "JNP 0x50", "JL 0x50", "JGE 0x50",
-			"JLE 0x50", "JG 0x50", "LOOP 0x50", "LOOPZ 0x50", "LOOPNZ 0x50"], FlowControl.COND_BRANCH)
+			"JLE 0x50", "JG 0x50", "LOOP 0x50", "LOOPZ 0x50", "LOOPNZ 0x50"], distorm3.FlowControl.CND_BRANCH)
 		]
 		for i in pairs:
 			for j in i[0]:
-				a = I32(j + "\nnop", DF_STOP_ON_FLOW_CONTROL)
+				a = I32(j + "\nnop", distorm3.DF_STOP_ON_FLOW_CONTROL)
 				self.assertEqual(len(a.insts), 1)
-				self.assertEqual(a.inst["meta"] & 0xF, i[1])
-				a = I32("push eax\nnop\n" + j, DF_RETURN_FC_ONLY)
+				self.assertEqual(a.inst.meta & 0xf, i[1])
+				a = I32("push eax\nnop\n" + j, distorm3.DF_RETURN_FC_ONLY)
 				self.assertEqual(len(a.insts), 1)
-				a = I32("nop\nxor eax, eax\n" + j + "\ninc eax", DF_RETURN_FC_ONLY | DF_STOP_ON_FLOW_CONTROL)
+				a = I32("nop\nxor eax, eax\n" + j + "\ninc eax", distorm3.DF_RETURN_FC_ONLY | distorm3.DF_STOP_ON_FLOW_CONTROL)
 				self.assertEqual(len(a.insts), 1)
 	def test_filter(self):
 		pass
+	def test_stop_on_privileged(self):
+		a = I32("nop\niret\nret", distorm3.DF_STOP_ON_PRIVILEGED)
+		self.assertEqual(len(a.insts), 2)
+		a = I64("mov eax, ebx\nnop\ncli\nnop", distorm3.DF_STOP_ON_PRIVILEGED)
+		self.assertEqual(len(a.insts), 3)
+	def test_step_byte(self):
+		a = IB32("90b833c3eb48", distorm3.DF_SINGLE_BYTE_STEP).insts
+		self.assertEqual(a[0].address, 0)
+		self.assertEqual(a[0].mnemonic, "NOP")
+		self.assertEqual(a[0].size, 1)
+		self.assertEqual(a[1].address, 1)
+		self.assertEqual(a[1].mnemonic, "MOV")
+		self.assertEqual(a[1].size, 5)
+		self.assertEqual(a[2].address, 2)
+		self.assertEqual(a[2].mnemonic, "XOR")
+		self.assertEqual(a[2].size, 2)
+		self.assertEqual(a[3].address, 3)
+		self.assertEqual(a[3].mnemonic, "RET")
+		self.assertEqual(a[3].size, 1)
+		self.assertEqual(a[4].address, 4)
+		self.assertEqual(a[4].mnemonic, "JMP")
+		self.assertEqual(a[4].size, 2)
+		self.assertEqual(a[5].address, 5)
+		self.assertEqual(a[5].mnemonic, "DEC")
+		self.assertEqual(a[5].size, 1)
 
 def GetNewSuite(className):
 	suite = unittest.TestSuite()
@@ -1681,6 +1685,6 @@ if __name__ == "__main__":
 	suite.addTest(GetNewSuite(TestAVXOperands))
 	suite.addTest(GetNewSuite(TestMisc))
 	suite.addTest(GetNewSuite(TestPrefixes))
-	#suite.addTest(GetNewSuite(TestInvalid))
-	#suite.addTest(GetNewSuite(TestFeatures))
+	suite.addTest(GetNewSuite(TestInvalid))
+	suite.addTest(GetNewSuite(TestFeatures))
 	unittest.TextTestRunner(verbosity=1).run(suite)

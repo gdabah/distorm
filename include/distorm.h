@@ -70,7 +70,7 @@ typedef unsigned __int8		uint8_t;
 #define META_GET_ISC(meta) (((meta) >> 8) & 0x1f)
 #define META_SET_ISC(di, isc) (((di)->meta) |= ((isc) << 8))
 /* Get the flow control flags of the instruction, see 'features for decompose' below. */
-#define META_GET_FC(meta) ((meta) & 0xF)
+#define META_GET_FC(meta) ((meta) & 0xf)
 
 /* Get the target address of a branching instruction. O_PC operand type. */
 #define INSTRUCTION_GET_TARGET(di) ((_OffsetType)(((di)->addr + (di)->imm.addr + (di)->size)))
@@ -384,8 +384,13 @@ typedef struct {
 #define DF_STOP_ON_INT 0x100
 /* The decoder will stop and return to the caller when any of the 'CMOVxx' instruction was decoded. */
 #define DF_STOP_ON_CMOV 0x200
-/* The decoder will stop and return to the caller when it encounters the HLT instruction */
+/* The decoder will stop and return to the caller when it encounters the HLT instruction. */
 #define DF_STOP_ON_HLT 0x400
+/* The decoder will stop and return to the caller when it encounters a privileged instruction. */
+#define DF_STOP_ON_PRIVILEGED 0x800
+/* The decoder will not synchronize to the next byte after the previosuly decoded instruction, instead it will start decoding at the next byte. */
+#define DF_SINGLE_BYTE_STEP 0x1000
+
 /* The decoder will stop and return to the caller when any flow control instruction was decoded. */
 #define DF_STOP_ON_FLOW_CONTROL (DF_STOP_ON_CALL | DF_STOP_ON_RET | DF_STOP_ON_SYS | DF_STOP_ON_UNC_BRANCH | DF_STOP_ON_CND_BRANCH | DF_STOP_ON_INT | DF_STOP_ON_CMOV | DF_STOP_ON_HLT)
 

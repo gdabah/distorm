@@ -156,7 +156,7 @@ namespace diStorm
       /* Meta defines the instruction set class, and the flow control flags. Use META macros. */
       internal ushort meta;
       /* The CPU flags that the instruction operates upon. */
-      internal byte modifiedFlagsMask, testedFlagsMask, undefinedFlagsMask;
+      internal ushort modifiedFlagsMask, testedFlagsMask, undefinedFlagsMask;
     };
 
     [DllImport("distorm3")]
@@ -185,7 +185,6 @@ namespace diStorm
         throw new OutOfMemoryException();
 
       Memset(ci, 0, sizeof (_CodeInfo));
-      //memset(ci, 0, sizeof(_CodeInfo));
 
       ci->codeOffset = new IntPtr(nci._codeOffset);
       gch = GCHandle.Alloc(nci._code, GCHandleType.Pinned);
