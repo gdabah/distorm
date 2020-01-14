@@ -923,7 +923,7 @@ class TestMode64(unittest.TestCase):
 		I64("mov rax, 0x1234567890abcdef").check_imm(1, 0x1234567890abcdef, 64)
 	def test_reg64(self):
 		I64("movsxd r10, eax").check_reg(0, Regs.R10, 64)
-	def test_rm16_32(self):
+	def test_rm16_32_2(self):
 		#MOVZXD RAX, [RAX]
 		I64("db 0x63\n db 0x00").check_simple_deref(1, Regs.RAX, 32)
 		#MOVZXDW RAX, [RAX]
