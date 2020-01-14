@@ -26,8 +26,7 @@ __all__ = [
 ]
 
 from ctypes import *
-from os.path import split, join
-from os import name as os_name
+import os
 import sys
 
 if sys.version_info[0] >= 3:
@@ -36,32 +35,24 @@ if sys.version_info[0] >= 3:
 #==============================================================================
 # Load the diStorm DLL
 
-# Guess the DLL filename and load the library.
-_distorm_path = None
-try:
-    _distorm_path = split(__file__)[0]
-except NameError:
-    # In some containers __file__ isn't set.
-    pass
-if hasattr(sys, "oxidized"):
-    _distorm_path = ""
-if hasattr(sys, '_MEIPASS'):
-    _distorm_path = sys._MEIPASS
-potential_libs = ['libdistorm3.so', 'libdistorm3.dylib']
-if os_name == 'nt':
-    potential_libs = ['distorm3.dll', 'libdistorm3.dll']
-lib_was_found = False
-for i in potential_libs:
-    try:
-        _distorm_file = join(_distorm_path, i)
-        _distorm = cdll.LoadLibrary(_distorm_file)
-        lib_was_found = True
-        break
-    except OSError:
-        pass
+def _load_distorm():
+    if sys.version_info[0] == 3:
+        try:
+            import _distorm3
+            return cdll.LoadLibrary(_distorm3.__spec__.origin)
+        except ImportError:
+            pass
 
-if lib_was_found == False:
+    dll_ext = ('.dll' if sys.platform == 'win32' else '.so')
+    libnames = ['_distorm3' + dll_ext]
+    for dir in sys.path:
+        for name in libnames:
+            _distorm_file = os.path.join(dir, name)
+            if os.path.isfile(_distorm_file):
+                return cdll.LoadLibrary(_distorm_file)
     raise ImportError("Error loading the diStorm dynamic library (or cannot load library into process).")
+
+_distorm = _load_distorm()
 
 # Get the decode C function (try 64 bits version first, only then 32 bits).
 SUPPORT_64BIT_OFFSET = False
@@ -71,12 +62,9 @@ try:
     internal_format = _distorm.distorm_format64
     SUPPORT_64BIT_OFFSET = True
 except AttributeError:
-    try:
-          internal_decode = _distorm.distorm_decode32
-          internal_decompose = _distorm.distorm_decompose32
-          internal_format = _distorm.distorm_format32
-    except AttributeError:
-        raise ImportError("Error loading distorm")
+    internal_decode = _distorm.distorm_decode32
+    internal_decompose = _distorm.distorm_decompose32
+    internal_format = _distorm.distorm_format32
 
 #==============================================================================
 # diStorm C interface
