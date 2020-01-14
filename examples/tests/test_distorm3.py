@@ -2,13 +2,20 @@
 # Gil Dabah 2006, http://ragestorm.net/distorm
 # Tests for diStorm3
 #
-import os
-import distorm3
-from distorm3 import *
 
-import struct
-import unittest
+import os
 import random
+import struct
+import subprocess
+import sys
+import tempfile
+import unittest
+
+from distorm3 import *
+import distorm3
+
+
+YASM_PATH = os.environ.get("YASM_PATH", "yasm")
 
 REG_NONE = 255
 _REGISTERS = ["RAX", "RCX", "RDX", "RBX", "RSP", "RBP", "RSI", "RDI", "R8", "R9", "R10", "R11", "R12", "R13", "R14", "R15",
@@ -35,17 +42,17 @@ fbin = []
 
 def Assemble(text, mode):
 	lines = text.replace("\n", "\r\n")
-	if mode is None:
-		mode = 32
 	lines = ("bits %d\r\n" % mode) + lines
-	open("1.asm", "wb").write(lines.encode())
-	if mode == 64:
-		mode = "amd64"
-	else:
-		mode = "x86"
-	os.system("c:\\yasm -m%s 1.asm" % mode)
-	s = open("1", "rb").read()
-	#if (not isinstance(s, str)):
+	with tempfile.NamedTemporaryFile(suffix=".asm", prefix="distorm3-test-", mode="wb+", delete=True) as asm_file:
+		asm_file.write(lines.encode())
+		asm_file.flush()
+		asm_name = asm_file.name
+		out_name = asm_name + ".out"
+		cmd = [YASM_PATH, "-m%s" % ("amd64" if mode == 64 else "x86"), asm_name, "-o%s" % out_name]
+		subprocess.check_call(cmd, shell=(sys.platform == "win32"))
+		with open(out_name, "rb") as out_file:
+			s = out_file.read()
+		os.unlink(out_name)
 	return s
 
 class Test(unittest.TestCase):
