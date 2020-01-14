@@ -143,9 +143,9 @@ def WriteMnemonicsC(mnemonicsIds):
 def WriteMnemonicsPython(mnemonicsIds):
 	""" Write the dictionary of opcods to the python module. """
 	#
-	# Fix Python dictionary inside __init__.py.
+	# Fix Python dictionary inside distorm3/_generated.py.
 	#
-	path = os.path.join("..", "python", "distorm3", "__init__.py")
+	path = os.path.join("..", "python", "distorm3", "_generated.py")
 	print("- Try rewriting mnemonics for %s." % path)
 	d = CreateMnemonicsPython(mnemonicsIds)
 	old = open(path, "r").read()
