@@ -11,7 +11,6 @@ import sys
 import tempfile
 import unittest
 
-from distorm3 import *
 import distorm3
 
 
@@ -69,7 +68,7 @@ class InstBin(Test):
 		except:
 			bin = bytes.fromhex(bin)
 		#fbin[mode].write(bin)
-		self.insts = Decompose(0, bin, mode, features)
+		self.insts = distorm3.Decompose(0, bin, mode, features)
 		self.inst = self.insts[0]
 	def check_valid(self, instsNo = 1):
 		self.assertNotEqual(self.inst.rawFlags, 65535)
@@ -87,7 +86,7 @@ class Inst(Test):
 		bin = Assemble(instText, modeSize)
 		#print map(lambda x: hex(ord(x)), bin)
 		#fbin[mode].write(bin)
-		self.insts = Decompose(0, bin, mode, features)
+		self.insts = distorm3.Decompose(0, bin, mode, features)
 		self.inst = self.insts[instNo]
 
 	def check_mnemonic(self, mnemonic):
@@ -144,19 +143,19 @@ class Inst(Test):
 		self.assertEqual({0: 16, 1: 32, 2: 64}[(self.inst.rawFlags >> 10) & 3], sz)
 
 def I16(instText, instNo = 0, features = 0):
-	return Inst(instText, Decode16Bits, instNo, features)
+	return Inst(instText, distorm3.Decode16Bits, instNo, features)
 
 def I32(instText, features = 0):
-	return Inst(instText, Decode32Bits, 0, features)
+	return Inst(instText, distorm3.Decode32Bits, 0, features)
 
 def IB32(bin, features = 0):
-	return InstBin(bin, Decode32Bits, features)
+	return InstBin(bin, distorm3.Decode32Bits, features)
 
 def I64(instText, features = 0):
-	return Inst(instText, Decode64Bits, 0, features)
+	return Inst(instText, distorm3.Decode64Bits, 0, features)
 
 def IB64(bin, features = 0):
-	return InstBin(bin, Decode64Bits, features)
+	return InstBin(bin, distorm3.Decode64Bits, features)
 
 def ABS64(x):
 	return x
