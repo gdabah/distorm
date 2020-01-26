@@ -2,10 +2,9 @@
 #include <Python.h>
 
 #if PY_MAJOR_VERSION == 2
-PyMODINIT_FUNC
-init_distorm3(void)
+PyMODINIT_FUNC init_distorm3(void)
 {
-    (void) Py_InitModule("_distorm3", NULL);
+    (void)Py_InitModule("_distorm3", NULL);
 }
 #else
 static struct PyModuleDef _distorm3_module = {
@@ -16,8 +15,7 @@ static struct PyModuleDef _distorm3_module = {
     NULL,
 };
 
-PyMODINIT_FUNC
-PyInit__distorm3(void)
+PyMODINIT_FUNC PyInit__distorm3(void)
 {
     PyObject *m;
 
