@@ -1,5 +1,5 @@
 #
-# Gil Dabah 2006, http://ragestorm.net/distorm
+# Gil Dabah 2006
 # Tests for diStorm3
 #
 
@@ -13,7 +13,8 @@ import unittest
 
 import distorm3
 
-
+# We require YASM assembler to work.
+# Set YASM_PATH envar to its full binary path.
 YASM_PATH = os.environ.get("YASM_PATH", "yasm")
 
 REG_NONE = 255
@@ -30,16 +31,20 @@ fbin = []
 def Assemble(text, mode):
 	lines = text.replace("\n", "\r\n")
 	lines = ("bits %d\r\n" % mode) + lines
-	with tempfile.NamedTemporaryFile(suffix=".asm", prefix="distorm3-test-", mode="wb+", delete=True) as asm_file:
+	asm_name = ""
+	with tempfile.NamedTemporaryFile(suffix=".asm", prefix="distorm3-test-", mode="wb+", delete=False) as asm_file:
 		asm_file.write(lines.encode())
-		asm_file.flush()
+		asm_file.flush() # Doesn't work instantly on windows. :(
 		asm_name = asm_file.name
+		asm_file.close()
 		out_name = asm_name + ".out"
 		cmd = [YASM_PATH, "-m%s" % ("amd64" if mode == 64 else "x86"), asm_name, "-o%s" % out_name]
 		subprocess.check_call(cmd, shell=(sys.platform == "win32"))
 		with open(out_name, "rb") as out_file:
 			s = out_file.read()
 		os.unlink(out_name)
+	if len(asm_name):
+		os.unlink(asm_name)
 	return s
 
 class Test(unittest.TestCase):
