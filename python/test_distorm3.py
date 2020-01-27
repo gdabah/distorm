@@ -2,50 +2,44 @@
 # Gil Dabah 2006, http://ragestorm.net/distorm
 # Tests for diStorm3
 #
-import os
-import distorm3
-from distorm3 import *
 
-import struct
-import unittest
+import os
 import random
+import struct
+import subprocess
+import sys
+import tempfile
+import unittest
+
+import distorm3
+
+
+YASM_PATH = os.environ.get("YASM_PATH", "yasm")
 
 REG_NONE = 255
-_REGISTERS = ["RAX", "RCX", "RDX", "RBX", "RSP", "RBP", "RSI", "RDI", "R8", "R9", "R10", "R11", "R12", "R13", "R14", "R15",
-	"EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI", "R8D", "R9D", "R10D", "R11D", "R12D", "R13D", "R14D", "R15D",
-	"AX", "CX", "DX", "BX", "SP", "BP", "SI", "DI", "R8W", "R9W", "R10W", "R11W", "R12W", "R13W", "R14W", "R15W",
-	"AL", "CL", "DL", "BL", "AH", "CH", "DH", "BH", "R8B", "R9B", "R10B", "R11B", "R12B", "R13B", "R14B", "R15B",
-	"SPL", "BPL", "SIL", "DIL",
-	"ES", "CS", "SS", "DS", "FS", "GS",
-	"RIP",
-	"ST0", "ST1", "ST2", "ST3", "ST4", "ST5", "ST6", "ST7",
-	"MM0", "MM1", "MM2", "MM3", "MM4", "MM5", "MM6", "MM7",
-	"XMM0", "XMM1", "XMM2", "XMM3", "XMM4", "XMM5", "XMM6", "XMM7", "XMM8", "XMM9", "XMM10", "XMM11", "XMM12", "XMM13", "XMM14", "XMM15",
-	"YMM0", "YMM1", "YMM2", "YMM3", "YMM4", "YMM5", "YMM6", "YMM7", "YMM8", "YMM9", "YMM10", "YMM11", "YMM12", "YMM13", "YMM14", "YMM15",
-	"CR0", "", "CR2", "CR3", "CR4", "", "", "", "CR8",
-	"DR0", "DR1", "DR2", "DR3", "", "", "DR6", "DR7"]
 
-class Registers(object):
+class _Registers(object):
 	def __init__(self):
-		for i in enumerate(_REGISTERS):
-			if len(i[1]):
-				setattr(self, i[1], i[0])
-Regs = Registers()
+		for index, name in enumerate(distorm3.Registers):
+			if name:
+				setattr(_Registers, name, index)
+
+Regs = _Registers()
 fbin = []
 
 def Assemble(text, mode):
 	lines = text.replace("\n", "\r\n")
-	if mode is None:
-		mode = 32
 	lines = ("bits %d\r\n" % mode) + lines
-	open("1.asm", "wb").write(lines.encode())
-	if mode == 64:
-		mode = "amd64"
-	else:
-		mode = "x86"
-	os.system("c:\\yasm -m%s 1.asm" % mode)
-	s = open("1", "rb").read()
-	#if (not isinstance(s, str)):
+	with tempfile.NamedTemporaryFile(suffix=".asm", prefix="distorm3-test-", mode="wb+", delete=True) as asm_file:
+		asm_file.write(lines.encode())
+		asm_file.flush()
+		asm_name = asm_file.name
+		out_name = asm_name + ".out"
+		cmd = [YASM_PATH, "-m%s" % ("amd64" if mode == 64 else "x86"), asm_name, "-o%s" % out_name]
+		subprocess.check_call(cmd, shell=(sys.platform == "win32"))
+		with open(out_name, "rb") as out_file:
+			s = out_file.read()
+		os.unlink(out_name)
 	return s
 
 class Test(unittest.TestCase):
@@ -62,7 +56,7 @@ class InstBin(Test):
 		except:
 			bin = bytes.fromhex(bin)
 		#fbin[mode].write(bin)
-		self.insts = Decompose(0, bin, mode, features)
+		self.insts = distorm3.Decompose(0, bin, mode, features)
 		self.inst = self.insts[0]
 	def check_valid(self, instsNo = 1):
 		self.assertNotEqual(self.inst.rawFlags, 65535)
@@ -80,7 +74,7 @@ class Inst(Test):
 		bin = Assemble(instText, modeSize)
 		#print map(lambda x: hex(ord(x)), bin)
 		#fbin[mode].write(bin)
-		self.insts = Decompose(0, bin, mode, features)
+		self.insts = distorm3.Decompose(0, bin, mode, features)
 		self.inst = self.insts[instNo]
 
 	def check_mnemonic(self, mnemonic):
@@ -137,19 +131,19 @@ class Inst(Test):
 		self.assertEqual({0: 16, 1: 32, 2: 64}[(self.inst.rawFlags >> 10) & 3], sz)
 
 def I16(instText, instNo = 0, features = 0):
-	return Inst(instText, Decode16Bits, instNo, features)
+	return Inst(instText, distorm3.Decode16Bits, instNo, features)
 
 def I32(instText, features = 0):
-	return Inst(instText, Decode32Bits, 0, features)
+	return Inst(instText, distorm3.Decode32Bits, 0, features)
 
 def IB32(bin, features = 0):
-	return InstBin(bin, Decode32Bits, features)
+	return InstBin(bin, distorm3.Decode32Bits, features)
 
 def I64(instText, features = 0):
-	return Inst(instText, Decode64Bits, 0, features)
+	return Inst(instText, distorm3.Decode64Bits, 0, features)
 
 def IB64(bin, features = 0):
-	return InstBin(bin, Decode64Bits, features)
+	return InstBin(bin, distorm3.Decode64Bits, features)
 
 def ABS64(x):
 	return x
@@ -929,7 +923,7 @@ class TestMode64(unittest.TestCase):
 		I64("mov rax, 0x1234567890abcdef").check_imm(1, 0x1234567890abcdef, 64)
 	def test_reg64(self):
 		I64("movsxd r10, eax").check_reg(0, Regs.R10, 64)
-	def test_rm16_32(self):
+	def test_rm16_32_2(self):
 		#MOVZXD RAX, [RAX]
 		I64("db 0x63\n db 0x00").check_simple_deref(1, Regs.RAX, 32)
 		#MOVZXDW RAX, [RAX]
