@@ -42,4 +42,5 @@ jobs:
       run: copy test-deps\yasm-1.3.0-win64.exe python\yasm.exe
       if: runner.os == 'Windows'
     - name: Run test_distorm3.py
-      run: cd python; python test_distorm3.py
+      working-directory: ./python
+      run: python test_distorm3.py
