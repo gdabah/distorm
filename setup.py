@@ -1,17 +1,9 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2009, Mario Vilas
-# Rob Ruana 2010
-# Gil Dabah
-# All rights reserved.
-# Licensed under BSD.
-#
-
 import os
 import os.path
 from glob import glob
 from setuptools import Extension, setup
-
 
 def main():
     # Just in case we are being called from a different directory
@@ -19,7 +11,6 @@ def main():
     if cwd:
         os.chdir(cwd)
 
-    package_data = []
     distorm_module = Extension(
         "_distorm3",
         sources=sorted(glob('src/*.c')) + ["python/python_module_init.c"],
@@ -28,14 +19,12 @@ def main():
     )
 
     options = {
-
     # Setup instructions
     'requires'          : ['ctypes'],
     'provides'          : ['distorm3'],
     'packages'          : ['distorm3'],
     'package_dir'       : { '' : 'python' },
     'ext_modules'       : [distorm_module],
-    'package_data'      : {'distorm3': package_data},
     # Metadata
     'name'              : 'distorm3',
     'version'           : '3.4.2',
