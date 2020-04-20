@@ -226,7 +226,7 @@ DF_STOP_ON_PRIVILEGED = 0x800
 DF_SINGLE_BYTE_STEP = 0x1000
 DF_STOP_ON_FLOW_CONTROL = (DF_STOP_ON_CALL | DF_STOP_ON_RET | DF_STOP_ON_SYS | \
     DF_STOP_ON_UNC_BRANCH | DF_STOP_ON_CND_BRANCH | DF_STOP_ON_INT | DF_STOP_ON_CMOV | \
-    DF_STOP_ON_HLT | DF_STOP_ON_PRIVILEGED)
+    DF_STOP_ON_HLT)
 
 def DecodeGenerator(codeOffset, code, dt):
     """
@@ -679,7 +679,7 @@ def DecomposeGenerator(codeOffset, code, dt, features = 0):
         p_code     = byref(code_buf, codeOffset - startCodeOffset)
         codeLen    = codeLen - delta
 
-        if (features & DF_STOP_ON_FLOW_CONTROL) != 0:
+        if (features & (DF_STOP_ON_FLOW_CONTROL | DF_STOP_ON_PRIVILEGED)) != 0:
             break # User passed a stop flag.
 
 def Decompose(offset, code, type = Decode32Bits, features = 0):
