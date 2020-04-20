@@ -655,7 +655,7 @@ def DecomposeGenerator(codeOffset, code, dt, features = 0):
     code_buf        = create_string_buffer(code)
     p_code          = byref(code_buf)
     result          = (_DInst * MAX_INSTRUCTIONS)()
-    instruction_off = 0
+    startCodeOffset = codeOffset
 
     while codeLen > 0:
 
@@ -669,19 +669,14 @@ def DecomposeGenerator(codeOffset, code, dt, features = 0):
         if not used:
             break
 
-        delta = 0
         for index in range(used):
             di = result[index]
-            yield Instruction(di, code[instruction_off : instruction_off + di.size], dt)
+            yield Instruction(di, code[di.addr - startCodeOffset : di.addr - startCodeOffset + di.size], dt)
 
-            # Take into account filtered out instructions.
-            delta += di.size + codeInfo.nextOffset - codeOffset
-            instruction_off += di.size + codeInfo.nextOffset - codeOffset
-
-        if delta <= 0:
-            break
+        lastInst = result[used - 1]
+        delta = lastInst.addr + lastInst.size - codeOffset
         codeOffset = codeOffset + delta
-        p_code     = byref(code_buf, instruction_off)
+        p_code     = byref(code_buf, delta)
         codeLen    = codeLen - delta
 
         if (features & DF_STOP_ON_FLOW_CONTROL) != 0:
