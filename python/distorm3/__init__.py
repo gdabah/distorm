@@ -676,7 +676,7 @@ def DecomposeGenerator(codeOffset, code, dt, features = 0):
         lastInst = result[used - 1]
         delta = lastInst.addr + lastInst.size - codeOffset
         codeOffset = codeOffset + delta
-        p_code     = byref(code_buf, delta)
+        p_code     = byref(code_buf, codeOffset - startCodeOffset)
         codeLen    = codeLen - delta
 
         if (features & DF_STOP_ON_FLOW_CONTROL) != 0:
