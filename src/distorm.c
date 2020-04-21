@@ -29,22 +29,15 @@ This library is licensed under the BSD license. See the file COPYING.
 		return DECRES_SUCCESS;
 	}
 
-	/* DECRES_SUCCESS still may indicate we may have something in the result, so zero it first thing. */
-	*usedInstructionsCount = 0;
-
 	if ((ci == NULL) ||
 		(ci->codeLen < 0) ||
-		((ci->dt != Decode16Bits) && (ci->dt != Decode32Bits) && (ci->dt != Decode64Bits)) ||
+		((unsigned)ci->dt > (unsigned)Decode64Bits) ||
 		(ci->code == NULL) ||
 		(result == NULL) ||
+		(maxInstructions == 0) ||
 		((ci->features & (DF_MAXIMUM_ADDR16 | DF_MAXIMUM_ADDR32)) == (DF_MAXIMUM_ADDR16 | DF_MAXIMUM_ADDR32)))
 	{
 		return DECRES_INPUTERR;
-	}
-
-	/* Assume length=0 is success. */
-	if (ci->codeLen == 0) {
-		return DECRES_SUCCESS;
 	}
 
 	return decode_internal(ci, FALSE, result, maxInstructions, usedInstructionsCount);
@@ -128,6 +121,7 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 	}
 }
 
+/* WARNING: This function is written carefully to be able to work with same input and output buffer in-place! */
 #ifdef SUPPORT_64BIT_OFFSET
 	_DLLEXPORT_ void distorm_format64(const _CodeInfo* ci, const _DInst* di, _DecodedInst* result)
 #else
@@ -140,23 +134,27 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 	uint64_t addrMask = (uint64_t)-1;
 	uint8_t segment;
 	const _WMnemonic* mnemonic;
+	unsigned int suffixSize = 0;
 
 	/* Set address mask, when default is for 64bits addresses. */
 	if (ci->features & DF_MAXIMUM_ADDR32) addrMask = 0xffffffff;
 	else if (ci->features & DF_MAXIMUM_ADDR16) addrMask = 0xffff;
 
-	/* Copy other fields. */
-	result->size = di->size;
-	result->offset = di->addr;
-
 	if (di->flags == FLAG_NOT_DECODABLE) {
+		/* In-place considerations: DI is RESULT. Deref fields first. */
+		unsigned int size = di->size;
+		unsigned int byte = di->imm.byte;
+		_OffsetType offset = di->addr & addrMask;
+
 		str = &result->mnemonic;
-		result->offset &= addrMask;
+		strclear_WS(&result->instructionHex);
+		str_hex_b(&result->instructionHex, byte);
+
+		result->size = size;
+		result->offset = offset;
 		strclear_WS(&result->operands);
 		strcpy_WSN(str, "DB ");
-		str_code_hb(str, di->imm.byte);
-		strclear_WS(&result->instructionHex);
-		str_hex_b(&result->instructionHex, di->imm.byte);
+		str_code_hb(str, byte);
 		return; /* Skip to next instruction. */
 	}
 
@@ -165,33 +163,6 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 	/* Gotta have full address for (di->addr - ci->codeOffset) to work in all modes. */
 	for (i = 0; i < di->size; i++)
 		str_hex_b(str, ci->code[(unsigned int)(di->addr - ci->codeOffset + i)]);
-
-	/* Truncate address now. */
-	result->offset &= addrMask;
-
-	str = &result->mnemonic;
-	switch (FLAG_GET_PREFIX(di->flags))
-	{
-		case FLAG_LOCK:
-			strcpy_WSN(str, "LOCK ");
-		break;
-		case FLAG_REP:
-			/* REP prefix for CMPS and SCAS is really a REPZ. */
-			if ((di->opcode == I_CMPS) || (di->opcode == I_SCAS)) strcpy_WSN(str, "REPZ ");
-			else strcpy_WSN(str, "REP ");
-		break;
-		case FLAG_REPNZ:
-			strcpy_WSN(str, "REPNZ ");
-		break;
-		default:
-			/* Init mnemonic string, cause next touch is concatenation. */
-			strclear_WS(str);
-		break;
-	}
-
-	mnemonic = (const _WMnemonic*)&_MNEMONICS[di->opcode];
-	memcpy((int8_t*)&str->p[str->length], mnemonic->p, mnemonic->length + 1);
-	str->length += mnemonic->length;
 
 	/* Format operands: */
 	str = &result->operands;
@@ -211,15 +182,8 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 		 * to indicate size of operation and continue to next instruction.
 		 */
 		if ((FLAG_GET_ADDRSIZE(di->flags) == ci->dt) && (SEGMENT_IS_DEFAULT(di->segment))) {
-			str = &result->mnemonic;
-			switch (di->ops[0].size)
-			{
-				case 8: chrcat_WS(str, 'B'); break;
-				case 16: chrcat_WS(str, 'W'); break;
-				case 32: chrcat_WS(str, 'D'); break;
-				case 64: chrcat_WS(str, 'Q'); break;
-			}
-			return;
+			suffixSize = di->ops[0].size / 8;
+			goto skipOperands;
 		}
 	}
 
@@ -338,6 +302,54 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 
 	if (di->flags & FLAG_HINT_TAKEN) strcat_WSN(str, " ;TAKEN");
 	else if (di->flags & FLAG_HINT_NOT_TAKEN) strcat_WSN(str, " ;NOT TAKEN");
+
+	skipOperands:
+	{
+		/* In-place considerations: DI is RESULT. Deref fields first. */
+		unsigned int size = di->size;
+		_OffsetType offset = di->addr & addrMask;
+		unsigned int prefix = FLAG_GET_PREFIX(di->flags);
+
+		mnemonic = (const _WMnemonic*)&_MNEMONICS[di->opcode];
+
+		str = &result->mnemonic;
+		if (prefix) {
+			switch (prefix)
+			{
+			case FLAG_LOCK:
+				strcpy_WSN(str, "LOCK ");
+				break;
+			case FLAG_REP:
+				/* REP prefix for CMPS and SCAS is really a REPZ. */
+				if ((di->opcode == I_CMPS) || (di->opcode == I_SCAS)) strcpy_WSN(str, "REPZ ");
+				else strcpy_WSN(str, "REP ");
+				break;
+			case FLAG_REPNZ:
+				strcpy_WSN(str, "REPNZ ");
+				break;
+			}
+		}
+		else {
+			/* Init mnemonic string. */
+			str->length = 0;
+		}
+
+		memcpy((int8_t*)&str->p[str->length], mnemonic->p, mnemonic->length + 1);
+		str->length += mnemonic->length;
+
+		if (suffixSize) {
+			switch (suffixSize)
+			{
+			case 1: chrcat_WS(str, 'B'); break;
+			case 2: chrcat_WS(str, 'W'); break;
+			case 4: chrcat_WS(str, 'D'); break;
+			case 8: chrcat_WS(str, 'Q'); break;
+			}
+		}
+
+		result->offset = offset;
+		result->size = size;
+	}
 }
 
 #ifdef SUPPORT_64BIT_OFFSET
@@ -347,7 +359,6 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 #endif
 {
 	_DecodeResult res;
-	_DInst di;
 	_CodeInfo ci;
 	unsigned int instsCount = 0, i;
 
@@ -358,17 +369,13 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 		return DECRES_INPUTERR;
 	}
 
-	if ((dt != Decode16Bits) && (dt != Decode32Bits) && (dt != Decode64Bits)) {
+	if ((unsigned)dt > (unsigned)Decode64Bits) {
 		return DECRES_INPUTERR;
 	}
 
-	if (code == NULL || result == NULL) {
+	/* Make sure there's at least one instruction in the result buffer. */
+	if ((code == NULL) || (result == NULL) || (maxInstructions == 0)) {
 		return DECRES_INPUTERR;
-	}
-
-	/* Assume length=0 is success. */
-	if (codeLen == 0) {
-		return DECRES_SUCCESS;
 	}
 
 	/*
@@ -390,14 +397,11 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 
 	res = decode_internal(&ci, TRUE, (_DInst*)result, maxInstructions, &instsCount);
 	for (i = 0; i < instsCount; i++) {
-		if ((*usedInstructionsCount + i) >= maxInstructions) return DECRES_MEMORYERR;
-
-		/* Copy the current decomposed result to a temp structure, so we can override the result with text. */
-		memcpy(&di, (char*)result + (i * sizeof(_DecodedInst)), sizeof(_DInst));
+		/* distorm_format is optimized and can work with same input/output buffer in-place. */
 #ifdef SUPPORT_64BIT_OFFSET
-		distorm_format64(&ci, &di, &result[i]);
+		distorm_format64(&ci, (_DInst*)&result[i], &result[i]);
 #else
-		distorm_format32(&ci, &di, &result[i]);
+		distorm_format32(&ci, (_DInst*)&result[i], &result[i]);
 #endif
 	}
 

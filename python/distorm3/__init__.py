@@ -101,11 +101,11 @@ class _CodeInfo (Structure):
 
 class _DecodedInst (Structure):
     _fields_ = [
+        ('offset',          _OffsetType),
+	    ('size',            c_uint),
         ('mnemonic',        _WString),
         ('operands',        _WString),
-        ('instructionHex',  _WString),
-        ('size',            c_uint),
-        ('offset',          _OffsetType),
+        ('instructionHex',  _WString)
     ]
 
 # _OperandType enum
