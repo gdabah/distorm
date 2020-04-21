@@ -192,7 +192,7 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 		switch (di->ops[i].type)
 		{
 			case O_REG:
-				strcat_WS(str, (const _WString*)&_REGISTERS[di->ops[i].index]);
+				strcat_WSR(str, &_REGISTERS[di->ops[i].index]);
 			break;
 			case O_IMM:
 				/* If the instruction is 'push', show explicit size (except byte imm). */
@@ -218,7 +218,7 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 				distorm_format_size(str, di, i);
 				chrcat_WS(str, OPEN_CHR);
 				if ((SEGMENT_GET(di->segment) != R_NONE) && !SEGMENT_IS_DEFAULT(di->segment)) {
-					strcat_WS(str, (const _WString*)&_REGISTERS[SEGMENT_GET(di->segment)]);
+					strcat_WSR(str, &_REGISTERS[SEGMENT_GET(di->segment)]);
 					chrcat_WS(str, SEG_OFF_CHR);
 				}
 				tmpDisp64 = di->disp & addrMask;
@@ -254,11 +254,11 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 					case I_SCAS: isDefault = FALSE; break;
 				}
 				if (!isDefault && (segment != R_NONE)) {
-					strcat_WS(str, (const _WString*)&_REGISTERS[segment]);
+					strcat_WSR(str, &_REGISTERS[segment]);
 					chrcat_WS(str, SEG_OFF_CHR);
 				}
 
-				strcat_WS(str, (const _WString*)&_REGISTERS[di->ops[i].index]);
+				strcat_WSR(str, &_REGISTERS[di->ops[i].index]);
 
 				distorm_format_signed_disp(str, di, addrMask);
 				chrcat_WS(str, CLOSE_CHR);
@@ -267,14 +267,14 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 				distorm_format_size(str, di, i);
 				chrcat_WS(str, OPEN_CHR);
 				if ((SEGMENT_GET(di->segment) != R_NONE) && !SEGMENT_IS_DEFAULT(di->segment)) {
-					strcat_WS(str, (const _WString*)&_REGISTERS[SEGMENT_GET(di->segment)]);
+					strcat_WSR(str, &_REGISTERS[SEGMENT_GET(di->segment)]);
 					chrcat_WS(str, SEG_OFF_CHR);
 				}
 				if (di->base != R_NONE) {
-					strcat_WS(str, (const _WString*)&_REGISTERS[di->base]);
+					strcat_WSR(str, &_REGISTERS[di->base]);
 					chrcat_WS(str, PLUS_DISP_CHR);
 				}
-				strcat_WS(str, (const _WString*)&_REGISTERS[di->ops[i].index]);
+				strcat_WSR(str, &_REGISTERS[di->ops[i].index]);
 				if (di->scale != 0) {
 					chrcat_WS(str, '*');
 					if (di->scale == 2) chrcat_WS(str, '2');
@@ -334,7 +334,12 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 			str->length = 0;
 		}
 
-		memcpy((int8_t*)&str->p[str->length], mnemonic->p, mnemonic->length + 1);
+		/*
+		 * Always copy 16 bytes from the mnemonic, we have a sentinel padding so we can read past.
+		 * This helps the compiler to remove the call to memcpy and therefore makes this copying much faster.
+		 * The longest instruction is exactly 16 chars long, but we null terminate the string below.
+		 */
+		memcpy((int8_t*)&str->p[str->length], mnemonic->p, 16);
 		str->length += mnemonic->length;
 
 		if (suffixSize) {
@@ -346,6 +351,8 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 			case 8: chrcat_WS(str, 'Q'); break;
 			}
 		}
+
+		str->p[str->length] = 0;
 
 		result->offset = offset;
 		result->size = size;

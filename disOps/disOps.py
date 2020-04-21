@@ -1,7 +1,7 @@
 #
 # disOps.py v 1.0.0
 #
-# Copyright (C) 2003-2018 Gil Dabah, http://ragestorm.net/distorm/
+# Copyright (C) 2003-2020 Gil Dabah, http://ragestorm.net/distorm/
 #
 # disOps is a part of the diStorm project, but can be used for anything.
 # The generated output is tightly coupled with diStorm data structures which can be found at instructions.h.
@@ -80,7 +80,8 @@ def CreateMnemonicsC(mnemonicsIds):
 		s += "\"\\\\x%02x\" \"%s\\\\0\" " % (len(i[0]), i[0])
 		if len(s) - s.rfind("\n") >= 76:
 			s += "\\\\\n"
-	s = s[:-1] + ";" # Ignore last space.
+	s = s[:-1] # Ignore last space.
+	s += " \\\\\\n\"" + "\\\\x00" * 20 + "\"; /* Sentinel mnemonic. */"
 	# Return enum & mnemonics.
 	return (opsEnum, s)
 
@@ -133,7 +134,7 @@ def WriteMnemonicsC(mnemonicsIds):
 	path = os.path.join("..", "src", "mnemonics.c")
 	print("- Try rewriting mnemonics for %s." % path)
 	old = open(path, "r").read()
-	rePattern = "const unsigned char _MNEMONICS\[\] =.*?;"
+	rePattern = "const unsigned char _MNEMONICS\[\] =.*?\*/"
 	if re.compile(rePattern, reFlags).search(old) == None:
 		raise Exception("Couldn't find matching mnemonics text block for substitution in " + path)
 	new = re.sub(rePattern, m, old, 1, reFlags)
