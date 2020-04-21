@@ -465,7 +465,7 @@ class Instructions:
 		# XRSTOR is declared below (see LFENCE), cause it is shared with LFENCE.
 
 		# New instruction from Intel September 2009:
-		Set("0f, 37", ["GETSEC"], [], IFlag.MODRM_REQUIRED | IFlag._32BITS)
+		Set("0f, 37", ["GETSEC"], [], IFlag._32BITS)
 
 		# XSAVEOPT is declared below (see SFENCE).
 
