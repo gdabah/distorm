@@ -35,8 +35,8 @@ namespace diStorm
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
     public struct _DecodedInst
     {
-		public IntPtr offset; /* Start offset of the decoded instruction. */
-		public uint size; /* Size of decoded instruction. */
+	    public IntPtr offset; /* Start offset of the decoded instruction. */
+	    public uint size; /* Size of decoded instruction. */
 	    public _WString mnemonic; /* Mnemonic of decoded instruction, prefixed if required by REP, LOCK etc. */
 	    public _WString operands; /* Operands of the decoded instruction, up to 3 operands, comma-seperated. */
 	    public _WString instructionHex; /* Hex dump - little endian, including prefixes. */
