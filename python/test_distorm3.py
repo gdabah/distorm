@@ -54,14 +54,14 @@ class Test(unittest.TestCase):
 		self.fail("dummy")
 
 class InstBin(Test):
-	def __init__(self, bin, mode, features):
+	def __init__(self, bin, mode, features, address):
 		Test.__init__(self)
 		try:
 			bin = bin.decode("hex")
 		except:
 			bin = bytes.fromhex(bin)
 		#fbin[mode].write(bin)
-		self.insts = distorm3.Decompose(0, bin, mode, features)
+		self.insts = distorm3.Decompose(address, bin, mode, features)
 		self.inst = self.insts[0]
 	def check_valid(self, instsNo = 1):
 		self.assertNotEqual(self.inst.rawFlags, 65535)
@@ -141,14 +141,14 @@ def I16(instText, instNo = 0, features = 0):
 def I32(instText, features = 0):
 	return Inst(instText, distorm3.Decode32Bits, 0, features)
 
-def IB32(bin, features = 0):
-	return InstBin(bin, distorm3.Decode32Bits, features)
+def IB32(bin, features = 0, address = 0):
+	return InstBin(bin, distorm3.Decode32Bits, features, address)
 
 def I64(instText, features = 0):
 	return Inst(instText, distorm3.Decode64Bits, 0, features)
 
-def IB64(bin, features = 0):
-	return InstBin(bin, distorm3.Decode64Bits, features)
+def IB64(bin, features = 0, address = 0):
+	return InstBin(bin, distorm3.Decode64Bits, features, address)
 
 def ABS64(x):
 	return x
@@ -1607,6 +1607,19 @@ class TestInvalid(unittest.TestCase):
 	def test_zzz_must_be_last_drop_prefixes(self):
 		# Drop prefixes when the last byte in stream is a prefix.
 		IB32("66")
+	def test_undefined_byte00(self):
+		# This is a regression test for the decomposer wrapper
+		a = ""
+		insts = IB32("c300").insts
+		for i in insts:
+			a += str(i)
+		insts = IB32("33c0" *  2000 + "90", 0, 0x4000).insts
+		self.assertEqual(insts[-1].mnemonic, "NOP")
+		self.assertEqual(insts[-1].instructionBytes, b"\x90")
+		self.assertEqual(insts[-1].address, 0x4000 + 2000 * 2)
+		self.assertEqual(insts[1000].mnemonic, "XOR")
+		self.assertEqual(insts[1000].instructionBytes, b"\x33\xc0")
+		self.assertEqual(insts[1000].address, 0x4000 + 1000 * 2)
 
 class TestFeatures(unittest.TestCase):
 	def test_addr16(self):
@@ -1637,7 +1650,14 @@ class TestFeatures(unittest.TestCase):
 				a = I32("nop\nxor eax, eax\n" + j + "\ninc eax", distorm3.DF_RETURN_FC_ONLY | distorm3.DF_STOP_ON_FLOW_CONTROL)
 				self.assertEqual(len(a.insts), 1)
 	def test_filter(self):
-		pass
+		a = IB32("33c0907e00" * 5, distorm3.DF_RETURN_FC_ONLY).insts
+		self.assertEqual(len(a), 5)
+		self.assertEqual(a[0].mnemonic[0], "J")
+		self.assertEqual(a[0].address, 3)
+		self.assertEqual(a[1].address, 8)
+		self.assertEqual(a[2].address, 13)
+		self.assertEqual(a[3].address, 18)
+		self.assertEqual(a[4].address, 23)
 	def test_stop_on_privileged(self):
 		a = I32("nop\niret\nret", distorm3.DF_STOP_ON_PRIVILEGED)
 		self.assertEqual(len(a.insts), 2)
@@ -1663,6 +1683,34 @@ class TestFeatures(unittest.TestCase):
 		self.assertEqual(a[5].address, 5)
 		self.assertEqual(a[5].mnemonic, "DEC")
 		self.assertEqual(a[5].size, 1)
+	def test_eflags_on(self):
+		a = IB32("33c04890", distorm3.DF_FILL_EFLAGS).insts
+		# XOR
+		self.assertEqual(a[0].modifiedFlags, distorm3.D_SF | distorm3.D_ZF | distorm3.D_PF)
+		self.assertEqual(a[0].testedFlags, 0)
+		self.assertEqual(a[0].undefinedFlags, distorm3.D_AF)
+		# INC
+		self.assertEqual(a[1].modifiedFlags, distorm3.D_OF | distorm3.D_SF | distorm3.D_ZF | distorm3.D_AF | distorm3.D_PF)
+		self.assertEqual(a[1].testedFlags, 0)
+		self.assertEqual(a[1].undefinedFlags, 0)
+		# NOP
+		self.assertEqual(a[2].modifiedFlags, 0)
+		self.assertEqual(a[2].testedFlags, 0)
+		self.assertEqual(a[2].undefinedFlags, 0)
+	def test_eflags_off(self):
+		a = IB32("33c04890").insts
+		# XOR
+		self.assertEqual(a[0].modifiedFlags, 0)
+		self.assertEqual(a[0].testedFlags, 0)
+		self.assertEqual(a[0].undefinedFlags, 0)
+		# INC
+		self.assertEqual(a[1].modifiedFlags, 0)
+		self.assertEqual(a[1].testedFlags, 0)
+		self.assertEqual(a[1].undefinedFlags, 0)
+		# NOP
+		self.assertEqual(a[2].modifiedFlags, 0)
+		self.assertEqual(a[2].testedFlags, 0)
+		self.assertEqual(a[2].undefinedFlags, 0)
 
 def GetNewSuite(className):
 	suite = unittest.TestSuite()

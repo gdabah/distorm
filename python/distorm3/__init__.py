@@ -162,7 +162,7 @@ class _DInst (Structure):
         ('addr',  _OffsetType),
         ('flags',  c_uint16), # -1 if invalid. See C headers for more info
         ('unusedPrefixesMask', c_uint16),
-        ('usedRegistersMask', c_uint32), # used registers mask.
+        ('usedRegistersMask', c_uint32), # used registers mask
         ('opcode', c_uint16),  # look up in opcode table
         ('ops', _Operand*4),
         ('size', c_ubyte),
@@ -171,9 +171,9 @@ class _DInst (Structure):
         ('scale', c_ubyte),   # ignore for values 0, 1 (other valid values - 2,4,8)
         ('dispSize', c_ubyte),
         ('meta', c_uint16), # meta flags - instruction set class, etc. See C headers again...
-        ('modifiedFlagsMask', c_uint16), # CPU modified (output) flags by instruction.
-        ('testedFlagsMask', c_uint16), # CPU tested (input) flags by instruction.
-        ('undefinedFlagsMask', c_uint16) # CPU undefined flags by instruction.
+        ('modifiedFlagsMask', c_uint16), # CPU modified (output) flags by instruction only set with DF_FILL_EFLAGS
+        ('testedFlagsMask', c_uint16), # CPU tested (input) flags by instruction only set with DF_FILL_EFLAGS
+        ('undefinedFlagsMask', c_uint16) # CPU undefined flags by instruction only set with DF_FILL_EFLAGS
         ]
 
 #==============================================================================
@@ -206,6 +206,16 @@ FLAGS = [
 "FLAG_RIP_RELATIVE"
 ]
 
+# CPU flags that instructions modify, test or undefine (are EFLAGS compatible!).
+D_CF = 1	 # Carry #
+D_PF = 4	 # Parity #
+D_AF = 0x10	 # Auxiliary #
+D_ZF = 0x40	 # Zero #
+D_SF = 0x80	 # Sign #
+D_IF = 0x200 # Interrupt #
+D_DF = 0x400 # Direction #
+D_OF = 0x800 # Overflow #
+
 # Instruction could not be disassembled. Special-case handling
 FLAG_NOT_DECODABLE = 0xFFFF # -1 in uint16
 # Some features
@@ -224,6 +234,7 @@ DF_STOP_ON_CMOV  = 0x200
 DF_STOP_ON_HLT  = 0x400
 DF_STOP_ON_PRIVILEGED = 0x800
 DF_SINGLE_BYTE_STEP = 0x1000
+DF_FILL_EFLAGS = 0x2000
 DF_STOP_ON_FLOW_CONTROL = (DF_STOP_ON_CALL | DF_STOP_ON_RET | DF_STOP_ON_SYS | \
     DF_STOP_ON_UNC_BRANCH | DF_STOP_ON_CND_BRANCH | DF_STOP_ON_INT | DF_STOP_ON_CMOV | \
     DF_STOP_ON_HLT)
@@ -575,6 +586,10 @@ class Instruction (object):
         self.meta = di.meta
         self.instructionClass = _getISC(metas)
         self.flowControl = _getFC(metas)
+        # copy eflags
+        self.modifiedFlags = di.modifiedFlagsMask
+        self.undefinedFlags = di.undefinedFlagsMask
+        self.testedFlags = di.testedFlagsMask
 
     def _extractOperand(self, di, operand):
         # a single operand can be up to: reg1 + reg2*scale + constant

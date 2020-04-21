@@ -66,11 +66,17 @@ static _DecodeType decode_get_effective_op_size(_DecodeType dt, _iflags decodedP
 	return dt;
 }
 
-/* A helper macro to convert from diStorm's CPU flags to EFLAGS. */
+/*
+ * A helper macro to convert from diStorm's CPU flags to EFLAGS.
+ * Copy eflags from compact version (8 bits) to eflags compatible (16 bits).
+ * From D_COMPACT_IF to D_IF, bit index 1 to 9.
+ * From D_COMPACT_DF to D_DF, bit index 3 to 10.
+ * From D_COMPACT_OF to D_OF, bit index 5 to 11.
+ */
 #define CONVERT_FLAGS_TO_EFLAGS(dst, src, field) dst->field = ((src->field & D_COMPACT_SAME_FLAGS) | \
-	((src->field & D_COMPACT_IF) ? D_IF : 0) | \
-	((src->field & D_COMPACT_DF) ? D_DF : 0) | \
-	((src->field & D_COMPACT_OF) ? D_OF : 0));
+	((src->field & D_COMPACT_IF) << (9 - 1)) | \
+	((src->field & D_COMPACT_DF) << (10 - 3)) | \
+	((src->field & D_COMPACT_OF) << (11 - 5)));
 
 static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 {
@@ -377,9 +383,11 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	if (di->base != R_NONE) di->usedRegistersMask |= _REGISTERTORCLASS[di->base];
 
 	/* Copy CPU affected flags. */
-	CONVERT_FLAGS_TO_EFLAGS(di, isi, modifiedFlagsMask);
-	CONVERT_FLAGS_TO_EFLAGS(di, isi, testedFlagsMask);
-	CONVERT_FLAGS_TO_EFLAGS(di, isi, undefinedFlagsMask);
+	if (ci->features & DF_FILL_EFLAGS) {
+		if (isi->modifiedFlagsMask) CONVERT_FLAGS_TO_EFLAGS(di, isi, modifiedFlagsMask);
+		if (isi->testedFlagsMask) CONVERT_FLAGS_TO_EFLAGS(di, isi, testedFlagsMask);
+		if (isi->undefinedFlagsMask) CONVERT_FLAGS_TO_EFLAGS(di, isi, undefinedFlagsMask);
+	}
 
 	/* Calculate the size of the instruction we've just decoded. */
 	di->size = (uint8_t)((ci->code - startCode) & 0xff);
@@ -456,6 +464,7 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 	/* No entries are used yet. */
 	*usedInstructionsCount = 0;
 	ci.dt = _ci->dt;
+	ci.features = _ci->features;
 	_ci->nextOffset = codeOffset;
 
 	/* Decode instructions as long as we have what to decode/enough room in entries. */

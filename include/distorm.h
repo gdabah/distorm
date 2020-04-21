@@ -252,7 +252,7 @@ typedef struct {
 	uint8_t dispSize;
 	/* Meta defines the instruction set class, and the flow control flags. Use META macros. */
 	uint16_t meta;
-	/* The CPU flags that the instruction operates upon. */
+	/* The CPU flags that the instruction operates upon, set only with DF_FILL_EFLAGS enabled, otherwise 0. */
 	uint16_t modifiedFlagsMask, testedFlagsMask, undefinedFlagsMask;
 } _DInst;
 
@@ -390,7 +390,8 @@ typedef struct {
 #define DF_STOP_ON_PRIVILEGED 0x800
 /* The decoder will not synchronize to the next byte after the previosuly decoded instruction, instead it will start decoding at the next byte. */
 #define DF_SINGLE_BYTE_STEP 0x1000
-
+/* The decoder will fill in the eflags fields for the decoded instruction. */
+#define DF_FILL_EFLAGS 0x2000
 /* The decoder will stop and return to the caller when any flow control instruction was decoded. */
 #define DF_STOP_ON_FLOW_CONTROL (DF_STOP_ON_CALL | DF_STOP_ON_RET | DF_STOP_ON_SYS | DF_STOP_ON_UNC_BRANCH | DF_STOP_ON_CND_BRANCH | DF_STOP_ON_INT | DF_STOP_ON_CMOV | DF_STOP_ON_HLT)
 
