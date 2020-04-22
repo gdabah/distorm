@@ -45,45 +45,53 @@ void str_hex(_WString* s, const uint8_t* buf, unsigned int len)
 		i += 2;
 	} while (i < len * 2);
 
-	s->length = len;
+	s->length = len * 2;
 	s->p[len * 2] = 0;
 }
 
 #ifdef SUPPORT_64BIT_OFFSET
 
-void str_int_impl(_WString* s, uint64_t x)
+void str_int_impl(unsigned char** s, uint64_t x)
 {
 	int8_t* buf;
-	int i = 0, shift = 0;
-	uint64_t t = 0;
+	int shift = 0;
+	OFFSET_INTEGER t = x;
 
-	buf = (int8_t*)&s->p[s->length];
+	buf = (int8_t*)*s;
 
-	buf[0] = '0';
-	buf[1] = 'x';
-	buf += 2;
+	*buf++ = '0';
+	*buf++ = 'x';
 
-	for (shift = 60; shift != 0; shift -= 4) {
-		t = (x >> shift) & 0xf;
-		if (i | t) buf[i++] = NIBBLE_TO_CHR;
+	if (x == 0) {
+		*buf = '0';
+		*s += 3;
+		return;
 	}
-	t = x & 0xf;
-	buf[i++] = NIBBLE_TO_CHR;
 
-	s->length += i + 2;
-	buf[i] = '\0';
+	do {
+		t >>= 4;
+		shift += 4;
+	} while (t);
+
+	do {
+		shift -= 4;
+		t = (x >> shift) & 0xf;
+		*buf++ = NIBBLE_TO_CHR;
+	} while (shift > 0);
+
+	*s += (size_t)(buf - *s);
 }
 
 #else
 
-void str_int_impl(_WString* s, uint8_t src[8])
+void str_int_impl(unsigned char** s, uint8_t src[8])
 {
 	int8_t* buf;
 	int i = 0, shift = 0;
 	uint32_t x = RULONG(&src[sizeof(int32_t)]);
 	int t;
 
-	buf = (int8_t*)&s->p[s->length];
+	buf = (int8_t*)*s;
 	buf[0] = '0';
 	buf[1] = 'x';
 	buf += 2;
@@ -101,8 +109,7 @@ void str_int_impl(_WString* s, uint8_t src[8])
 	t = x & 0xf;
 	buf[i++] = NIBBLE_TO_CHR;
 
-	s->length += i + 2;
-	buf[i] = '\0';
+	*s += (size_t)(i + 2);
 }
 
 #endif /* SUPPORT_64BIT_OFFSET */
