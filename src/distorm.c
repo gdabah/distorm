@@ -93,9 +93,9 @@ static void distorm_format_size(unsigned char** str, const _DInst* di, int opNum
 
 	if (isSizingRequired)
 	{
+		/*case 0: break; OT_MEM's unknown size. */
 		switch (di->ops[opNum].size / 8)
 		{
-			/*case 0: break; /* OT_MEM's unknown size. */
 			case 1: strcat_WSN(str, "BYTE "); break;
 			case 2: strcat_WSN(str, "WORD "); break;
 			case 4: strcat_WSN(str, "DWORD "); break;
@@ -103,7 +103,6 @@ static void distorm_format_size(unsigned char** str, const _DInst* di, int opNum
 			case 10: strcat_WSN(str, "TBYTE "); break;
 			case 16: strcat_WSN(str, "DQWORD "); break;
 			case 32: strcat_WSN(str, "YWORD "); break;
-			/*default: /* Big oh uh if it gets here. */ break;
 		}
 	}
 }
@@ -140,7 +139,7 @@ static void distorm_format_signed_disp(unsigned char** str, const _DInst* di, ui
 	else if (ci->features & DF_MAXIMUM_ADDR16) addrMask = 0xffff;
 
 	/* Gotta have full address for (di->addr - ci->codeOffset) to work in all modes. */
-	str_hex(&result->instructionHex, (const char*)&ci->code[(unsigned int)(di->addr - ci->codeOffset)], di->size);
+	str_hex(&result->instructionHex, (const uint8_t*)&ci->code[(unsigned int)(di->addr - ci->codeOffset)], di->size);
 
 	strfinalize_WS(&result->operands, (unsigned char*)&result->operands.p);
 

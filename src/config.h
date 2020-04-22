@@ -57,7 +57,7 @@ This library is licensed under the BSD license. See the file COPYING.
 
 #define _DLLEXPORT_
 #define _FASTCALL_
-#define _INLINE_ static
+#define _INLINE_ __inline__
 /* GCC ignores this directive... */
 /*#define _FASTCALL_ __attribute__((__fastcall__))*/
 

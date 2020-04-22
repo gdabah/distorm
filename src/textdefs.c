@@ -19,7 +19,7 @@ static uint8_t Nibble2ChrTable[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8
 void str_hex(_WString* s, const uint8_t* buf, unsigned int len)
 {
 	/* 256 * 2 : 2 chars per byte value. */
-	static int8_t* TextBTable =
+	static char* TextBTable =
 		"000102030405060708090a0b0c0d0e0f" \
 		"101112131415161718191a1b1c1d1e1f" \
 		"202122232425262728292a2b2c2d2e2f" \
@@ -79,7 +79,7 @@ void str_int_impl(unsigned char** s, uint64_t x)
 		*buf++ = NIBBLE_TO_CHR;
 	} while (shift > 0);
 
-	*s += (size_t)(buf - *s);
+	*s += (size_t)((size_t)buf - (size_t)*s);
 }
 
 #else
