@@ -174,6 +174,7 @@ class TestMode16(unittest.TestCase):
 	def test_seimm(self):
 		I16("push 5").check_imm(0, 0x5, 8)
 		a = I16("push -6")
+		self.assertTrue(str(a.inst).find("-0x6") != -1)
 		self.assertEqual(a.inst.size, 2)
 		a.check_type_size(0, distorm3.OPERAND_IMMEDIATE, 8)
 		self.assertFalse(ABS64(a.inst.operands[0].value) != -6)
@@ -405,6 +406,7 @@ class TestMode32(unittest.TestCase):
 		I32("push 6").check_imm(0, 0x6, 8)
 		a = I32("push -7")
 		self.assertEqual(a.inst.size, 2)
+		self.assertTrue(str(a.inst).find("-0x7") != -1)
 		a.check_type_size(0, distorm3.OPERAND_IMMEDIATE, 8)
 		self.assertFalse(ABS64(a.inst.operands[0].value) != -7)
 		a = I32("db 0x66\n push -5")
@@ -691,6 +693,7 @@ class TestMode64(unittest.TestCase):
 		I64("push 6").check_imm(0, 0x6, 8)
 		a = I64("push -7")
 		self.assertEqual(a.inst.size, 2)
+		self.assertTrue(str(a.inst).find("-0x7") != -1)
 		a.check_type_size(0, distorm3.OPERAND_IMMEDIATE, 8)
 		self.assertFalse(ABS64(a.inst.operands[0].value) != -7)
 	def test_imm16_1_imm8_2(self):

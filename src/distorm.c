@@ -117,7 +117,7 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 		if ((int64_t)di->disp < 0) tmpDisp64 = -(int64_t)di->disp;
 		else tmpDisp64 = di->disp;
 		tmpDisp64 &= addrMask;
-		str_code_hqw(str, (uint8_t*)&tmpDisp64);
+		str_int(str, tmpDisp64);
 	}
 }
 
@@ -140,42 +140,29 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 	if (ci->features & DF_MAXIMUM_ADDR32) addrMask = 0xffffffff;
 	else if (ci->features & DF_MAXIMUM_ADDR16) addrMask = 0xffff;
 
+	/* Gotta have full address for (di->addr - ci->codeOffset) to work in all modes. */
+	str_hex(&result->instructionHex, (const char*)&ci->code[(unsigned int)(di->addr - ci->codeOffset)], di->size);
+
 	if (di->flags == FLAG_NOT_DECODABLE) {
 		/* In-place considerations: DI is RESULT. Deref fields first. */
 		unsigned int size = di->size;
 		unsigned int byte = di->imm.byte;
 		_OffsetType offset = di->addr & addrMask;
 
-		str = &result->mnemonic;
-		strclear_WS(&result->instructionHex);
-		str_hex_b(&result->instructionHex, byte);
-
-		result->size = size;
 		result->offset = offset;
+		result->size = size;
 		strclear_WS(&result->operands);
-		strcpy_WSN(str, "DB ");
-		str_code_hb(str, byte);
+		strcpy_WSN(&result->mnemonic, "DB ");
+		str_int(&result->mnemonic, byte);
 		return; /* Skip to next instruction. */
 	}
-
-	str = &result->instructionHex;
-	strclear_WS(str);
-	/* Gotta have full address for (di->addr - ci->codeOffset) to work in all modes. */
-	for (i = 0; i < di->size; i++)
-		str_hex_b(str, ci->code[(unsigned int)(di->addr - ci->codeOffset + i)]);
 
 	/* Format operands: */
 	str = &result->operands;
 	strclear_WS(str);
 
-	/* Special treatment for String instructions. */
-	if ((META_GET_ISC(di->meta) == ISC_INTEGER) &&
-		((di->opcode == I_MOVS) ||
-		 (di->opcode == I_CMPS) ||
-		 (di->opcode == I_STOS) ||
-		 (di->opcode == I_LODS) ||
-		 (di->opcode == I_SCAS)))
-	{
+	/* Special treatment for String (movs, cmps, stos, lods, scas) instructions. */
+	if ((di->opcode >= I_MOVS) && (di->opcode <= I_SCAS)) {
 		/*
 		 * No operands are needed if the address size is the default one,
 		 * and no segment is overridden, so add the suffix letter,
@@ -201,18 +188,17 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 				if ((di->flags & FLAG_IMM_SIGNED) && (di->ops[i].size == 8)) {
 					if (di->imm.sbyte < 0) {
 						chrcat_WS(str, MINUS_DISP_CHR);
-						str_code_hb(str, -di->imm.sbyte);
+						str_int(str, -di->imm.sbyte);
 						break;
 					}
 				}
-				if (di->ops[i].size == 64) str_code_hqw(str, (uint8_t*)&di->imm.qword);
-				else str_code_hdw(str, di->imm.dword);
+				str_int(str, di->imm.qword);
 			break;
 			case O_IMM1:
-				str_code_hdw(str, di->imm.ex.i1);
+				str_int(str, di->imm.ex.i1);
 			break;
 			case O_IMM2:
-				str_code_hdw(str, di->imm.ex.i2);
+				str_int(str, di->imm.ex.i2);
 			break;
 			case O_DISP:
 				distorm_format_size(str, di, i);
@@ -222,7 +208,7 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 					chrcat_WS(str, SEG_OFF_CHR);
 				}
 				tmpDisp64 = di->disp & addrMask;
-				str_code_hqw(str, (uint8_t*)&tmpDisp64);
+				str_int(str, tmpDisp64);
 				chrcat_WS(str, CLOSE_CHR);
 			break;
 			case O_SMEM:
@@ -287,15 +273,16 @@ static void distorm_format_signed_disp(_WString* str, const _DInst* di, uint64_t
 			break;
 			case O_PC:
 #ifdef SUPPORT_64BIT_OFFSET
-				str_off64(str, (di->imm.sqword + di->addr + di->size) & addrMask);
+				str_int(str, (di->imm.sqword + di->addr + di->size) & addrMask);
 #else
-				str_code_hdw(str, ((_OffsetType)di->imm.sdword + di->addr + di->size) & (uint32_t)addrMask);
+				tmpDisp64 = ((_OffsetType)di->imm.sdword + di->addr + di->size) & (uint32_t)addrMask;
+				str_int(str, tmpDisp64);
 #endif
 			break;
 			case O_PTR:
-				str_code_hdw(str, di->imm.ptr.seg);
+				str_int(str, di->imm.ptr.seg);
 				chrcat_WS(str, SEG_OFF_CHR);
-				str_code_hdw(str, di->imm.ptr.off);
+				str_int(str, di->imm.ptr.off);
 			break;
 		}
 	}

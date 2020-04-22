@@ -43,13 +43,14 @@ Naming Convention:
 * all numbers are in HEX.
 */
 
-void _FASTCALL_ str_hex_b(_WString* s, unsigned int x);
-void _FASTCALL_ str_code_hb(_WString* s, unsigned int x);
-void _FASTCALL_ str_code_hdw(_WString* s, uint32_t x);
-void _FASTCALL_ str_code_hqw(_WString* s, uint8_t src[8]);
+void str_hex(_WString* s, const uint8_t* buf, unsigned int len);
 
 #ifdef SUPPORT_64BIT_OFFSET
-void _FASTCALL_ str_off64(_WString* s, OFFSET_INTEGER x);
+#define str_int(s, x) str_int_impl((s), (x))
+void str_int_impl(_WString* s, uint64_t x);
+#else
+#define str_int(s, x) str_int_impl((s), (uint8_t*)&(x))
+void str_int_impl(_WString* s, uint8_t src[8]);
 #endif
 
 #endif /* DISTORM_LIGHT */
