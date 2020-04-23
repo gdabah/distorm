@@ -31,8 +31,8 @@ _INLINE_ void strcat_WSR(unsigned char** str, const _WRegister* reg)
 
 _INLINE_ void strfinalize_WS(_WString* s, unsigned char* endStrPtr)
 {
-	*endStrPtr = 0;
 	s->length = (unsigned int)((size_t)endStrPtr - (size_t)s->p);
+	*endStrPtr = 0;
 }
 
 _INLINE_ void chrcat_WS(unsigned char** s, uint8_t ch)
@@ -41,19 +41,7 @@ _INLINE_ void chrcat_WS(unsigned char** s, uint8_t ch)
 	*s += 1;
 }
 
-_INLINE_ void strcat_WS(unsigned char** s, const int8_t* buf, unsigned int len)
-{
-	memcpy((int8_t*)*s, buf, len);
-	*s += len;
-}
-
-
-/*
-* Warning, this macro should be used only when the compiler knows the size of string in advance!
-* This macro is used in order to spare the call to strlen when the strings are known already.
-* Note: sizeof includes NULL terminated character.
-*/
-#define strcat_WSN(s, t) strcat_WS((s), ((const int8_t*)t), sizeof((t))-1)
+#define strcat_WS(s, buf, copylen, advancelen) do { memcpy((int8_t*)s, buf, copylen); s += advancelen; } while(0)
 
 #endif /* DISTORM_LIGHT */
 

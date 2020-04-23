@@ -10,6 +10,8 @@ This library is licensed under the BSD license. See the file COPYING.
 */
 
 
+#include <Windows.h>
+
 #include "../include/distorm.h"
 #include "config.h"
 #include "decoder.h"
@@ -96,13 +98,13 @@ static void distorm_format_size(unsigned char** str, const _DInst* di, int opNum
 		/*case 0: break; OT_MEM's unknown size. */
 		switch (di->ops[opNum].size / 8)
 		{
-			case 1: strcat_WSN(str, "BYTE "); break;
-			case 2: strcat_WSN(str, "WORD "); break;
-			case 4: strcat_WSN(str, "DWORD "); break;
-			case 8: strcat_WSN(str, "QWORD "); break;
-			case 10: strcat_WSN(str, "TBYTE "); break;
-			case 16: strcat_WSN(str, "DQWORD "); break;
-			case 32: strcat_WSN(str, "YWORD "); break;
+			case 1: strcat_WS(*str, "BYTE    ", 8, 5); break;
+			case 2: strcat_WS(*str, "WORD    ", 8, 5); break;
+			case 4: strcat_WS(*str, "DWORD   ", 8, 6); break;
+			case 8: strcat_WS(*str, "QWORD   ", 8, 6); break;
+			case 10: strcat_WS(*str, "TBYTE   ", 8, 6); break;
+			case 16: strcat_WS(*str, "DQWORD  ", 8, 7); break;
+			case 32: strcat_WS(*str, "YWORD   ", 8, 6); break;
 		}
 	}
 }
@@ -112,16 +114,27 @@ static void distorm_format_signed_disp(unsigned char** str, const _DInst* di, ui
 	int64_t tmpDisp64;
 
 	if (di->dispSize) {
-		chrcat_WS(str, ((int64_t)di->disp < 0) ? MINUS_DISP_CHR : PLUS_DISP_CHR);
-		if ((int64_t)di->disp < 0) tmpDisp64 = -(int64_t)di->disp;
-		else tmpDisp64 = di->disp;
+		if (((int64_t)di->disp < 0)) {
+			chrcat_WS(str, MINUS_DISP_CHR);
+			tmpDisp64 = -(int64_t)di->disp;
+		}
+		else {
+			chrcat_WS(str, PLUS_DISP_CHR);
+			tmpDisp64 = di->disp;
+		}
 		tmpDisp64 &= addrMask;
 		str_int(str, tmpDisp64);
 	}
 }
 
+static uint8_t prefixTable[6][8] = { "", "LOCK ", "REPNZ ", "", "REP ", "REPZ " };
+static unsigned int prefixSizesTable[6] = { 0, 5, 6, 0, 4, 5 };
+static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
+/* static unsigned int suffixSizesTable[10] = { 0, 1, 1, 0, 1, 0, 0, 0, 1 }; */
+
 /* WARNING: This function is written carefully to be able to work with same input and output buffer in-place! */
 #ifdef SUPPORT_64BIT_OFFSET
+__declspec(noinline)
 	_DLLEXPORT_ void distorm_format64(const _CodeInfo* ci, const _DInst* di, _DecodedInst* result)
 #else
 	_DLLEXPORT_ void distorm_format32(const _CodeInfo* ci, const _DInst* di, _DecodedInst* result)
@@ -141,8 +154,6 @@ static void distorm_format_signed_disp(unsigned char** str, const _DInst* di, ui
 	/* Gotta have full address for (di->addr - ci->codeOffset) to work in all modes. */
 	str_hex(&result->instructionHex, (const uint8_t*)&ci->code[(unsigned int)(di->addr - ci->codeOffset)], di->size);
 
-	strfinalize_WS(&result->operands, (unsigned char*)&result->operands.p);
-
 	if (di->flags == FLAG_NOT_DECODABLE) {
 		/* In-place considerations: DI is RESULT. Deref fields first. */
 		unsigned int size = di->size;
@@ -152,9 +163,10 @@ static void distorm_format_signed_disp(unsigned char** str, const _DInst* di, ui
 		result->offset = offset;
 		result->size = size;
 		str = (unsigned char*)&result->mnemonic.p;
-		strcat_WSN(&str, "DB ");
+		strcat_WS(str, "DB  ", 4, 3);
 		str_int(&str, byte);
 		strfinalize_WS(&result->mnemonic, str);
+		*(uint64_t*)&result->operands = 0;
 		return; /* Skip to next instruction. */
 	}
 
@@ -165,7 +177,7 @@ static void distorm_format_signed_disp(unsigned char** str, const _DInst* di, ui
 		 * and no segment is overridden, so add the suffix letter,
 		 * to indicate size of operation and continue to next instruction.
 		 */
-		if ((FLAG_GET_ADDRSIZE(di->flags) == ci->dt) && (SEGMENT_IS_DEFAULT(di->segment))) {
+		if ((SEGMENT_IS_DEFAULT(di->segment)) && (FLAG_GET_ADDRSIZE(di->flags) == ci->dt)) {
 			suffixSize = di->ops[0].size / 8;
 			goto skipOperands;
 		}
@@ -173,179 +185,165 @@ static void distorm_format_signed_disp(unsigned char** str, const _DInst* di, ui
 
 	str = (unsigned char*)&result->operands.p;
 
-	for (i = 0; ((i < OPERANDS_NO) && (di->ops[i].type != O_NONE)); i++) {
-		if (i > 0) strcat_WSN(&str, ", ");
-		switch (di->ops[i].type)
-		{
-			case O_REG:
-				strcat_WSR(&str, &_REGISTERS[di->ops[i].index]);
-			break;
-			case O_IMM:
-				/* If the instruction is 'push', show explicit size (except byte imm). */
-				if ((di->opcode == I_PUSH) && (di->ops[i].size != 8)) distorm_format_size(&str, di, i);
-				/* Special fix for negative sign extended immediates. */
-				if ((di->flags & FLAG_IMM_SIGNED) && (di->ops[i].size == 8)) {
-					if (di->imm.sbyte < 0) {
-						chrcat_WS(&str, MINUS_DISP_CHR);
-						tmpDisp64 = -di->imm.sbyte;
-						str_int(&str, tmpDisp64);
-						break;
-					}
-				}
-				str_int(&str, di->imm.qword);
-			break;
-			case O_IMM1:
-				str_int(&str, di->imm.ex.i1);
-			break;
-			case O_IMM2:
-				str_int(&str, di->imm.ex.i2);
-			break;
-			case O_DISP:
-				distorm_format_size(&str, di, i);
-				chrcat_WS(&str, OPEN_CHR);
-				if ((SEGMENT_GET(di->segment) != R_NONE) && !SEGMENT_IS_DEFAULT(di->segment)) {
-					strcat_WSR(&str, &_REGISTERS[SEGMENT_GET(di->segment)]);
-					chrcat_WS(&str, SEG_OFF_CHR);
-				}
-				tmpDisp64 = di->disp & addrMask;
-				str_int(&str, tmpDisp64);
-				chrcat_WS(&str, CLOSE_CHR);
-			break;
-			case O_SMEM: {
-				int isDefault;
-				int segment;
-				distorm_format_size(&str, di, i);
-				chrcat_WS(&str, OPEN_CHR);
-
-				/*
-				 * This is where we need to take special care for String instructions.
-				 * If we got here, it means we need to explicitly show their operands.
-				 * The problem with CMPS and MOVS is that they have two(!) memory operands.
-				 * So we have to complete it ourselves, since the structure supplies only the segment that can be overridden.
-				 * And make the rest of the String operations explicit.
-				 */
-				segment = SEGMENT_GET(di->segment);
-				isDefault = SEGMENT_IS_DEFAULT(di->segment);
-				switch (di->opcode)
-				{
-					case I_MOVS:
-						isDefault = FALSE;
-						if (i == 0) segment = R_ES;
-					break;
-					case I_CMPS:
-						isDefault = FALSE;
-						if (i == 1) segment = R_ES;
-					break;
-					case I_INS:
-					case I_LODS:
-					case I_STOS:
-					case I_SCAS: isDefault = FALSE; break;
-				}
-				if (!isDefault && (segment != R_NONE)) {
-					strcat_WSR(&str, &_REGISTERS[segment]);
-					chrcat_WS(&str, SEG_OFF_CHR);
-				}
-
-				strcat_WSR(&str, &_REGISTERS[di->ops[i].index]);
-
-				distorm_format_signed_disp(&str, di, addrMask);
-				chrcat_WS(&str, CLOSE_CHR);
-			} break;
-			case O_MEM:
-				distorm_format_size(&str, di, i);
-				chrcat_WS(&str, OPEN_CHR);
-				if ((SEGMENT_GET(di->segment) != R_NONE) && !SEGMENT_IS_DEFAULT(di->segment)) {
-					strcat_WSR(&str, &_REGISTERS[SEGMENT_GET(di->segment)]);
-					chrcat_WS(&str, SEG_OFF_CHR);
-				}
-				if (di->base != R_NONE) {
-					strcat_WSR(&str, &_REGISTERS[di->base]);
-					chrcat_WS(&str, PLUS_DISP_CHR);
-				}
-				strcat_WSR(&str, &_REGISTERS[di->ops[i].index]);
-				if (di->scale != 0) {
-					if (di->scale == 2) strcat_WSN(&str, "*2");
-					else if (di->scale == 4) strcat_WSN(&str, "*4");
-					else /* if (di->scale == 8) */ strcat_WSN(&str, "*8");
-				}
-
-				distorm_format_signed_disp(&str, di, addrMask);
-				chrcat_WS(&str, CLOSE_CHR);
-			break;
-			case O_PC:
-#ifdef SUPPORT_64BIT_OFFSET
-				str_int(&str, (di->imm.sqword + di->addr + di->size) & addrMask);
-#else
-				tmpDisp64 = ((_OffsetType)di->imm.sdword + di->addr + di->size) & (uint32_t)addrMask;
-				str_int(&str, tmpDisp64);
-#endif
-			break;
-			case O_PTR:
-				str_int(&str, di->imm.ptr.seg);
-				chrcat_WS(&str, SEG_OFF_CHR);
-				str_int(&str, di->imm.ptr.off);
+#if 1
+	for (i = 0; i < OPERANDS_NO; i++) {
+		unsigned int type = di->ops[i].type;
+		if (type == O_NONE) {
 			break;
 		}
+		if (i > 0) strcat_WS(str, ", ", 2, 2);
+		if (type == O_REG) {
+			strcat_WSR(&str, &_REGISTERS[di->ops[i].index]);
+		}
+		else if (type == O_IMM) {
+			/* If the instruction is 'push', show explicit size (except byte imm). */
+			if ((di->opcode == I_PUSH) && (di->ops[i].size != 8)) distorm_format_size(&str, di, i);
+			/* Special fix for negative sign extended immediates. */
+			if ((di->flags & FLAG_IMM_SIGNED) && (di->ops[i].size == 8)) {
+				if (di->imm.sbyte < 0) {
+					chrcat_WS(&str, MINUS_DISP_CHR);
+					tmpDisp64 = -di->imm.sbyte;
+					str_int(&str, tmpDisp64);
+					break;
+				}
+			}
+			str_int(&str, di->imm.qword);
+		}
+		else if (type == O_PC) {
+#ifdef SUPPORT_64BIT_OFFSET
+			str_int(&str, (di->imm.sqword + di->addr + di->size) & addrMask);
+#else
+			tmpDisp64 = ((_OffsetType)di->imm.sdword + di->addr + di->size) & (uint32_t)addrMask;
+			str_int(&str, tmpDisp64);
+#endif
+		}
+		else if (type == O_DISP) {
+			distorm_format_size(&str, di, i);
+			chrcat_WS(&str, OPEN_CHR);
+			if ((SEGMENT_GET(di->segment) != R_NONE) && !SEGMENT_IS_DEFAULT(di->segment)) {
+				strcat_WSR(&str, &_REGISTERS[SEGMENT_GET(di->segment)]);
+				chrcat_WS(&str, SEG_OFF_CHR);
+			}
+			tmpDisp64 = di->disp & addrMask;
+			str_int(&str, tmpDisp64);
+			chrcat_WS(&str, CLOSE_CHR);
+		}
+		else if (type == O_SMEM) {
+			int isDefault;
+			int segment;
+			distorm_format_size(&str, di, i);
+			chrcat_WS(&str, OPEN_CHR);
+
+			/*
+				* This is where we need to take special care for String instructions.
+				* If we got here, it means we need to explicitly show their operands.
+				* The problem with CMPS and MOVS is that they have two(!) memory operands.
+				* So we have to complete it ourselves, since the structure supplies only the segment that can be overridden.
+				* And make the rest of the String operations explicit.
+				*/
+			segment = SEGMENT_GET(di->segment);
+			isDefault = SEGMENT_IS_DEFAULT(di->segment);
+			switch (di->opcode)
+			{
+				case I_MOVS:
+					isDefault = FALSE;
+					if (i == 0) segment = R_ES;
+				break;
+				case I_CMPS:
+					isDefault = FALSE;
+					if (i == 1) segment = R_ES;
+				break;
+				case I_INS:
+				case I_LODS:
+				case I_STOS:
+				case I_SCAS: isDefault = FALSE; break;
+			}
+			if (!isDefault && (segment != R_NONE)) {
+				strcat_WSR(&str, &_REGISTERS[segment]);
+				chrcat_WS(&str, SEG_OFF_CHR);
+			}
+
+			strcat_WSR(&str, &_REGISTERS[di->ops[i].index]);
+
+			distorm_format_signed_disp(&str, di, addrMask);
+			chrcat_WS(&str, CLOSE_CHR);
+		}
+		else if (type == O_MEM) {
+			distorm_format_size(&str, di, i);
+			chrcat_WS(&str, OPEN_CHR);
+			if ((SEGMENT_GET(di->segment) != R_NONE) && !SEGMENT_IS_DEFAULT(di->segment)) {
+				strcat_WSR(&str, &_REGISTERS[SEGMENT_GET(di->segment)]);
+				chrcat_WS(&str, SEG_OFF_CHR);
+			}
+			if (di->base != R_NONE) {
+				strcat_WSR(&str, &_REGISTERS[di->base]);
+				chrcat_WS(&str, PLUS_DISP_CHR);
+			}
+			strcat_WSR(&str, &_REGISTERS[di->ops[i].index]);
+			if (di->scale != 0) {
+				if (di->scale == 2) strcat_WS(str, "*2", 2, 2);
+				else if (di->scale == 4) strcat_WS(str, "*4", 2, 2);
+				else /* if (di->scale == 8) */ strcat_WS(str, "*8", 2, 2);
+			}
+			distorm_format_signed_disp(&str, di, addrMask);
+			chrcat_WS(&str, CLOSE_CHR);
+		}
+		else if (type == O_PTR) {
+			str_int(&str, di->imm.ptr.seg);
+			chrcat_WS(&str, SEG_OFF_CHR);
+			str_int(&str, di->imm.ptr.off);
+		}
+		else if (type == O_IMM1) {
+			str_int(&str, di->imm.ex.i1);
+		}
+		else if (type == O_IMM2) {
+			str_int(&str, di->imm.ex.i2);
+		}
 	}
+#endif
 
 	/* Finalize the operands string. */
 	strfinalize_WS(&result->operands, str);
-
 
 	/* Not used anymore.
 	if (di->flags & FLAG_HINT_TAKEN) strcat_WSN(str, " ;TAKEN");
 	else if (di->flags & FLAG_HINT_NOT_TAKEN) strcat_WSN(str, " ;NOT TAKEN");
 	*/
-
 	skipOperands:
 	{
 		/* In-place considerations: DI is RESULT. Deref fields first. */
+		unsigned int opcode = di->opcode;
+		unsigned int prefix = FLAG_GET_PREFIX(di->flags);
+		mnemonic = (const _WMnemonic*)&_MNEMONICS[opcode];
 		unsigned int size = di->size;
 		_OffsetType offset = di->addr & addrMask;
-		unsigned int prefix = FLAG_GET_PREFIX(di->flags);
-
-		mnemonic = (const _WMnemonic*)&_MNEMONICS[di->opcode];
-
 		str = (unsigned char*)&result->mnemonic.p;
+
 		if (prefix) {
-			switch (prefix)
-			{
-			case FLAG_LOCK:
-				strcat_WSN(&str, "LOCK ");
-				break;
-			case FLAG_REP:
-				/* REP prefix for CMPS and SCAS is really a REPZ. */
-				if ((di->opcode == I_CMPS) || (di->opcode == I_SCAS)) strcat_WSN(&str, "REPZ ");
-				else strcat_WSN(&str, "REP ");
-				break;
-			case FLAG_REPNZ:
-				strcat_WSN(&str, "REPNZ ");
-				break;
-			}
-		} else result->mnemonic.length = 0;
+			/* REP prefix for CMPS and SCAS is really a REPZ. */
+			prefix += (opcode == I_CMPS);
+			prefix += (opcode == I_SCAS);
+			memcpy(str, &prefixTable[prefix][0], 8);
+			str += prefixSizesTable[prefix];
+		}
 
 		/*
 		 * Always copy 16 bytes from the mnemonic, we have a sentinel padding so we can read past.
 		 * This helps the compiler to remove the call to memcpy and therefore makes this copying much faster.
-		 * The longest instruction is exactly 16 chars long, but we null terminate the string below.
+		 * The longest instruction is exactly 16 chars long, so we null terminate the string below.
 		 */
 		memcpy((int8_t*)str, mnemonic->p, 16);
 		str += mnemonic->length;
 
 		if (suffixSize) {
-			switch (suffixSize)
-			{
-			case 1: chrcat_WS(&str, 'B'); break;
-			case 2: chrcat_WS(&str, 'W'); break;
-			case 4: chrcat_WS(&str, 'D'); break;
-			case 8: chrcat_WS(&str, 'Q'); break;
-			}
+			*str++ = suffixTable[suffixSize];
+			/* str += suffixSizesTable[suffixSize]; */
 		}
 
 		strfinalize_WS(&result->mnemonic, str);
 
-		result->offset = offset;
 		result->size = size;
+		result->offset = offset;
 	}
 }
 

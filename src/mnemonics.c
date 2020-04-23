@@ -308,7 +308,7 @@ const _WRegister _REGISTERS[] = {
 	{4, "YMM0"}, {4, "YMM1"}, {4, "YMM2"}, {4, "YMM3"}, {4, "YMM4"}, {4, "YMM5"}, {4, "YMM6"}, {4, "YMM7"}, {4, "YMM8"}, {4, "YMM9"}, {5, "YMM10"}, {5, "YMM11"}, {5, "YMM12"}, {5, "YMM13"}, {5, "YMM14"}, {5, "YMM15"},
 	{3, "CR0"}, {0, ""}, {3, "CR2"}, {3, "CR3"}, {3, "CR4"}, {0, ""}, {0, ""}, {0, ""}, {3, "CR8"},
 	{3, "DR0"}, {3, "DR1"}, {3, "DR2"}, {3, "DR3"}, {0, ""}, {0, ""}, {3, "DR6"}, {3, "DR7"},
-	{0, ""} /* There must be an empty last reg see, strcat_WSR. */
+	{0, ""} /* There must be an empty last reg, see strcat_WSR. */
 };
 
 #endif /* DISTORM_LIGHT */

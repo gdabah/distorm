@@ -91,7 +91,7 @@ typedef unsigned __int8		uint8_t;
 #define FLAG_GET_OPSIZE(flags) (((flags) >> 8) & 3)
 #define FLAG_GET_ADDRSIZE(flags) (((flags) >> 10) & 3)
 /* To get the LOCK/REPNZ/REP prefixes. */
-#define FLAG_GET_PREFIX(flags) ((flags) & 7)
+#define FLAG_GET_PREFIX(flags) (((unsigned int)((int16_t)flags)) & 7)
 /* Indicates whether the instruction is privileged. */
 #define FLAG_GET_PRIVILEGED(flags) (((flags) & FLAG_PRIVILEGED_INSTRUCTION) != 0)
 
