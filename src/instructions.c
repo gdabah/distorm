@@ -323,16 +323,16 @@ _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps)
 {
 	unsigned int tmpIndex0, tmpIndex1, tmpIndex2;
 	int instType;
-	unsigned int in;
+	_InstNode in;
 	_InstInfo* ii = NULL;
 	int isWaitIncluded = FALSE;
 
 	/* Always safe to read first byte codeLen > 0. */
 	tmpIndex0 = *ci->code;
 
-	if (prefixes_is_valid(tmpIndex0, ci->dt)) {
+	if (prefixes_is_valid((unsigned char)tmpIndex0, ci->dt)) {
 		prefixes_decode(ci, ps);
-		if (ci->codeLen <= 1) return NULL; /* No more bytes for opcode, halt. */
+		if (ci->codeLen < 1) return NULL; /* No more bytes for opcode, halt. */
 		tmpIndex0 = *ci->code; /* Reload. */
 
 		/* If there are too many prefixes, it will be checked later in decode_inst. */

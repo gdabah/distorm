@@ -22,30 +22,31 @@ This library is licensed under the BSD license. See the file COPYING.
  * That's why I have to detect such cases and drop those excess prefixes.
  */
 
+
 int PrefixTables[256 * 2] = {
 	/* Decode 16/32 Bits */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0,
-	0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+	0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, /* ES (0x26) CS (0x2e) */
+	0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, /* DS (0x3e) SS (0x36) */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, /* FS(0x64) GS(0x65) OP_SIZE(0x66) ADDR_SIZE(0x67) */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* VEX2b (0xc5) VEX3b (0xc4) */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* LOCK (0xf0) REPNZ (0xf2) REP (0xf3) */
 	/* Decode64Bits */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0,
 	0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0,
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /* 0x40 - 0x4f */
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /* REX: 0x40 - 0x4f */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -59,15 +60,6 @@ int PrefixTables[256 * 2] = {
 	1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-/* Ignore a specific prefix type. */
-_INLINE_ void prefixes_ignore(_PrefixState* ps, _PrefixIndexer pi)
-{
-	/*
-	 * If that type of prefix appeared already, set the bit of that *former* prefix.
-	 * Anyway, set the new index of that prefix type to the current index, so next time we know its position.
-	 */
-	ps->unusedPrefixesMask |= ps->pfxIndexer[pi];
-}
 /* Ignore all prefix. */
 void prefixes_ignore_all(_PrefixState* ps)
 {
@@ -340,18 +332,17 @@ void prefixes_decode(_CodeInfo* ci, _PrefixState* ps)
 
 /*
  * For every memory-indirection operand we want to set a used segment.
- * If the segment is being overrided with a prefix, we will need to if it's a default.
- * Defaults don't use their prefix, e.g "mov [rsp]" can ignore a given SS: prefix,\
+ * If the segment is being overrided with a prefix, we will need to check if it's a default.
+ * Defaults don't use their prefix, e.g "mov [rsp]" can ignore a given SS: prefix,
  * but still set the used segment as SS.
-  * This function is called only with SS and DS as defaults.
+ * This function is called only with SS and DS as defaults.
+ * If there's a segment prefix used, it will override the default one.
+ * And If the prefix is a default seg in 64 bits, it will be ignored.
  */
 void prefixes_use_segment(_iflags defaultSeg, _PrefixState* ps, _DecodeType dt, _DInst* di)
 {
 	/* Extract given segment prefix from the decoded prefixes. */
 	_iflags flags = ps->decodedPrefixes & INST_PRE_SEGOVRD_MASK;
-
-	/* Any one of DS, ES, SS and CS is ignored in 64 bits. */
-	if ((dt == Decode64Bits) && (flags & INST_PRE_SEGOVRD_MASK32)) return;
 
 	/* Use the given prefix only if it's not the default. */
 	if (flags && (flags != defaultSeg)) {
@@ -372,4 +363,7 @@ void prefixes_use_segment(_iflags defaultSeg, _PrefixState* ps, _DecodeType dt, 
 		case INST_PRE_FS: di->segment |= R_FS; break;
 		case INST_PRE_GS: di->segment |= R_GS; break;
 	}
+
+	/* If it's one of the CS,SS,DS,ES and the mode is 64 bits, set segment it to none, since it's ignored. */
+	if ((dt == Decode64Bits) && (flags & INST_PRE_SEGOVRD_MASK32)) di->segment = R_NONE;
 }

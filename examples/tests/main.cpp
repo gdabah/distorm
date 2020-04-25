@@ -17,19 +17,27 @@
 int main(int argc, char **argv)
 {
 	_DecodeResult res;
-	_DecodedInst decodedInstructions[1000];
+	_DInst decodedInstructions[1000];
+	_DecodedInst di;
 	unsigned int decodedInstructionsCount = 0, i = 0;
 	_OffsetType offset = 0;
 	unsigned int dver = distorm_version();
 	printf("diStorm version: %d.%d.%d\n", (dver >> 16), ((dver) >> 8) & 0xff, dver & 0xff);
 
 	unsigned char rawData[] = {
+		0xa7
+	};
 
-		0x33, 0xc0
-} ;
-	res = distorm_decode(offset, (const unsigned char*)rawData, sizeof(rawData), Decode64Bits, decodedInstructions, MAX_INSTRUCTIONS, &decodedInstructionsCount);
+	_CodeInfo ci = { 0 };
+	ci.codeLen = sizeof(rawData);
+	ci.code = rawData;
+	ci.dt = Decode64Bits;
+	ci.features = 0;
+	//distorm_decompose(&ci, decodedInstructions, 1000, &decodedInstructionsCount);
+	distorm_decode(0, rawData, sizeof(rawData), Decode64Bits, &di, 1, &decodedInstructionsCount);
 	for (int i = 0; i < decodedInstructionsCount; i++) {
-		printf("%08I64x (%02d) %-24s %s%s%s\r\n", decodedInstructions[i].offset, decodedInstructions[i].size, (char*)decodedInstructions[i].instructionHex.p, (char*)decodedInstructions[i].mnemonic.p, decodedInstructions[i].operands.length != 0 ? " " : "", (char*)decodedInstructions[i].operands.p);
+		//distorm_format(&ci, &decodedInstructions[i], &di);
+		printf("%08I64x (%02d) %-24s %s%s%s\r\n", di.offset, di.size, (char*)di.instructionHex.p, (char*)di.mnemonic.p, di.operands.length != 0 ? " " : "", (char*)di.operands.p);
 	}
 
 	return 0;

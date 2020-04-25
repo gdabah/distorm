@@ -167,6 +167,8 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 		return; /* Skip to next instruction. */
 	}
 
+	str = (unsigned char*)&result->operands.p;
+
 	/* Special treatment for String (movs, cmps, stos, lods, scas) instructions. */
 	if ((di->opcode >= I_MOVS) && (di->opcode <= I_SCAS)) {
 		/*
@@ -179,8 +181,6 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 			goto skipOperands;
 		}
 	}
-
-	str = (unsigned char*)&result->operands.p;
 
 #if 1
 	for (i = 0; i < OPERANDS_NO; i++) {
@@ -299,6 +299,7 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 	}
 #endif
 
+skipOperands:
 	/* Finalize the operands string. */
 	strfinalize_WS(&result->operands, str);
 
@@ -306,7 +307,6 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 	if (di->flags & FLAG_HINT_TAKEN) strcat_WSN(str, " ;TAKEN");
 	else if (di->flags & FLAG_HINT_NOT_TAKEN) strcat_WSN(str, " ;NOT TAKEN");
 	*/
-	skipOperands:
 	{
 		/* In-place considerations: DI is RESULT. Deref fields first. */
 		unsigned int opcode = di->opcode;

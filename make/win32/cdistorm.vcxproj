@@ -129,7 +129,7 @@
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>Full</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
@@ -217,7 +217,6 @@
     <ClCompile Include="..\..\src\operands.c" />
     <ClCompile Include="..\..\src\prefix.c" />
     <ClCompile Include="..\..\src\textdefs.c" />
-    <ClCompile Include="..\..\src\wstring.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\config.h" />

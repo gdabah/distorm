@@ -87,7 +87,7 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	unsigned int modrm = 0;
 
 	/* The REX/VEX prefix byte value. */
-	unsigned int vrex = ps->vrex;
+	unsigned int vrex;
 
 	/*
 	 * Backup original input, so we can use it later if a problem occurs
@@ -116,6 +116,7 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 
 	ii = inst_lookup(ci, ps);
 	if (ii == NULL) goto _Undecodable;
+	vrex = ps->vrex;
 	isi = &InstSharedInfoTable[ii->sharedIndex];
 	instFlags = FlagsTable[isi->flagsIndex];
 	privilegedFlag = ii->opcodeId & OPCODE_ID_PRIVILEGED;
@@ -395,12 +396,25 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	return DECRES_SUCCESS;
 
 _Undecodable: /* If the instruction couldn't be decoded for some reason, drop the first byte. */
-	/* Special case for WAIT instruction: If it's dropped, you have to return a valid instruction! */
-	/*if (*startCode == INST_WAIT_INDEX) {
+	/* Special case for WAIT instruction: If it's dropped as a prefix, we have to return a valid instruction! */
+	if (*startCode == INST_WAIT_INDEX) {
+		int delta;
+		memset(di, 0, sizeof(_DInst));
+		di->addr = ci->codeOffset;
+		di->segment = R_NONE;
+		di->base = R_NONE;
+		di->size = 1;
 		di->opcode = I_WAIT;
 		META_SET_ISC(di, ISC_INTEGER);
+
+		/* Fix ci because WAIT could be a prefix that failed, and ci->code is now out of sync. */
+		delta = (int)(ci->code - startCode); /* How many bytes we read so far. */
+		ci->codeLen += delta - 1;
+		ci->code = startCode + 1;
+		/* codeOffset is fixed outside. */
+
 		return DECRES_SUCCESS;
-	}*/
+	}
 
 	/* Mark that we didn't manage to decode the instruction well, caller will drop it. */
 	return DECRES_INPUTERR;
@@ -494,9 +508,16 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 		codeLen = ci.codeLen;
 		codeOffset = ci.codeOffset;
 
-		if (ps.count) memset(&ps, 0, sizeof(ps));
+		// if (ps.count); // TODO: fix me
+		memset(&ps, 0, sizeof(ps));
 
 		/**** INSTRUCTION DECODING NEXT: ****/
+
+		/* Make sure we didn't run out of output entries. */
+		if (pdi >= maxResultAddr) {
+			ret = DECRES_MEMORYERR;
+			break;
+		}
 
 		ret = decode_inst(&ci, &ps, pdi);
 
@@ -520,6 +541,7 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 
 				/* Check whether we need to stop on any feature. */
 				if ((ci.features & DF_STOP_ON_PRIVILEGED) && (FLAG_GET_PRIVILEGED(pdi->flags))) {
+					pdi = (_DInst*)((char*)pdi + diStructSize);
 					break; /* ret = DECRES_SUCCESS; */
 				}
 
@@ -533,6 +555,7 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 						((ci.features & DF_STOP_ON_INT) && (mfc == FC_INT)) ||
 						((ci.features & DF_STOP_ON_CMOV) && (mfc == FC_CMOV)) ||
 						((ci.features & DF_STOP_ON_HLT) && (mfc == FC_HLT)))) {
+						pdi = (_DInst*)((char*)pdi + diStructSize);
 						break; /* ret = DECRES_SUCCESS; */
 					}
 				}
@@ -540,10 +563,6 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 
 			/* Allocate at least one more entry to use, for the next instruction. */
 			pdi = (_DInst*)((char*)pdi + diStructSize);
-			if (pdi >= maxResultAddr) {
-				ret = DECRES_MEMORYERR;
-				break;
-			}
 		}
 		else { /* ret == DECRES_INPUTERR */
 

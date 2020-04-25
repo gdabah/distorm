@@ -57,8 +57,18 @@ extern int PrefixTables[256 * 2];
 
 _INLINE_ int prefixes_is_valid(unsigned char ch, _DecodeType dt)
 {
-	/* The predicate selects second half table for 64 bits otherwise selects first half. */
+	/* The predicate selects (branchlessly) second half table for 64 bits otherwise selects first half. */
 	return PrefixTables[ch + ((dt >> 1) << 8)];
+}
+
+/* Ignore a specific prefix type. */
+_INLINE_ void prefixes_ignore(_PrefixState* ps, _PrefixIndexer pi)
+{
+	/*
+	 * If that type of prefix appeared already, set the bit of that *former* prefix.
+	 * Anyway, set the new index of that prefix type to the current index, so next time we know its position.
+	 */
+	ps->unusedPrefixesMask |= ps->pfxIndexer[pi];
 }
 
 void prefixes_ignore(_PrefixState* ps, _PrefixIndexer pi);
