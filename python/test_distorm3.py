@@ -1503,15 +1503,12 @@ class TestMisc2(unittest.TestCase):
 		# And see that it matches the input.
 		# This checks no bytes are skipped.
 		data = "".join(["%02x" % random.randint(0, 255) for i in range(1 << 17)])
-		
 		insts = IB16(data).insts
 		output = "".join([_hexlify(i.instructionBytes) for i in insts])
 		self.assertTrue(data == output)
-		
 		insts = IB32(data).insts
 		output = "".join([_hexlify(i.instructionBytes) for i in insts])
 		self.assertTrue(data == output)
-
 		insts = IB64(data).insts
 		output = "".join([_hexlify(i.instructionBytes) for i in insts])
 		self.assertTrue(data == output)
