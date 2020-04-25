@@ -125,8 +125,8 @@ static void distorm_format_signed_disp(unsigned char** str, const _DInst* di, ui
 	}
 }
 
-static uint8_t prefixTable[6][8] = { "", "LOCK ", "REPNZ ", "", "REP ", "REPZ " };
-static unsigned int prefixSizesTable[6] = { 0, 5, 6, 0, 4, 5 };
+static uint8_t prefixTable[6][8] = { "", "LOCK ", "REPNZ ", "REPNZ ", "REP ", "REPZ " };
+static unsigned int prefixSizesTable[6] = { 0, 5, 6, 6, 4, 5 };
 static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 /* static unsigned int suffixSizesTable[10] = { 0, 1, 1, 0, 1, 0, 0, 0, 1 }; */
 

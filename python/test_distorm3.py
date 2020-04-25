@@ -138,6 +138,9 @@ class Inst(Test):
 def I16(instText, instNo = 0, features = 0):
 	return Inst(instText, distorm3.Decode16Bits, instNo, features)
 
+def IB16(bin, features = 0, address = 0):
+	return InstBin(bin, distorm3.Decode16Bits, features, address)
+
 def I32(instText, features = 0):
 	return Inst(instText, distorm3.Decode32Bits, 0, features)
 
@@ -1487,6 +1490,32 @@ class TestMisc(unittest.TestCase):
 		a.check_type_size(0,distorm3.OPERAND_IMMEDIATE, 8)
 		a.check_addr_size(32)
 
+def _hexlify(data):
+	s = ""
+	for i in data:
+		s += "%02x" % i
+	return s
+
+class TestMisc2(unittest.TestCase):
+	def test_binary(self):
+		# Generate 128kb of random bytes.
+		# Disasm them, extract the returned hex,
+		# And see that it matches the input.
+		# This checks no bytes are skipped.
+		data = "".join(["%02x" % random.randint(0, 255) for i in range(1 << 17)])
+		
+		insts = IB16(data).insts
+		output = "".join([_hexlify(i.instructionBytes) for i in insts])
+		self.assertTrue(data == output)
+		
+		insts = IB32(data).insts
+		output = "".join([_hexlify(i.instructionBytes) for i in insts])
+		self.assertTrue(data == output)
+
+		insts = IB64(data).insts
+		output = "".join([_hexlify(i.instructionBytes) for i in insts])
+		self.assertTrue(data == output)
+
 class TestPrefixes(unittest.TestCase):
 	Derefs16 = ["BX + SI", "BX + DI", "BP + SI", "BP + DI", "SI", "DI", "BP", "BX"]
 	Derefs32 = ["EAX", "ECX", "EDX", "EBX", "EBP", "ESI", "EDI"]
@@ -1562,6 +1591,15 @@ class TestPrefixes(unittest.TestCase):
 		self.assertFalse("FLAG_REPNZ" not in I32("repnz scasb").inst.flags)
 	def test_rep(self):
 		self.assertFalse("FLAG_REP" not in I32("rep movsb").inst.flags)
+	def test_reps(self):
+		"""scas and cmps have different repZ prefix"""
+		self.assertTrue(str(I32("rep scasb").inst).find("REPZ") != -1)
+		self.assertTrue(str(I32("rep cmpsd").inst).find("REPZ") != -1)
+		self.assertTrue(str(I32("rep stosb").inst).find("REP") != -1)
+		self.assertTrue(str(I32("rep stosb").inst).find("REPZ") == -1)
+		self.assertTrue(str(I16("repnz scasb").inst).find("REPNZ") != -1)
+		self.assertTrue(str(I32("repnz cmpsd").inst).find("REPNZ") != -1)
+		self.assertTrue(str(I64("repnz stosb").inst).find("REPNZ") != -1)
 	def test_segment_override(self):
 		self.assertEqual(I32("mov eax, [cs:eax]").inst.segment, Regs.CS)
 		self.assertEqual(I32("mov eax, [ds:eax]").inst.segment, Regs.DS)
@@ -1594,6 +1632,14 @@ class TestPrefixes(unittest.TestCase):
 		self.assertEqual(IB64("6640ffc0").inst.unusedPrefixesMask, 2)
 		self.assertEqual(IB64("48660f10c0").inst.unusedPrefixesMask, 1)
 		self.assertEqual(IB64("664f0f10c0").inst.unusedPrefixesMask, 0)
+	def test_last_segment(self):
+		""" Only last segment is used as a prefix.
+		Check tricky 64 bits too for default overrides. """
+		self.assertEqual(IB32("2e260000").inst.segment, Regs.ES)
+		self.assertEqual(IB32("2e260000").inst.unusedPrefixesMask, 1)
+		self.assertEqual(IB64("2e650000").inst.segment, Regs.GS)
+		self.assertEqual(IB64("652e0000").inst.segment, REG_NONE)
+		self.assertEqual(IB64("652e0000").inst.unusedPrefixesMask, 3)
 
 class TestInvalid(unittest.TestCase):
 	def align(self):
@@ -1611,7 +1657,7 @@ class TestInvalid(unittest.TestCase):
 		# Drop prefixes when the last byte in stream is a prefix.
 		IB32("66")
 	def test_undefined_byte00(self):
-		# This is a regression test for the decomposer wrapper
+		# This is a regression test for the decomposer wrapper.
 		a = ""
 		insts = IB32("c300").insts
 		for i in insts:
@@ -1623,6 +1669,10 @@ class TestInvalid(unittest.TestCase):
 		self.assertEqual(insts[1000].mnemonic, "XOR")
 		self.assertEqual(insts[1000].instructionBytes, b"\x33\xc0")
 		self.assertEqual(insts[1000].address, 0x4000 + 1000 * 2)
+	def test_prefix_regression(self):
+		# We had a temporary code with a prefix length bug that wouldn't return an instruction.
+		# So make sure we get an instruction where stream ends with last code byte.
+		self.assertEqual(IB32("66af").insts[0].mnemonic, "SCAS")
 
 class TestFeatures(unittest.TestCase):
 	def test_addr16(self):
@@ -1734,6 +1784,7 @@ if __name__ == "__main__":
 	suite.addTest(GetNewSuite(TestInstTable))
 	suite.addTest(GetNewSuite(TestAVXOperands))
 	suite.addTest(GetNewSuite(TestMisc))
+	suite.addTest(GetNewSuite(TestMisc2))
 	suite.addTest(GetNewSuite(TestPrefixes))
 	suite.addTest(GetNewSuite(TestInvalid))
 	suite.addTest(GetNewSuite(TestFeatures))

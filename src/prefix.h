@@ -71,7 +71,6 @@ _INLINE_ void prefixes_ignore(_PrefixState* ps, _PrefixIndexer pi)
 	ps->unusedPrefixesMask |= ps->pfxIndexer[pi];
 }
 
-void prefixes_ignore(_PrefixState* ps, _PrefixIndexer pi);
 void prefixes_ignore_all(_PrefixState* ps);
 uint16_t prefixes_set_unused_mask(_PrefixState* ps);
 void prefixes_decode(_CodeInfo* ci, _PrefixState* ps);
