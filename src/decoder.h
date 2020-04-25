@@ -16,6 +16,6 @@ This library is licensed under the BSD license. See the file COPYING.
 
 typedef unsigned int _iflags;
 
-_DecodeResult decode_internal(_CodeInfo* ci, int supportOldIntr, _DInst result[], unsigned int maxResultCount, unsigned int* usedInstructionsCount);
+_DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[], unsigned int maxResultCount, unsigned int* usedInstructionsCount);
 
 #endif /* DECODER_H */

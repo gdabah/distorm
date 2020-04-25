@@ -508,8 +508,7 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 		codeLen = ci.codeLen;
 		codeOffset = ci.codeOffset;
 
-		// if (ps.count); // TODO: fix me
-		memset(&ps, 0, sizeof(ps));
+		if (ps.count) memset(&ps, 0, sizeof(ps));
 
 		/**** INSTRUCTION DECODING NEXT: ****/
 
