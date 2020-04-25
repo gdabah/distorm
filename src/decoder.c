@@ -189,6 +189,7 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	effAdrSz = decode_get_effective_addr_size(ci->dt, ps->decodedPrefixes);
 
 	memset(di, 0, sizeof(_DInst));
+	di->addr = ci->codeOffset;
 	di->base = R_NONE;
 
 	/*
@@ -245,7 +246,7 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	 * this limit is by putting redundant prefixes before an instruction.
 	 * start points to first prefix if any, otherwise it points to instruction first byte.
 	 */
-	if ((ci->code - ps->start) > INST_MAXIMUM_SIZE) goto _Undecodable; /* Drop instruction. */
+	if ((ci->code - startCode) > INST_MAXIMUM_SIZE) goto _Undecodable; /* Drop instruction. */
 
 	/*
 	 * If we reached here the instruction was fully decoded, we located the instruction in the DB and extracted operands.
@@ -394,22 +395,44 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	return DECRES_SUCCESS;
 
 _Undecodable: /* If the instruction couldn't be decoded for some reason, drop the first byte. */
-	memset(di, 0, sizeof(_DInst));
-	di->base = R_NONE;
-
-	di->size = 1;
-	/* Clean prefixes just in case... */
-	ps->usedPrefixes = 0;
-
 	/* Special case for WAIT instruction: If it's dropped, you have to return a valid instruction! */
-	if (*startCode == INST_WAIT_INDEX) {
+	/*if (*startCode == INST_WAIT_INDEX) {
 		di->opcode = I_WAIT;
 		META_SET_ISC(di, ISC_INTEGER);
 		return DECRES_SUCCESS;
-	}
+	}*/
 
 	/* Mark that we didn't manage to decode the instruction well, caller will drop it. */
 	return DECRES_INPUTERR;
+}
+
+_INLINE_ int dropInstructions(size_t droppedCount,
+	const uint8_t* code,
+	_OffsetType codeOffset,
+	_OffsetType addrMask,
+	unsigned int diStructSize,
+	_DInst* maxResultAddr,
+	_DInst** ppdi)
+{
+	/* Make sure there is enough room. */
+	if ((((size_t)*ppdi) + (((size_t)droppedCount + 1) * diStructSize)) >= (size_t)maxResultAddr) {
+		return FALSE;
+	}
+
+	for (unsigned int i = 0; i < droppedCount; i++, code++) {
+		_DInst* pdi = *ppdi;
+		*ppdi = (_DInst*)((char*)pdi + diStructSize);
+
+		/* Use next entry. */
+		memset(pdi, 0, sizeof(_DInst));
+
+		pdi->flags = FLAG_NOT_DECODABLE;
+		pdi->imm.byte = *code;
+		pdi->size = 1;
+		pdi->addr = (codeOffset + i) & addrMask;
+	}
+
+	return TRUE;
 }
 
 /*
@@ -422,32 +445,34 @@ _Undecodable: /* If the instruction couldn't be decoded for some reason, drop th
  */
 _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[], unsigned int maxResultCount, unsigned int* usedInstructionsCount)
 {
+	_CodeInfo ci = *_ci; /* A working copy, we don't touch user's _ci except OUT params. */
 	_PrefixState ps;
-	unsigned int prefixSize;
-	_CodeInfo ci;
-	unsigned int features;
-	unsigned int mfc;
+	/* Bookkeep these from ci below, as it makes things way simpler. */
+	const uint8_t* code;
+	int codeLen;
+	_OffsetType codeOffset;
 
-	_OffsetType codeOffset = _ci->codeOffset;
-	const uint8_t* code = _ci->code;
-	int codeLen = _ci->codeLen;
-
-	/*
-	 * This is used for printing only, it is the real offset of where the whole instruction begins.
-	 * We need this variable in addition to codeOffset, because prefixes might change the real offset an instruction begins at.
-	 * So we keep track of both.
-	 */
-	_OffsetType startInstOffset = 0;
-
-	const uint8_t* p;
+	_DecodeResult ret = DECRES_SUCCESS;
 
 	/* Current working decoded instruction in results. */
-	unsigned int nextPos = 0;
-	_DInst *pdi = NULL;
+	_DInst* pdi = (_DInst*)&result[0]; /* There's always a room for at least one slot, checked earlier. */
+	_DInst* maxResultAddr;
+
+	unsigned int diStructSize;
+	/* Use next entry. */
+#ifndef DISTORM_LIGHT
+	if (supportOldIntr) {
+		diStructSize = sizeof(_DecodedInst);
+		maxResultAddr = (_DInst*)((size_t)&result[0] + (maxResultCount * sizeof(_DecodedInst)));
+	}
+	else
+#endif /* DISTORM_LIGHT */
+	{
+		diStructSize = sizeof(_DInst);
+		maxResultAddr = &result[maxResultCount];
+	}
 
 	_OffsetType addrMask = (_OffsetType)-1;
-
-	_DecodeResult decodeResult;
 
 #ifdef DISTORM_LIGHT
 	supportOldIntr; /* Unreferenced. */
@@ -457,222 +482,96 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 	 * Otherwise, we use the textual interface which needs full addresses for formatting bytes output.
 	 * So distorm_format will truncate later.
 	 */
-	if (_ci->features & DF_MAXIMUM_ADDR32) addrMask = 0xffffffff;
-	else if (_ci->features & DF_MAXIMUM_ADDR16) addrMask = 0xffff;
+	if (features & DF_MAXIMUM_ADDR32) addrMask = 0xffffffff;
+	else if (features & DF_MAXIMUM_ADDR16) addrMask = 0xffff;
 #endif
 
-	/* No entries are used yet. */
-	*usedInstructionsCount = 0;
-	ci.dt = _ci->dt;
-	ci.features = _ci->features;
-	_ci->nextOffset = codeOffset;
+	ps.count = 1; /* Force zero'ing ps below. */
 
 	/* Decode instructions as long as we have what to decode/enough room in entries. */
-	while (codeLen > 0) {
+	while (ci.codeLen > 0) {
+		code = ci.code;
+		codeLen = ci.codeLen;
+		codeOffset = ci.codeOffset;
 
-		/* startInstOffset holds the displayed offset of current instruction. */
-		startInstOffset = codeOffset;
+		if (ps.count) memset(&ps, 0, sizeof(ps));
 
-		memset(&ps, 0, (size_t)((char*)&ps.pfxIndexer[0] - (char*)&ps));
-		memset(ps.pfxIndexer, PFXIDX_NONE, sizeof(int) * PFXIDX_MAX);
-		ps.start = code;
-		ps.last = code;
-		prefixSize = 0;
+		/**** INSTRUCTION DECODING NEXT: ****/
 
-		if (prefixes_is_valid(*code, ci.dt)) {
-			prefixes_decode(code, codeLen, &ps, ci.dt);
-			/* Count prefixes, start points to first prefix. */
-			prefixSize = (unsigned int)(ps.last - ps.start);
-			/*
-			 * It might be that we will just notice that we ran out of bytes, or only prefixes
-			 * so we will have to drop everything and halt.
-			 * Also take into consideration of flow control instruction filter.
-			 */
-			codeLen -= prefixSize;
-			if ((codeLen == 0) || (prefixSize == INST_MAXIMUM_SIZE)) {
-				if (~_ci->features & DF_RETURN_FC_ONLY) {
-					/* Make sure there is enough room. */
-					if (nextPos + (ps.last - code) > maxResultCount) return DECRES_MEMORYERR;
+		ret = decode_inst(&ci, &ps, pdi);
 
-					for (p = code; p < ps.last; p++, startInstOffset++) {
-						/* Use next entry. */
-#ifndef DISTORM_LIGHT
-						if (supportOldIntr) {
-							pdi = (_DInst*)((char*)result + nextPos * sizeof(_DecodedInst));
-						}
-						else
-#endif /* DISTORM_LIGHT */
-						{
-							pdi = &result[nextPos];
-						}
-						nextPos++;
-						memset(pdi, 0, sizeof(_DInst));
+		if (ret == DECRES_SUCCESS) {
+			/* decode_inst keeps track (only if successful!) for code and codeLen but ignores codeOffset, fix it here. */
+			ci.codeOffset += pdi->size;
 
-						pdi->flags = FLAG_NOT_DECODABLE;
-						pdi->imm.byte = *p;
-						pdi->size = 1;
-						pdi->addr = startInstOffset & addrMask;
+			if (ci.features & (DF_SINGLE_BYTE_STEP | DF_RETURN_FC_ONLY | DF_STOP_ON_PRIVILEGED | DF_STOP_ON_FLOW_CONTROL)) {
+
+				/* Sync codeinfo, remember that currently it points to beginning of the instruction and prefixes if any. */
+				if (ci.features & DF_SINGLE_BYTE_STEP) {
+					ci.code = code + 1;
+					ci.codeLen = codeLen - 1;
+					ci.codeOffset = codeOffset + 1;
+				}
+
+				/* See if we need to filter this instruction. */
+				if ((ci.features & DF_RETURN_FC_ONLY) && (META_GET_FC(pdi->meta) == FC_NONE)) {
+					continue;
+				}
+
+				/* Check whether we need to stop on any feature. */
+				if ((ci.features & DF_STOP_ON_PRIVILEGED) && (FLAG_GET_PRIVILEGED(pdi->flags))) {
+					break; /* ret = DECRES_SUCCESS; */
+				}
+
+				if (ci.features & DF_STOP_ON_FLOW_CONTROL) {
+					unsigned int mfc = META_GET_FC(pdi->meta);
+					if (mfc && (((ci.features & DF_STOP_ON_CALL) && (mfc == FC_CALL)) ||
+						((ci.features & DF_STOP_ON_RET) && (mfc == FC_RET)) ||
+						((ci.features & DF_STOP_ON_SYS) && (mfc == FC_SYS)) ||
+						((ci.features & DF_STOP_ON_UNC_BRANCH) && (mfc == FC_UNC_BRANCH)) ||
+						((ci.features & DF_STOP_ON_CND_BRANCH) && (mfc == FC_CND_BRANCH)) ||
+						((ci.features & DF_STOP_ON_INT) && (mfc == FC_INT)) ||
+						((ci.features & DF_STOP_ON_CMOV) && (mfc == FC_CMOV)) ||
+						((ci.features & DF_STOP_ON_HLT) && (mfc == FC_HLT)))) {
+						break; /* ret = DECRES_SUCCESS; */
 					}
-					*usedInstructionsCount = nextPos; /* Include them all. */
 				}
-				if (codeLen == 0) break; /* Bye bye, out of bytes. */
 			}
-			code += prefixSize;
-			codeOffset += prefixSize;
 
-			/* If we got only prefixes continue to next instruction, note that DF_SINGLE_BYTE_STEP is ignored here. */
-			if (prefixSize == INST_MAXIMUM_SIZE) continue;
+			/* Allocate at least one more entry to use, for the next instruction. */
+			pdi = (_DInst*)((char*)pdi + diStructSize);
+			if (pdi >= maxResultAddr) {
+				ret = DECRES_MEMORYERR;
+				break;
+			}
 		}
+		else { /* ret == DECRES_INPUTERR */
 
-		/*
-		 * Now we decode the instruction and only then we do further prefixes handling.
-		 * This is because the instruction could not be decoded at all, or an instruction requires
-		 * a mandatory prefix, or some of the prefixes were useless, etc...
+			/* Skip a single byte in case of a failure and retry instruction. */
+			ci.code = code + 1;
+			ci.codeLen = codeLen - 1;
+			ci.codeOffset = codeOffset + 1;
 
-		 * Even if there were a mandatory prefix, we already took into account its size as a normal prefix.
-		 * so prefixSize includes that, and the returned size in pdi is simply the size of the real(=without prefixes) instruction.
-		 */
-		if (ci.dt == Decode64Bits) {
-			if (ps.decodedPrefixes & INST_PRE_REX) {
-				/* REX prefix must precede first byte of instruction. */
-				if (ps.rexPos != (code - 1)) {
-					ps.decodedPrefixes &= ~INST_PRE_REX;
-					ps.prefixExtType = PET_NONE;
-					prefixes_ignore(&ps, PFXIDX_REX);
-				}
+			/* Handle failure of decoding last instruction. */
+			if ((!(ci.features & DF_RETURN_FC_ONLY))) {
 				/*
-				 * We will disable operand size prefix,
-				 * if it exists only after decoding the instruction, since it might be a mandatory prefix.
-				 * This will be done after calling inst_lookup in decode_inst.
+				 * Drop the number of bytes that we're stepping by.
+				 * Notice we use code & codeOffset which point beyond prefixes, so account for that.
 				 */
-			}
-			/* In 64 bits, segment overrides of CS, DS, ES and SS are ignored. So don't take'em into account. */
-			if (ps.decodedPrefixes & INST_PRE_SEGOVRD_MASK32) {
-				ps.decodedPrefixes &= ~INST_PRE_SEGOVRD_MASK32;
-				prefixes_ignore(&ps, PFXIDX_SEG);
-			}
-		}
-
-		/* Make sure there is at least one more entry to use, for the upcoming instruction. */
-		if (nextPos + 1 > maxResultCount) return DECRES_MEMORYERR;
-#ifndef DISTORM_LIGHT
-		if (supportOldIntr) {
-			pdi = (_DInst*)((char*)result + nextPos * sizeof(_DecodedInst));
-		}
-		else
-#endif /* DISTORM_LIGHT */
-		{
-			pdi = &result[nextPos];
-		}
-		nextPos++;
-
-		/*
-		 * The reason we copy these two again is because we have to keep track on the input ourselves.
-		 * There might be a case when an instruction is invalid, and then it will be counted as one byte only.
-		 * But that instruction already read a byte or two from the stream and only then returned the error.
-		 * Thus, we end up unsynchronized on the stream.
-		 * This way, we are totally safe, because we keep track after the call to decode_inst, using the returned size.
-		 */
-		ci.code = code;
-		ci.codeLen = codeLen;
-		/* Nobody uses codeOffset in the decoder itself, so spare it. */
-
-		decodeResult = decode_inst(&ci, &ps, pdi);
-
-		/* See if we need to filter this instruction. */
-		if ((_ci->features & DF_RETURN_FC_ONLY) && (META_GET_FC(pdi->meta) == FC_NONE)) decodeResult = DECRES_FILTERED;
-
-		/* Set address to the beginning of the instruction. */
-		pdi->addr = startInstOffset & addrMask;
-		/* pdi->disp &= addrMask; */
-
-		if ((decodeResult == DECRES_INPUTERR) && (ps.decodedPrefixes & INST_PRE_VEX)) {
-			if (ps.prefixExtType == PET_VEX3BYTES) {
-				prefixSize -= 2;
-				codeLen += 2;
-			} else if (ps.prefixExtType == PET_VEX2BYTES) {
-				prefixSize -= 1;
-				codeLen += 1;
-			}
-			/* DF_SINGLE_BYTE_STEP is ignored here. */
-			ps.last = ps.start + prefixSize - 1;
-			code = ps.last + 1;
-			codeOffset = startInstOffset + prefixSize;
-		} else {
-			/* Advance to next instruction. */
-
-			if (!(_ci->features & DF_SINGLE_BYTE_STEP)) { /* Start with the more likely happy flow. */
-				codeLen -= pdi->size;
-				codeOffset += pdi->size;
-				code += pdi->size;
-			} else {
-				/* Skip one byte only, so ignore the prefixes read. */
-				codeLen += prefixSize - 1;
-				codeOffset = codeOffset - prefixSize + 1;
-				code = code - prefixSize + 1;
-
-				/* Keep ci in sync. */
-				ci.code = code;
-				ci.codeLen = codeLen;
-			}
-
-			/* Instruction's size should include prefixes. */
-			pdi->size += (uint8_t)prefixSize;
-		}
-
-		/* Drop all prefixes and the instruction itself, because the instruction wasn't successfully decoded. */
-		if ((decodeResult == DECRES_INPUTERR) && (~_ci->features & DF_RETURN_FC_ONLY)) {
-			nextPos--; /* Undo last result. */
-			if ((prefixSize + 1) > 0) { /* 1 for the first instruction's byte. */
-				if ((nextPos + prefixSize + 1) > maxResultCount) return DECRES_MEMORYERR;
-
-				for (p = ps.start; p < ps.last + 1; p++, startInstOffset++) {
-					/* Use next entry. */
-#ifndef DISTORM_LIGHT
-					if (supportOldIntr) {
-						pdi = (_DInst*)((char*)result + nextPos * sizeof(_DecodedInst));
-					}
-					else
-#endif /* DISTORM_LIGHT */
-					{
-						pdi = &result[nextPos];
-					}
-					nextPos++;
-
-					memset(pdi, 0, sizeof(_DInst));
-					pdi->flags = FLAG_NOT_DECODABLE;
-					pdi->imm.byte = *p;
-					pdi->size = 1;
-					pdi->addr = startInstOffset & addrMask;
+				if (!dropInstructions((size_t)ci.code - (size_t)code, code, codeOffset, addrMask, diStructSize, maxResultAddr, &pdi)) {
+					ret = DECRES_MEMORYERR;
+					break;
 				}
 			}
-		} else if (decodeResult == DECRES_FILTERED) nextPos--; /* Return it to pool, since it was filtered. */
 
-		/* Alright, the caller can read, at least, up to this one. */
-		*usedInstructionsCount = nextPos;
-		/* Fix next offset. */
-		_ci->nextOffset = codeOffset;
-
-		/* Check whether we need to stop on any feature. */
-		features = _ci->features;
-		if (decodeResult == DECRES_SUCCESS) {
-			if ((features & DF_STOP_ON_PRIVILEGED) && (FLAG_GET_PRIVILEGED(pdi->flags))) return DECRES_SUCCESS;
-
-			if (features & DF_STOP_ON_FLOW_CONTROL) {
-				mfc = META_GET_FC(pdi->meta);
-				if (((features & DF_STOP_ON_CALL) && (mfc == FC_CALL)) ||
-					((features & DF_STOP_ON_RET) && (mfc == FC_RET)) ||
-					((features & DF_STOP_ON_SYS) && (mfc == FC_SYS)) ||
-					((features & DF_STOP_ON_UNC_BRANCH) && (mfc == FC_UNC_BRANCH)) ||
-					((features & DF_STOP_ON_CND_BRANCH) && (mfc == FC_CND_BRANCH)) ||
-					((features & DF_STOP_ON_INT) && (mfc == FC_INT)) ||
-					((features & DF_STOP_ON_CMOV) && (mfc == FC_CMOV)) ||
-					((features & DF_STOP_ON_HLT) && (mfc == FC_HLT))) {
-						return DECRES_SUCCESS;
-				}
-			}
+			/* Reset return value. */
+			ret = DECRES_SUCCESS;
 		}
 	}
 
-	return DECRES_SUCCESS;
+	/* Set OUT params. */
+	*usedInstructionsCount = (unsigned int)(((size_t)pdi - (size_t)result) / (size_t)diStructSize);
+	_ci->nextOffset = ci.codeOffset;
+
+	return ret;
 }
