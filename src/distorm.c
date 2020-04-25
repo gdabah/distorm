@@ -132,7 +132,6 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 
 /* WARNING: This function is written carefully to be able to work with same input and output buffer in-place! */
 #ifdef SUPPORT_64BIT_OFFSET
-__declspec(noinline)
 	_DLLEXPORT_ void distorm_format64(const _CodeInfo* ci, const _DInst* di, _DecodedInst* result)
 #else
 	_DLLEXPORT_ void distorm_format32(const _CodeInfo* ci, const _DInst* di, _DecodedInst* result)
