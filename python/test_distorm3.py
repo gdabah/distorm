@@ -1492,8 +1492,12 @@ class TestMisc(unittest.TestCase):
 
 def _hexlify(data):
 	s = ""
-	for i in data:
-		s += "%02x" % i
+	if type(data[0]) == str: # Python 2.x
+		for i in data:
+			s += "%02x" % ord(i)
+	else:
+		for i in data: # Python 3.x
+			s += "%02x" % i
 	return s
 
 class TestMisc2(unittest.TestCase):
