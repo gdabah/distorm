@@ -25,7 +25,7 @@ int main(int argc, char **argv)
 	printf("diStorm version: %d.%d.%d\n", (dver >> 16), ((dver) >> 8) & 0xff, dver & 0xff);
 
 	unsigned char rawData[] = {
-		0xf2, 0xaf
+		0x48, 0x66, 0x0f, 0x10, 0xc0
 	};
 
 	_CodeInfo ci = { 0 };
