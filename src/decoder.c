@@ -93,9 +93,6 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	/* The ModR/M byte of the current instruction. */
 	unsigned int modrm = 0;
 
-	/* Used only for special CMP instructions which have pseudo opcodes suffix. */
-	unsigned int cmpType = 0;
-
 	/*
 	 * Indicates whether it is right to LOCK the instruction by decoding its first operand.
 	 * Only then you know if it's ok to output the LOCK prefix's text...
@@ -242,6 +239,9 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 
 		/* Check whether pseudo opcode is needed, only for CMP instructions: */
 		if (instFlags & INST_PSEUDO_OPCODE) {
+			/* Used only for special CMP instructions which have pseudo opcodes suffix. */
+			unsigned int cmpType;
+
 			if (--ci->codeLen < 0) goto _Undecodable;
 			cmpType = *ci->code;
 			ci->code++;
@@ -412,7 +412,7 @@ _Undecodable: /* If the instruction couldn't be decoded for some reason, fail. *
 	if (*startCode == INST_WAIT_INDEX) {
 		int delta;
 		memset(di, 0, sizeof(_DInst));
-		di->addr = ci->codeOffset;
+		di->addr = ci->codeOffset; /* TODO addrmask */
 		di->segment = R_NONE;
 		di->base = R_NONE;
 		di->size = 1;
@@ -430,35 +430,6 @@ _Undecodable: /* If the instruction couldn't be decoded for some reason, fail. *
 
 	/* Mark that we didn't manage to decode the instruction well, caller will drop it. */
 	return DECRES_INPUTERR;
-}
-
-_INLINE_ int dropInstructions(size_t droppedCount,
-	const uint8_t* code,
-	_OffsetType codeOffset,
-	_OffsetType addrMask,
-	unsigned int diStructSize,
-	_DInst* maxResultAddr,
-	_DInst** ppdi)
-{
-	/* Make sure there is enough room. */
-	if ((((size_t)*ppdi) + (((size_t)droppedCount + 1) * diStructSize)) >= (size_t)maxResultAddr) {
-		return FALSE;
-	}
-
-	for (unsigned int i = 0; i < droppedCount; i++, code++) {
-		_DInst* pdi = *ppdi;
-		*ppdi = (_DInst*)((char*)pdi + diStructSize);
-
-		/* Use next entry. */
-		memset(pdi, 0, sizeof(_DInst));
-
-		pdi->flags = FLAG_NOT_DECODABLE;
-		pdi->imm.byte = *code;
-		pdi->size = 1;
-		pdi->addr = (codeOffset + i) & addrMask;
-	}
-
-	return TRUE;
 }
 
 /*
@@ -577,22 +548,20 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 		}
 		else { /* ret == DECRES_INPUTERR */
 
+			/* Handle failure of decoding last instruction. */
+			if ((!(ci.features & DF_RETURN_FC_ONLY))) {
+				memset(pdi, 0, sizeof(_DInst));
+				pdi->flags = FLAG_NOT_DECODABLE;
+				pdi->imm.byte = *ci.code;
+				pdi->size = 1;
+				pdi->addr = ci.codeOffset & addrMask;
+				pdi = (_DInst*)((char*)pdi + diStructSize);
+			}
+
 			/* Skip a single byte in case of a failure and retry instruction. */
 			ci.code = code + 1;
 			ci.codeLen = codeLen - 1;
 			ci.codeOffset = codeOffset + 1;
-
-			/* Handle failure of decoding last instruction. */
-			if ((!(ci.features & DF_RETURN_FC_ONLY))) {
-				/*
-				 * Drop the number of bytes that we're stepping by.
-				 * Notice we use code & codeOffset which point beyond prefixes, so account for that.
-				 */
-				if (!dropInstructions((size_t)ci.code - (size_t)code, code, codeOffset, addrMask, diStructSize, maxResultAddr, &pdi)) {
-					ret = DECRES_MEMORYERR;
-					break;
-				}
-			}
 
 			/* Reset return value. */
 			ret = DECRES_SUCCESS;
