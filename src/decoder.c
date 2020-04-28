@@ -78,8 +78,8 @@ static _DecodeType decode_get_effective_op_size(_DecodeType dt, _iflags decodedP
 	((src->field & D_COMPACT_DF) << (10 - 3)) | \
 	((src->field & D_COMPACT_OF) << (11 - 5)));
 
- /* If DECRES_SUCCESS is returned, CI is in sync, otherwise it loses sync. */
- /* Important note: CI is keeping track only for code and codeLen, in case of a failure caller has to restart on their own. */
+/* If DECRES_SUCCESS is returned, CI is in sync, otherwise it loses sync. */
+/* Important note: CI is keeping track only for code and codeLen, in case of a failure caller has to restart on their own. */
 static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 {
 	/* Holds the info about the current found instruction. */
@@ -105,8 +105,6 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	 * (like not enough data for decoding, invalid opcode, etc).
 	 */
 	const uint8_t* startCode = ci->code;
-	//unsigned int opsNo = 0;
-	unsigned int privileged;
 
 	ii = inst_lookup(ci, ps);
 	if (ii == NULL) goto _Undecodable;
@@ -120,11 +118,11 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	}
 
 	memset(di, 0, sizeof(_DInst));
-	di->addr = ci->codeOffset; /* &ci->addrMask;  TODO: fix me */
+	di->addr = ci->codeOffset & ci->addrMask;
 
 	isi = &InstSharedInfoTable[ii->sharedIndex];
 
-	privileged = ii->opcodeId & OPCODE_ID_PRIVILEGED;
+	di->flags = ii->opcodeId & OPCODE_ID_PRIVILEGED;
 	di->opcode = ii->opcodeId & ~OPCODE_ID_PRIVILEGED; /* Default opcode, might change due to prefixes etc below. */
 	/*
 	 * Store the address size inside the flags.
@@ -185,6 +183,9 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	for (;;) {
 		if (isi->d != OT_NONE) {
 			if (!operands_extract(ci, di, ii, instFlags, (_OpType)isi->d, ONT_1, modrm, ps, effOpSz, effAdrSz, &lockable)) goto _Undecodable;
+
+			/* Copy DST_WR flag. */
+			di->flags |= (instFlags & INST_DST_WR) >> (31 - 6); /* Copy bit from INST_DST_WR (bit 31) to FLAG_DST_WR (bit 6). */
 		}
 		else break;
 
@@ -251,7 +252,6 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 			 * we will have to fix it so it offsets into the corrected mnemonic.
 			 * Therefore, we use another table to fix the offset.
 			 */
-
 			if (instFlags & INST_PRE_VEX) {
 				/* AVX Comparison type must be between 0 to 32, otherwise Reserved. */
 				if (cmpType >= INST_VCMP_MAX_RANGE) goto _Undecodable;
@@ -311,13 +311,10 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	 * Use the correct mnemonic according to the DT.
 	 * If we are in 32 bits decoding mode it doesn't necessarily mean we will choose mnemonic2, alas,
 	 * it means that if there is a mnemonic2, it will be used.
-	 */
-
-	 /*
-	  * Note:
-	  * If the instruction is prefixed by operand size we will format it in the non-default decoding mode!
-	  * So there might be a situation that an instruction of 32 bit gets formatted in 16 bits decoding mode.
-	  * Both ways should end up with a correct and expected formatting of the text.
+	 * Note:
+	 * If the instruction is prefixed by operand size we will format it in the non-default decoding mode!
+	 * So there might be a situation that an instruction of 32 bit gets formatted in 16 bits decoding mode.
+	 * Both ways should end up with a correct and expected formatting of the text.
 	 */
 	if (effOpSz == Decode32Bits) { /* Decode32Bits */
 
@@ -336,7 +333,7 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	}
 	else if (effOpSz == Decode64Bits) { /* Decode64Bits, note that some instructions might be decoded in Decode32Bits above. */
 
-	 /* Set operand size. */
+		/* Set operand size. */
 		FLAG_SET_OPSIZE(di, Decode64Bits);
 
 		if (instFlags & (INST_USE_EXMNEMONIC | INST_USE_EXMNEMONIC2)) {
@@ -357,7 +354,7 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	}
 	else { /* Decode16Bits */
 
-	 /* Set operand size. */
+		/* Set operand size. */
 		FLAG_SET_OPSIZE(di, Decode16Bits);
 
 		/*
@@ -385,9 +382,6 @@ _SkipOpcoding:
 	 */
 	if (di->size > INST_MAXIMUM_SIZE) goto _Undecodable;
 
-	/* Copy DST_WR flag. */
-	di->flags |= (instFlags & INST_DST_WR) >> (31 - 6); /* Copy bit from INST_DST_WR (bit 31) to FLAG_DST_WR (bit 6). */
-	di->flags |= privileged;
 	/* Set the unused prefixes mask, if any prefixes (not) used at all. */
 	if (ps->count) di->unusedPrefixesMask = prefixes_set_unused_mask(ps);
 
@@ -412,7 +406,7 @@ _Undecodable: /* If the instruction couldn't be decoded for some reason, fail. *
 	if (*startCode == INST_WAIT_INDEX) {
 		int delta;
 		memset(di, 0, sizeof(_DInst));
-		di->addr = ci->codeOffset; /* TODO addrmask */
+		di->addr = ci->codeOffset & ci->addrMask;
 		di->segment = R_NONE;
 		di->base = R_NONE;
 		di->size = 1;
@@ -469,7 +463,7 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 		maxResultAddr = &result[maxResultCount];
 	}
 
-	_OffsetType addrMask = (_OffsetType)-1;
+	ci.addrMask = (_OffsetType)-1;
 
 #ifdef DISTORM_LIGHT
 	supportOldIntr; /* Unreferenced. */
@@ -479,8 +473,8 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 	 * Otherwise, we use the textual interface which needs full addresses for formatting bytes output.
 	 * So distorm_format will truncate later.
 	 */
-	if (features & DF_MAXIMUM_ADDR32) addrMask = 0xffffffff;
-	else if (features & DF_MAXIMUM_ADDR16) addrMask = 0xffff;
+	if (features & DF_MAXIMUM_ADDR32) ci.addrMask = 0xffffffff;
+	else if (features & DF_MAXIMUM_ADDR16) ci.addrMask = 0xffff;
 #endif
 
 	ps.count = 1; /* Force zero'ing ps below. */
@@ -554,7 +548,7 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 				pdi->flags = FLAG_NOT_DECODABLE;
 				pdi->imm.byte = *ci.code;
 				pdi->size = 1;
-				pdi->addr = ci.codeOffset & addrMask;
+				pdi->addr = ci.codeOffset & ci.addrMask;
 				pdi = (_DInst*)((char*)pdi + diStructSize);
 			}
 

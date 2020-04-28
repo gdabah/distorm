@@ -96,10 +96,10 @@ static void distorm_format_size(unsigned char** str, const _DInst* di, int opNum
 		/*case 0: break; OT_MEM's unknown size. */
 		switch (di->ops[opNum].size / 8)
 		{
-			case 1: strcat_WS(*str, "BYTE    ", 8, 5); break;
-			case 2: strcat_WS(*str, "WORD    ", 8, 5); break;
-			case 4: strcat_WS(*str, "DWORD   ", 8, 6); break;
-			case 8: strcat_WS(*str, "QWORD   ", 8, 6); break;
+			case 1: strcat_WS(*str,  "BYTE    ", 8, 5); break;
+			case 2: strcat_WS(*str,  "WORD    ", 8, 5); break;
+			case 4: strcat_WS(*str,  "DWORD   ", 8, 6); break;
+			case 8: strcat_WS(*str,  "QWORD   ", 8, 6); break;
 			case 10: strcat_WS(*str, "TBYTE   ", 8, 6); break;
 			case 16: strcat_WS(*str, "DQWORD  ", 8, 7); break;
 			case 32: strcat_WS(*str, "YWORD   ", 8, 6); break;
@@ -115,12 +115,12 @@ static void distorm_format_signed_disp(unsigned char** str, const _DInst* di, ui
 		if (((int64_t)di->disp < 0)) {
 			chrcat_WS(str, MINUS_DISP_CHR);
 			tmpDisp64 = -(int64_t)di->disp;
+			tmpDisp64 &= addrMask; /* Verify only for neg numbers. */
 		}
 		else {
 			chrcat_WS(str, PLUS_DISP_CHR);
 			tmpDisp64 = di->disp;
 		}
-		tmpDisp64 &= addrMask;
 		str_int(str, tmpDisp64);
 	}
 }
@@ -145,8 +145,11 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 	unsigned int suffixSize = 0;
 
 	/* Set address mask, when default is for 64bits addresses. */
-	if (ci->features & DF_MAXIMUM_ADDR32) addrMask = 0xffffffff;
-	else if (ci->features & DF_MAXIMUM_ADDR16) addrMask = 0xffff;
+	if (ci->features & DF_USE_ADDR_MASK) addrMask = ci->addrMask;
+	else {
+		if (ci->features & DF_MAXIMUM_ADDR32) addrMask = 0xffffffff;
+		else if (ci->features & DF_MAXIMUM_ADDR16) addrMask = 0xffff;
+	}
 
 	/* Gotta have full address for (di->addr - ci->codeOffset) to work in all modes. */
 	str_hex(&result->instructionHex, (const uint8_t*)&ci->code[(unsigned int)(di->addr - ci->codeOffset)], di->size);
@@ -182,7 +185,6 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 		}
 	}
 
-#if 1
 	for (i = 0; i < OPERANDS_NO; i++) {
 		unsigned int type = di->ops[i].type;
 		if (type == O_NONE) {
@@ -297,7 +299,6 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 			str_int(&str, di->imm.ex.i2);
 		}
 	}
-#endif
 
 skipOperands:
 	/* Finalize the operands string. */
@@ -382,9 +383,10 @@ skipOperands:
 	ci.code = code;
 	ci.codeLen = codeLen;
 	ci.dt = dt;
-	ci.features = DF_NONE;
-	if (dt == Decode16Bits) ci.features = DF_MAXIMUM_ADDR16;
-	else if (dt == Decode32Bits) ci.features = DF_MAXIMUM_ADDR32;
+	ci.features = DF_USE_ADDR_MASK;
+	if (dt == Decode16Bits) ci.addrMask = 0xffff;
+	else if (dt == Decode32Bits) ci.addrMask = 0xffffffff;
+	else ci.addrMask = (_OffsetType)-1;
 
 	res = decode_internal(&ci, TRUE, (_DInst*)result, maxInstructions, usedInstructionsCount);
 	for (unsigned int i = 0, instsCount = *usedInstructionsCount; i < instsCount; i++) {

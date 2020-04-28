@@ -25,7 +25,7 @@ typedef struct WMnemonic {
 
 typedef struct WRegister {
 	unsigned int length;
-	unsigned char p[12]; /* p is a null terminated string. */
+	unsigned char p[6]; /* p is a null terminated string. */
 } _WRegister;
 
 extern const unsigned char _MNEMONICS[];

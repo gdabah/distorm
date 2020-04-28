@@ -110,7 +110,8 @@ typedef enum { Decode16Bits = 0, Decode32Bits = 1, Decode64Bits = 2 } _DecodeTyp
 typedef OFFSET_INTEGER _OffsetType;
 
 typedef struct {
-	_OffsetType codeOffset, nextOffset; /* nextOffset is OUT only. */
+	_OffsetType codeOffset, addrMask;
+	_OffsetType nextOffset; /* nextOffset is OUT only. */
 	const uint8_t* code;
 	int codeLen; /* Using signed integer makes it easier to detect an underflow. */
 	_DecodeType dt;
@@ -392,6 +393,8 @@ typedef struct {
 #define DF_SINGLE_BYTE_STEP 0x1000
 /* The decoder will fill in the eflags fields for the decoded instruction. */
 #define DF_FILL_EFLAGS 0x2000
+/* The decoder will use the addrMask in CodeInfo structure instead of DF_MAXIMUM_ADDR16/32. */
+#define DF_USE_ADDR_MASK 0x4000
 /* The decoder will stop and return to the caller when any flow control instruction was decoded. */
 #define DF_STOP_ON_FLOW_CONTROL (DF_STOP_ON_CALL | DF_STOP_ON_RET | DF_STOP_ON_SYS | DF_STOP_ON_UNC_BRANCH | DF_STOP_ON_CND_BRANCH | DF_STOP_ON_INT | DF_STOP_ON_CMOV | DF_STOP_ON_HLT)
 
