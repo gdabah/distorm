@@ -17,6 +17,7 @@ namespace diStorm
     public unsafe struct _CodeInfo
     {
       internal IntPtr codeOffset;
+	  internal IntPtr addrMask;
       internal IntPtr nextOffset; /* nextOffset is OUT only. */
       internal byte* code;
       internal int codeLen; /* Using signed integer makes it easier to detect an underflow. */
@@ -146,6 +147,8 @@ namespace diStorm
           }
         }
       }
+	  /* Number of valid operands. */
+      internal byte opsNo;
       /* Size of the whole instruction. */
       internal byte size;
       /* Segment information of memory indirection, default segment, or overridden one, can be -1. Use SEGMENT macros. */

@@ -92,8 +92,8 @@ class Inst(Test):
 
 	def check_reg(self, n, idx, sz):
 		self.assertEqual(self.inst.operands[n].type, distorm3.OPERAND_REGISTER)
-		self.assertEqual(self.inst.operands[n].size, sz)
 		self.assertEqual(self.inst.operands[n].index, idx)
+		self.assertEqual(self.inst.operands[n].size, sz)
 
 	def check_pc(self, val, sz):
 		self.assertEqual(self.inst.operands[0].type, distorm3.OPERAND_IMMEDIATE)

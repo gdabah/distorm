@@ -17,12 +17,9 @@ This library is licensed under the BSD license. See the file COPYING.
 #include "prefix.h"
 #include "instructions.h"
 
-
-extern uint32_t _REGISTERTORCLASS[];
-
 int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
-                     _iflags instFlags, _OpType type, _OperandNumberType opNum,
+                     _iflags instFlags, _OpType type,
                      unsigned int modrm, _PrefixState* ps, _DecodeType effOpSz,
-                     _DecodeType effAdrSz, int* lockableInstruction);
+                     _DecodeType effAdrSz);
 
 #endif /* OPERANDS_H */

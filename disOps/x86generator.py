@@ -458,7 +458,7 @@ def FormatInstruction(ii, mnemonicsIds):
 		raise Exception("FlagsIndex exceeded its 8 bits. Change flags of _InstInfo to be uint16!")
 
 	# InstSharedInfo:
-	sharedInfo = (flagsIndex, ops[1], ops[0], (ii.classType << 8) | ii.flowControl, ii.modifiedFlags, ii.testedFlags, ii.undefinedFlags)
+	sharedInfo = (flagsIndex, ops[1], ops[0], ii.modifiedFlags, ii.testedFlags, ii.undefinedFlags, (ii.classType << 8) | ii.flowControl)
 	if sharedInfo not in sharedInfoDict:
 		sharedInfoDict[sharedInfo] = len(sharedInfoDict)
 	# Get the shared-info-index.

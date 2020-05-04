@@ -1,4 +1,4 @@
-/* diStorm 3.4.2 */
+/* diStorm 3.4.4 */
 
 /*
 distorm.h
@@ -244,6 +244,8 @@ typedef struct {
 	uint16_t opcode;
 	/* Up to four operands per instruction, ignored if ops[n].type == O_NONE. */
 	_Operand ops[OPERANDS_NO];
+	/* Number of valid ops entries. */
+	uint8_t opsNo;
 	/* Size of the whole instruction in bytes. */
 	uint8_t size;
 	/* Segment information of memory indirection, default segment, or overriden one, can be -1. Use SEGMENT macros. */
@@ -304,6 +306,7 @@ typedef struct {
 #define RM_R13 0x80000 /* R13B, R13W, R13D, R13 */
 #define RM_R14 0x100000 /* R14B, R14W, R14D, R14 */
 #define RM_R15 0x200000 /* R15B, R15W, R15D, R15 */
+#define RM_SEG 0x400000 /* CS, SS, DS, ES, FS, GS */
 
 /* RIP should be checked using the 'flags' field and FLAG_RIP_RELATIVE.
  * Segments should be checked using the segment macros.

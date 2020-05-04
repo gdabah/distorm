@@ -80,7 +80,7 @@ static _DecodeType decode_get_effective_op_size(_DecodeType dt, _iflags decodedP
 
 /* If DECRES_SUCCESS is returned, CI is in sync, otherwise it loses sync. */
 /* Important note: CI is keeping track only for code and codeLen, in case of a failure caller has to restart on their own. */
-static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
+static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, const uint8_t* startCode, _DInst* di)
 {
 	/* Holds the info about the current found instruction. */
 	_InstInfo* ii;
@@ -92,19 +92,6 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 
 	/* The ModR/M byte of the current instruction. */
 	unsigned int modrm = 0;
-
-	/*
-	 * Indicates whether it is right to LOCK the instruction by decoding its first operand.
-	 * Only then you know if it's ok to output the LOCK prefix's text...
-	 * Used for first operand only.
-	 */
-	int lockable = FALSE;
-
-	/*
-	 * Backup original input, so we can use it later if a problem occurs
-	 * (like not enough data for decoding, invalid opcode, etc).
-	 */
-	const uint8_t* startCode = ci->code;
 
 	ii = inst_lookup(ci, ps);
 	if (ii == NULL) goto _Undecodable;
@@ -174,48 +161,47 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 	/* Cache the effective operand-size and address-size. */
 	effOpSz = decode_get_effective_op_size(ci->dt, ps->decodedPrefixes, ps->vrex, instFlags);
 
-	/*
-	 * Try to extract the next operand only if the latter exists.
-	 * For example, if there is not first operand, no reason to try to extract second operand...
-	 * I decided that a for-break is better for readability in this specific case than goto.
-	 * Note: do-while with a constant 0 makes the compiler warning about it.
-	 */
-	for (;;) {
-		if (isi->d != OT_NONE) {
-			if (!operands_extract(ci, di, ii, instFlags, (_OpType)isi->d, ONT_1, modrm, ps, effOpSz, effAdrSz, &lockable)) goto _Undecodable;
+	/* Try to extract the next operand only if the latter exists. */
+	if (isi->d != OT_NONE) {
 
-			/* Copy DST_WR flag. */
-			di->flags |= (instFlags & INST_DST_WR) >> (31 - 6); /* Copy bit from INST_DST_WR (bit 31) to FLAG_DST_WR (bit 6). */
+		if (instFlags & (INST_MODRR_REQUIRED | INST_FORCE_REG0)) {
+			/* Some instructions enforce that mod=11, so validate that. */
+			if ((modrm < INST_DIVIDED_MODRM) && (instFlags & INST_MODRR_REQUIRED)) goto _Undecodable;
+			/* Some instructions enforce that reg=000, so validate that. (Specifically EXTRQ). */
+			if ((instFlags & INST_FORCE_REG0) && (((modrm >> 3) & 7) != 0)) goto _Undecodable;
 		}
-		else break;
+
+		if (!operands_extract(ci, di, ii, instFlags, (_OpType)isi->d, modrm, ps, effOpSz, effAdrSz)) goto _Undecodable;
+		di->opsNo++; /* Note that in special FPU SSI the operands_extract of ONT_1 sets ONT_2 and increases opsNo internally! */
+
+		/* Copy DST_WR flag. */
+		di->flags |= (instFlags & INST_DST_WR) >> (31 - 6); /* Copy bit from INST_DST_WR (bit 31) to FLAG_DST_WR (bit 6). */
 
 		if (isi->s != OT_NONE) {
-			if (!operands_extract(ci, di, ii, instFlags, (_OpType)isi->s, ONT_2, modrm, ps, effOpSz, effAdrSz, NULL)) goto _Undecodable;
+			if (!operands_extract(ci, di, ii, instFlags, (_OpType)isi->s, modrm, ps, effOpSz, effAdrSz)) goto _Undecodable;
+			di->opsNo++;
+			/* Use third operand, only if the flags says this InstInfo requires it. */
+			if (instFlags & INST_USE_OP3) {
+				if (!operands_extract(ci, di, ii, instFlags, (_OpType)((_InstInfoEx*)ii)->op3, modrm, ps, effOpSz, effAdrSz)) goto _Undecodable;
+				di->opsNo++;
+				/* Support for a fourth operand is added for (e.g:) INSERTQ instruction. */
+				if (instFlags & INST_USE_OP4) {
+					if (!operands_extract(ci, di, ii, instFlags, (_OpType)((_InstInfoEx*)ii)->op4, modrm, ps, effOpSz, effAdrSz)) goto _Undecodable;
+					di->opsNo++;
+				}
+			}
 		}
-		else break;
+	}
 
-		/* Use third operand, only if the flags says this InstInfo requires it. */
-		if (instFlags & INST_USE_OP3) {
-			if (!operands_extract(ci, di, ii, instFlags, (_OpType)((_InstInfoEx*)ii)->op3, ONT_3, modrm, ps, effOpSz, effAdrSz, NULL)) goto _Undecodable;
-		}
-		else break;
-
-		/* Support for a fourth operand is added for (i.e:) INSERTQ instruction. */
-		if (instFlags & INST_USE_OP4) {
-			if (!operands_extract(ci, di, ii, instFlags, (_OpType)((_InstInfoEx*)ii)->op4, ONT_4, modrm, ps, effOpSz, effAdrSz, NULL)) goto _Undecodable;
-		}
-		break;
-	} /* Continue here after all operands were extracted. */
 
 	if (instFlags & (INST_3DNOW_FETCH |
 		INST_PSEUDO_OPCODE |
 		INST_NATIVE |
-		INST_PRE_LOCK |
 		INST_PRE_REPNZ |
 		INST_PRE_REP |
 		INST_PRE_ADDR_SIZE |
 		INST_INVALID_64BITS |
-		INST_64BITS_FETCH)) { /* 9 for 1! */
+		INST_64BITS_FETCH)) { /* 8 for 1! */
 
 		/* If it's a native instruction copy OpSize Prefix. */
 		if (instFlags & INST_NATIVE) ps->usedPrefixes |= (ps->decodedPrefixes & INST_PRE_OP_SIZE);
@@ -268,12 +254,8 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, _DInst* di)
 			goto _SkipOpcoding;
 		}
 
-		/* Start with prefix LOCK/REP/N/Z. */
-		if ((lockable == TRUE) && (instFlags & INST_PRE_LOCK)) {
-			ps->usedPrefixes |= INST_PRE_LOCK;
-			di->flags |= FLAG_LOCK;
-		}
-		else if (instFlags & (INST_PRE_REPNZ | INST_PRE_REP)) {
+		/* Start with prefix REP/N/Z. */
+		if (instFlags & (INST_PRE_REPNZ | INST_PRE_REP)) {
 			if ((instFlags & INST_PRE_REPNZ) && (ps->decodedPrefixes & INST_PRE_REPNZ)) {
 				ps->usedPrefixes |= INST_PRE_REPNZ;
 				di->flags |= FLAG_REPNZ;
@@ -407,6 +389,7 @@ _Undecodable: /* If the instruction couldn't be decoded for some reason, fail. *
 		int delta;
 		memset(di, 0, sizeof(_DInst));
 		di->addr = ci->codeOffset & ci->addrMask;
+		di->imm.byte = INST_WAIT_INDEX;
 		di->segment = R_NONE;
 		di->base = R_NONE;
 		di->size = 1;
@@ -495,7 +478,7 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 			break;
 		}
 
-		ret = decode_inst(&ci, &ps, pdi);
+		ret = decode_inst(&ci, &ps, code, pdi);
 
 		if (ret == DECRES_SUCCESS) {
 			/* decode_inst keeps track (only if successful!) for code and codeLen but ignores codeOffset, fix it here. */
@@ -546,9 +529,9 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 			if ((!(ci.features & DF_RETURN_FC_ONLY))) {
 				memset(pdi, 0, sizeof(_DInst));
 				pdi->flags = FLAG_NOT_DECODABLE;
-				pdi->imm.byte = *ci.code;
+				pdi->imm.byte = *code;
 				pdi->size = 1;
-				pdi->addr = ci.codeOffset & ci.addrMask;
+				pdi->addr = codeOffset & ci.addrMask;
 				pdi = (_DInst*)((char*)pdi + diStructSize);
 			}
 

@@ -35,7 +35,7 @@ typedef struct {
 	unsigned int count;
 	uint16_t unusedPrefixesMask;
 	/* Holds the offset to the prefix byte by its type. */
-	int pfxIndexer[PFXIDX_MAX];
+	uint16_t pfxIndexer[PFXIDX_MAX];
 	_PrefixExtType prefixExtType;
 	/* Indicates whether the operand size prefix (0x66) was used as a mandatory prefix. */
 	int isOpSizeMandatory;

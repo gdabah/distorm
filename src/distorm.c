@@ -340,8 +340,8 @@ skipOperands:
 
 		strfinalize_WS(&result->mnemonic, str);
 
-		result->size = size;
 		result->offset = offset;
+		result->size = size;
 	}
 }
 

@@ -166,6 +166,7 @@ class _DInst (Structure):
         ('usedRegistersMask', c_uint32), # used registers mask
         ('opcode', c_uint16),  # look up in opcode table
         ('ops', _Operand*4),
+        ('opsNo', c_ubyte), # number of valid ops
         ('size', c_ubyte),
         ('segment', c_ubyte), # -1 if unused. See C headers for more info
         ('base', c_ubyte),    # base register for indirections
