@@ -185,11 +185,8 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 		}
 	}
 
-	for (i = 0; i < OPERANDS_NO; i++) {
+	for (i = 0; i < di->opsNo; i++) {
 		unsigned int type = di->ops[i].type;
-		if (type == O_NONE) {
-			break;
-		}
 		if (i > 0) strcat_WS(str, ", ", 2, 2);
 		if (type == O_REG) {
 			strcat_WSR(&str, &_REGISTERS[di->ops[i].index]);
@@ -280,9 +277,12 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 			}
 			strcat_WSR(&str, &_REGISTERS[di->ops[i].index]);
 			if (di->scale != 0) {
-				if (di->scale == 2) strcat_WS(str, "*2", 2, 2);
-				else if (di->scale == 4) strcat_WS(str, "*4", 2, 2);
-				else /* if (di->scale == 8) */ strcat_WS(str, "*8", 2, 2);
+				switch (di->scale)
+				{
+					case 2: strcat_WS(str, "*2", 2, 2); break;
+					case 4: strcat_WS(str, "*4", 2, 2); break;
+					case 8: strcat_WS(str, "*8", 2, 2); break;
+				}
 			}
 			distorm_format_signed_disp(&str, di, addrMask);
 			chrcat_WS(&str, CLOSE_CHR);
