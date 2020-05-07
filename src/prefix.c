@@ -170,77 +170,75 @@ void prefixes_decode(_CodeInfo* ci, _PrefixState* ps)
 
 		/* Examine what type of prefix we got. */
 		byte = *ci->code;
-		/* REX type, 64 bits decoding mode only: */
-		if ((byte >= 0x40) && (byte <= 0x4f)) {
+		switch (byte)
+		{
+		case PREFIX_OP_SIZE: {/* Op Size type: */
+			ps->decodedPrefixes |= INST_PRE_OP_SIZE;
+			prefixes_track_unused(ps, index, PFXIDX_OP_SIZE);
+		} break;
+			/* Look for both common arch prefixes. */
+		case PREFIX_LOCK: {
+			/* LOCK and REPx type: */
+			ps->decodedPrefixes |= INST_PRE_LOCK;
+			prefixes_track_unused(ps, index, PFXIDX_LOREP);
+		} break;
+		case PREFIX_REPNZ: {
+			ps->decodedPrefixes |= INST_PRE_REPNZ;
+			prefixes_track_unused(ps, index, PFXIDX_LOREP);
+		} break;
+		case PREFIX_REP: {
+			ps->decodedPrefixes |= INST_PRE_REP;
+			prefixes_track_unused(ps, index, PFXIDX_LOREP);
+		} break;
+		case PREFIX_CS: {
+			/* Seg Overide type: */
+			ps->decodedPrefixes &= ~INST_PRE_SEGOVRD_MASK;
+			ps->decodedPrefixes |= INST_PRE_CS;
+			prefixes_track_unused(ps, index, PFXIDX_SEG);
+		} break;
+		case PREFIX_SS: {
+			ps->decodedPrefixes &= ~INST_PRE_SEGOVRD_MASK;
+			ps->decodedPrefixes |= INST_PRE_SS;
+			prefixes_track_unused(ps, index, PFXIDX_SEG);
+		} break;
+		case PREFIX_DS: {
+			ps->decodedPrefixes &= ~INST_PRE_SEGOVRD_MASK;
+			ps->decodedPrefixes |= INST_PRE_DS;
+			prefixes_track_unused(ps, index, PFXIDX_SEG);
+		} break;
+		case PREFIX_ES: {
+			ps->decodedPrefixes &= ~INST_PRE_SEGOVRD_MASK;
+			ps->decodedPrefixes |= INST_PRE_ES;
+			prefixes_track_unused(ps, index, PFXIDX_SEG);
+		} break;
+		case PREFIX_FS: {
+			ps->decodedPrefixes &= ~INST_PRE_SEGOVRD_MASK;
+			ps->decodedPrefixes |= INST_PRE_FS;
+			prefixes_track_unused(ps, index, PFXIDX_SEG);
+		} break;
+		case PREFIX_GS: {
+			ps->decodedPrefixes &= ~INST_PRE_SEGOVRD_MASK;
+			ps->decodedPrefixes |= INST_PRE_GS;
+			prefixes_track_unused(ps, index, PFXIDX_SEG);
+		} break;
+		case PREFIX_ADDR_SIZE: {
+			/* Addr Size type: */
+			ps->decodedPrefixes |= INST_PRE_ADDR_SIZE;
+			prefixes_track_unused(ps, index, PFXIDX_ADRS);
+		} break;
+		default:
 			if (ci->dt == Decode64Bits) {
-				ps->decodedPrefixes |= INST_PRE_REX;
-				rexPos = ci->code;
-				ps->vrex = byte & 0xf; /* Keep only BXRW. */
-				ps->prefixExtType = PET_REX;
-				prefixes_track_unused(ps, index, PFXIDX_REX);
+				/* REX type, 64 bits decoding mode only: */
+				if ((byte & 0xf0) == 0x40) {
+					ps->decodedPrefixes |= INST_PRE_REX;
+					rexPos = ci->code;
+					ps->vrex = byte & 0xf; /* Keep only BXRW. */
+					ps->prefixExtType = PET_REX;
+					prefixes_track_unused(ps, index, PFXIDX_REX);
+					continue;
+				}
 			}
-			else break; /* If we are not in 64 bits mode, it's an instruction, then halt. */
-		}
-		else {
-			switch (byte)
-			{
-			case PREFIX_OP_SIZE: {/* Op Size type: */
-				ps->decodedPrefixes |= INST_PRE_OP_SIZE;
-				prefixes_track_unused(ps, index, PFXIDX_OP_SIZE);
-			} break;
-				/* Look for both common arch prefixes. */
-			case PREFIX_LOCK: {
-				/* LOCK and REPx type: */
-				ps->decodedPrefixes |= INST_PRE_LOCK;
-				prefixes_track_unused(ps, index, PFXIDX_LOREP);
-			} break;
-			case PREFIX_REPNZ: {
-				ps->decodedPrefixes |= INST_PRE_REPNZ;
-				prefixes_track_unused(ps, index, PFXIDX_LOREP);
-			} break;
-			case PREFIX_REP: {
-				ps->decodedPrefixes |= INST_PRE_REP;
-				prefixes_track_unused(ps, index, PFXIDX_LOREP);
-			} break;
-			case PREFIX_CS: {
-				/* Seg Overide type: */
-				ps->decodedPrefixes &= ~INST_PRE_SEGOVRD_MASK;
-				ps->decodedPrefixes |= INST_PRE_CS;
-				prefixes_track_unused(ps, index, PFXIDX_SEG);
-			} break;
-			case PREFIX_SS: {
-				ps->decodedPrefixes &= ~INST_PRE_SEGOVRD_MASK;
-				ps->decodedPrefixes |= INST_PRE_SS;
-				prefixes_track_unused(ps, index, PFXIDX_SEG);
-			} break;
-			case PREFIX_DS: {
-				ps->decodedPrefixes &= ~INST_PRE_SEGOVRD_MASK;
-				ps->decodedPrefixes |= INST_PRE_DS;
-				prefixes_track_unused(ps, index, PFXIDX_SEG);
-			} break;
-			case PREFIX_ES: {
-				ps->decodedPrefixes &= ~INST_PRE_SEGOVRD_MASK;
-				ps->decodedPrefixes |= INST_PRE_ES;
-				prefixes_track_unused(ps, index, PFXIDX_SEG);
-			} break;
-			case PREFIX_FS: {
-				ps->decodedPrefixes &= ~INST_PRE_SEGOVRD_MASK;
-				ps->decodedPrefixes |= INST_PRE_FS;
-				prefixes_track_unused(ps, index, PFXIDX_SEG);
-			} break;
-			case PREFIX_GS: {
-				ps->decodedPrefixes &= ~INST_PRE_SEGOVRD_MASK;
-				ps->decodedPrefixes |= INST_PRE_GS;
-				prefixes_track_unused(ps, index, PFXIDX_SEG);
-			} break;
-			case PREFIX_ADDR_SIZE: {
-				/* Addr Size type: */
-				ps->decodedPrefixes |= INST_PRE_ADDR_SIZE;
-				prefixes_track_unused(ps, index, PFXIDX_ADRS);
-			} break;
-			default:
-				goto _Break2;
-			}
+			goto _Break2;
 		}
 	}
 _Break2:
