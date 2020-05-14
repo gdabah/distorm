@@ -319,7 +319,7 @@ static _InstInfo* inst_vex_lookup(_CodeInfo* ci, _PrefixState* ps)
 	return NULL;
 }
 
-_InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps)
+_InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps, int* isPrefixed)
 {
 	unsigned int tmpIndex0, tmpIndex1, tmpIndex2;
 	int instType;
@@ -331,6 +331,7 @@ _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps)
 	tmpIndex0 = *ci->code;
 
 	if (prefixes_is_valid((unsigned char)tmpIndex0, ci->dt)) {
+		*isPrefixed = TRUE;
 		prefixes_decode(ci, ps);
 		if (ci->codeLen < 1) return NULL; /* No more bytes for opcode, halt. */
 		tmpIndex0 = *ci->code; /* Reload. */

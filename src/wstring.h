@@ -29,18 +29,8 @@ _INLINE_ void strcat_WSR(unsigned char** str, const _WRegister* reg)
 	*str += reg->length;
 }
 
-_INLINE_ void strfinalize_WS(_WString* s, unsigned char* endStrPtr)
-{
-	s->length = (unsigned int)((size_t)endStrPtr - (size_t)s->p);
-	*endStrPtr = 0;
-}
-
-_INLINE_ void chrcat_WS(unsigned char** s, uint8_t ch)
-{
-	**s = ch;
-	*s += 1;
-}
-
+#define strfinalize_WS(s, end) do { *end = 0; s.length = (unsigned int)((size_t)end - (size_t)s.p); } while (0)
+#define chrcat_WS(s, ch) do { *s = ch; s += 1; } while (0)
 #define strcat_WS(s, buf, copylen, advancelen) do { memcpy((int8_t*)s, buf, copylen); s += advancelen; } while(0)
 
 #endif /* DISTORM_LIGHT */

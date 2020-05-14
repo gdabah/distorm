@@ -39,14 +39,13 @@ void str_hex(_WString* s, const uint8_t* buf, unsigned int len)
 	
 	unsigned int i = 0;
 	/* Length is at least 1, enter loop. */
+	s->length = len * 2;
 	do {
 		RSHORT(&s->p[i]) = RSHORT(&TextBTable[(*buf) * 2]);
 		buf++;
 		i += 2;
 	} while (i < len * 2);
-
-	s->length = len * 2;
-	s->p[len * 2] = 0;
+	s->p[i] = 0;
 }
 
 #ifdef SUPPORT_64BIT_OFFSET
@@ -79,7 +78,7 @@ void str_int_impl(unsigned char** s, uint64_t x)
 		*buf++ = NIBBLE_TO_CHR;
 	} while (shift > 0);
 
-	*s += (size_t)((size_t)buf - (size_t)*s);
+	*s = buf;
 }
 
 #else

@@ -234,9 +234,10 @@ def UpdatePrivilegedInstruction(opcodeIds, ii):
 		# IO Sensitive Instructions, mostly allowed by ring0 only.
 		"IN", "INS", "OUT", "OUTS", "CLI", "STI", "IRET"
 	]
+	ii.privileged = False
 	for i in enumerate(ii.mnemonics):
 		if (i[1] in privileged) or IsPrivilegedMov(ii):
-			opcodeIds[i[0]] |= 0x8000
+			ii.privileged = True
 
 def SetInstructionAffectedFlags(ii, flagsTuple):
 	""" Helper routine to set the m/t/u flags for an instruction info. """
@@ -457,8 +458,9 @@ def FormatInstruction(ii, mnemonicsIds):
 	if flagsIndex >= 256:
 		raise Exception("FlagsIndex exceeded its 8 bits. Change flags of _InstInfo to be uint16!")
 
+	privileged = 0x8000 if ii.privileged else 0
 	# InstSharedInfo:
-	sharedInfo = (flagsIndex, ops[1], ops[0], ii.modifiedFlags, ii.testedFlags, ii.undefinedFlags, (ii.classType << 8) | ii.flowControl)
+	sharedInfo = (flagsIndex, ops[1], ops[0], ii.modifiedFlags, ii.testedFlags, ii.undefinedFlags, (ii.classType << 8) | ii.flowControl | privileged)
 	if sharedInfo not in sharedInfoDict:
 		sharedInfoDict[sharedInfo] = len(sharedInfoDict)
 	# Get the shared-info-index.

@@ -379,7 +379,7 @@ typedef enum OpType {
 #define INST_VEX_V_UNUSED (1 << 6)
 
 /* Indication that the instruction is privileged (Ring 0), this should be checked on the opcodeId field. */
-#define OPCODE_ID_PRIVILEGED ((uint16_t)0x8000)
+#define META_INST_PRIVILEGED ((uint16_t)0x8000)
 
 /*
  * Indicates which operand is being decoded.
@@ -471,7 +471,7 @@ typedef enum {
 /* Instruction node is treated as { int index:13;  int type:3; } */
 typedef uint16_t _InstNode;
 
-_InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps);
+_InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps, int* isPrefixed);
 _InstInfo* inst_lookup_3dnow(_CodeInfo* ci);
 
 #endif /* INSTRUCTIONS_H */

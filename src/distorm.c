@@ -113,12 +113,12 @@ static void distorm_format_signed_disp(unsigned char** str, const _DInst* di, ui
 
 	if (di->dispSize) {
 		if (((int64_t)di->disp < 0)) {
-			chrcat_WS(str, MINUS_DISP_CHR);
+			chrcat_WS(*str, MINUS_DISP_CHR);
 			tmpDisp64 = -(int64_t)di->disp;
 			tmpDisp64 &= addrMask; /* Verify only for neg numbers. */
 		}
 		else {
-			chrcat_WS(str, PLUS_DISP_CHR);
+			chrcat_WS(*str, PLUS_DISP_CHR);
 			tmpDisp64 = di->disp;
 		}
 		str_int(str, tmpDisp64);
@@ -128,7 +128,6 @@ static void distorm_format_signed_disp(unsigned char** str, const _DInst* di, ui
 static uint8_t prefixTable[6][8] = { "", "LOCK ", "REPNZ ", "REPNZ ", "REP ", "REPZ " };
 static unsigned int prefixSizesTable[6] = { 0, 5, 6, 6, 4, 5 };
 static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
-/* static unsigned int suffixSizesTable[10] = { 0, 1, 1, 0, 1, 0, 0, 0, 1 }; */
 
 /* WARNING: This function is written carefully to be able to work with same input and output buffer in-place! */
 #ifdef SUPPORT_64BIT_OFFSET
@@ -137,8 +136,15 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 	_DLLEXPORT_ void distorm_format32(const _CodeInfo* ci, const _DInst* di, _DecodedInst* result)
 #endif
 {
+#if 0
+	unsigned int size = di->size;
+	_OffsetType offset = di->addr;
+	result->offset = offset;
+	result->size = size;
+	return;
+#endif
+
 	unsigned char* str;
-	unsigned int i;
 	int64_t tmpDisp64;
 	uint64_t addrMask = (uint64_t)-1;
 	const _WMnemonic* mnemonic;
@@ -154,7 +160,7 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 	/* Gotta have full address for (di->addr - ci->codeOffset) to work in all modes. */
 	str_hex(&result->instructionHex, (const uint8_t*)&ci->code[(unsigned int)(di->addr - ci->codeOffset)], di->size);
 
-	if (di->flags == FLAG_NOT_DECODABLE) {
+	if ((int)((int16_t)di->flags) == -1) {
 		/* In-place considerations: DI is RESULT. Deref fields first. */
 		unsigned int size = di->size;
 		unsigned int byte = di->imm.byte;
@@ -165,8 +171,8 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 		str = (unsigned char*)&result->mnemonic.p;
 		strcat_WS(str, "DB  ", 4, 3);
 		str_int(&str, byte);
-		strfinalize_WS(&result->mnemonic, str);
-		*(uint64_t*)&result->operands = 0;
+		strfinalize_WS(result->mnemonic, str);
+		*(uint64_t*)&result->operands = 0; /* Clears length and the string at once. */
 		return; /* Skip to next instruction. */
 	}
 
@@ -185,7 +191,7 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 		}
 	}
 
-	for (i = 0; i < di->opsNo; i++) {
+	for (unsigned int i = 0; i < di->opsNo; i++) {
 		unsigned int type = di->ops[i].type;
 		if (i > 0) strcat_WS(str, ", ", 2, 2);
 		if (type == O_REG) {
@@ -197,9 +203,9 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 			/* Special fix for negative sign extended immediates. */
 			if ((di->flags & FLAG_IMM_SIGNED) && (di->ops[i].size == 8)) {
 				if (di->imm.sbyte < 0) {
-					chrcat_WS(&str, MINUS_DISP_CHR);
+					chrcat_WS(str, MINUS_DISP_CHR);
 					tmpDisp64 = -di->imm.sbyte;
-					str_int(&str, tmpDisp64);
+						str_int(&str, tmpDisp64);
 					break;
 				}
 			}
@@ -207,7 +213,7 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 		}
 		else if (type == O_PC) {
 #ifdef SUPPORT_64BIT_OFFSET
-			str_int(&str, (di->imm.sqword + di->addr + di->size) & addrMask);
+			str_int(&str, (di->size + di->imm.sqword + di->addr) & addrMask);
 #else
 			tmpDisp64 = ((_OffsetType)di->imm.sdword + di->addr + di->size) & (uint32_t)addrMask;
 			str_int(&str, tmpDisp64);
@@ -215,20 +221,20 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 		}
 		else if (type == O_DISP) {
 			distorm_format_size(&str, di, i);
-			chrcat_WS(&str, OPEN_CHR);
+			chrcat_WS(str, OPEN_CHR);
 			if ((SEGMENT_GET(di->segment) != R_NONE) && !SEGMENT_IS_DEFAULT(di->segment)) {
 				strcat_WSR(&str, &_REGISTERS[SEGMENT_GET(di->segment)]);
-				chrcat_WS(&str, SEG_OFF_CHR);
+				chrcat_WS(str, SEG_OFF_CHR);
 			}
 			tmpDisp64 = di->disp & addrMask;
 			str_int(&str, tmpDisp64);
-			chrcat_WS(&str, CLOSE_CHR);
+			chrcat_WS(str, CLOSE_CHR);
 		}
 		else if (type == O_SMEM) {
 			int isDefault;
 			int segment;
 			distorm_format_size(&str, di, i);
-			chrcat_WS(&str, OPEN_CHR);
+			chrcat_WS(str, OPEN_CHR);
 
 			/*
 				* This is where we need to take special care for String instructions.
@@ -256,24 +262,24 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 			}
 			if (!isDefault && (segment != R_NONE)) {
 				strcat_WSR(&str, &_REGISTERS[segment]);
-				chrcat_WS(&str, SEG_OFF_CHR);
+				chrcat_WS(str, SEG_OFF_CHR);
 			}
 
 			strcat_WSR(&str, &_REGISTERS[di->ops[i].index]);
 
 			distorm_format_signed_disp(&str, di, addrMask);
-			chrcat_WS(&str, CLOSE_CHR);
+			chrcat_WS(str, CLOSE_CHR);
 		}
 		else if (type == O_MEM) {
 			distorm_format_size(&str, di, i);
-			chrcat_WS(&str, OPEN_CHR);
+			chrcat_WS(str, OPEN_CHR);
 			if ((SEGMENT_GET(di->segment) != R_NONE) && !SEGMENT_IS_DEFAULT(di->segment)) {
 				strcat_WSR(&str, &_REGISTERS[SEGMENT_GET(di->segment)]);
-				chrcat_WS(&str, SEG_OFF_CHR);
+				chrcat_WS(str, SEG_OFF_CHR);
 			}
 			if (di->base != R_NONE) {
 				strcat_WSR(&str, &_REGISTERS[di->base]);
-				chrcat_WS(&str, PLUS_DISP_CHR);
+				chrcat_WS(str, PLUS_DISP_CHR);
 			}
 			strcat_WSR(&str, &_REGISTERS[di->ops[i].index]);
 			if (di->scale != 0) {
@@ -285,11 +291,11 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 				}
 			}
 			distorm_format_signed_disp(&str, di, addrMask);
-			chrcat_WS(&str, CLOSE_CHR);
+			chrcat_WS(str, CLOSE_CHR);
 		}
 		else if (type == O_PTR) {
 			str_int(&str, di->imm.ptr.seg);
-			chrcat_WS(&str, SEG_OFF_CHR);
+			chrcat_WS(str, SEG_OFF_CHR);
 			str_int(&str, di->imm.ptr.off);
 		}
 		else if (type == O_IMM1) {
@@ -301,8 +307,9 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 	}
 
 skipOperands:
+
 	/* Finalize the operands string. */
-	strfinalize_WS(&result->operands, str);
+	strfinalize_WS(result->operands, str);
 
 	/* Not used anymore.
 	if (di->flags & FLAG_HINT_TAKEN) strcat_WSN(str, " ;TAKEN");
@@ -335,10 +342,8 @@ skipOperands:
 
 		if (suffixSize) {
 			*str++ = suffixTable[suffixSize];
-			/* str += suffixSizesTable[suffixSize]; */
 		}
-
-		strfinalize_WS(&result->mnemonic, str);
+		strfinalize_WS(result->mnemonic, str);
 
 		result->offset = offset;
 		result->size = size;

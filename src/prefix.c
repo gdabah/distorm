@@ -347,28 +347,34 @@ _Break2:
 void prefixes_use_segment(_iflags defaultSeg, _PrefixState* ps, _DecodeType dt, _DInst* di)
 {
 	/* Extract given segment prefix from the decoded prefixes. */
-	_iflags flags = ps->decodedPrefixes & INST_PRE_SEGOVRD_MASK;
+	_iflags flags;
+
+	if (dt == Decode64Bits) {
+		if (ps->decodedPrefixes & INST_PRE_SEGOVRD_MASK64) { /* Either GS or FS. */
+			di->segment = ps->decodedPrefixes & INST_PRE_GS ? R_GS : R_FS;
+		}
+
+		return;
+	}
+
+	flags = ps->decodedPrefixes & INST_PRE_SEGOVRD_MASK;
 
 	/* Use the given prefix only if it's not the default. */
 	if (flags && (flags != defaultSeg)) {
-		di->segment = 0;
 		ps->usedPrefixes |= flags;
+
+		switch (flags >> 7) /* INST_PRE_CS is 1 << 7. And the rest of the prefixes follow as bit fields. */
+		{
+			case 1: di->segment = R_CS; break;
+			case 2: di->segment = R_SS; break;
+			case 4: di->segment = R_DS; break;
+			case 8: di->segment = R_ES; break;
+			case 0x10: di->segment = R_FS; break;
+			case 0x20: di->segment = R_GS; break;
+		}
 	}
 	else {
-		flags = defaultSeg;
-		di->segment = SEGMENT_DEFAULT;
+		if (defaultSeg == INST_PRE_SS) di->segment = SEGMENT_DEFAULT | R_SS;
+		else di->segment = SEGMENT_DEFAULT | R_DS;
 	}
-
-	switch (flags >> 7) /* INST_PRE_CS is 1 << 7. And the rest of the prefixes follow as bit fields. */
-	{
-		case 1: di->segment |= R_CS; break;
-		case 2: di->segment |= R_SS; break;
-		case 4: di->segment |= R_DS; break;
-		case 8: di->segment |= R_ES; break;
-		case 0x10: di->segment |= R_FS; break;
-		case 0x20: di->segment |= R_GS; break;
-	}
-
-	/* If it's one of the CS,SS,DS,ES and the mode is 64 bits, set segment it to none, since it's ignored. */
-	if ((dt == Decode64Bits) && (flags & INST_PRE_SEGOVRD_MASK32)) di->segment = R_NONE;
 }
