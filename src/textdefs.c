@@ -78,7 +78,7 @@ void str_int_impl(unsigned char** s, uint64_t x)
 		*buf++ = NIBBLE_TO_CHR;
 	} while (shift > 0);
 
-	*s = buf;
+	*s = (unsigned char*)buf;
 }
 
 #else

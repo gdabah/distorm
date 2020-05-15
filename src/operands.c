@@ -17,7 +17,7 @@ This library is licensed under the BSD license. See the file COPYING.
 
 
 /* Maps a register to its register-class mask. */
-static uint32_t _REGISTERTORCLASS[] = /* Based on _RegisterType enumeration! */
+uint32_t _REGISTERTORCLASS[] = /* Based on _RegisterType enumeration! */
 {RM_AX, RM_CX, RM_DX, RM_BX, RM_SP, RM_BP, RM_SI, RM_DI, RM_R8, RM_R9, RM_R10, RM_R11, RM_R12, RM_R13, RM_R14, RM_R15,
  RM_AX, RM_CX, RM_DX, RM_BX, RM_SP, RM_BP, RM_SI, RM_DI, RM_R8, RM_R9, RM_R10, RM_R11, RM_R12, RM_R13, RM_R14, RM_R15,
  RM_AX, RM_CX, RM_DX, RM_BX, RM_SP, RM_BP, RM_SI, RM_DI, RM_R8, RM_R9, RM_R10, RM_R11, RM_R12, RM_R13, RM_R14, RM_R15,
@@ -237,7 +237,6 @@ static int operands_extract_modrm(_CodeInfo* ci,
                                   _iflags instFlags, _Operand* op)
 {
 	unsigned char sib = 0, base = 0;
-	unsigned int size = 0;
 
 	/* Memory indirection decoding ahead:) */
 
@@ -448,7 +447,9 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 				if (ps->vrex & PREFIX_EX_L) size = 256;
 				else size = 128;
 			break;
+			case OT_MEM_OPT: /* Here we know it's not optional. */
 			case OT_MEM: size = 0; /* Size is unknown, but still handled. */ break;
+			default: return FALSE;
 		}
 		rm = modrm & 7;
 		ret = operands_extract_modrm(ci, di, type, ps, effOpSz, effAdrSz, mod, rm, instFlags, op);
@@ -553,6 +554,7 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 
 				case OT_XMM128: size = 128; break;
 				case OT_YMM256: size = 256; break;
+				default: return FALSE;
 			}
 			/* Fill size of memory dereference for operand. */
 			rm = modrm & 7;
@@ -562,7 +564,6 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 				di->usedRegistersMask |= _REGISTERTORCLASS[op->index];
 			}
 			return ret;
-
 		}
 		else {
 			/*
@@ -1360,6 +1361,7 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 			if (ps->vrex & PREFIX_EX_W) operands_set_tsi(di, op, O_REG, 64, REGS64_BASE + reg);
 			else operands_set_tsi(di, op, O_REG, 32, REGS32_BASE + reg);
 		break;
+		default: return FALSE;
 	}
 	return TRUE;
 }
