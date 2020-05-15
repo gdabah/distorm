@@ -10,8 +10,10 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import ctypes
 
 import distorm3
+from distorm3._generated import Registers, Mnemonics
 
 # We require YASM assembler to work.
 # Set YASM_PATH envar to its full binary path.
@@ -1492,6 +1494,9 @@ class TestMisc(unittest.TestCase):
 		a = I64("db 0x67\n loopnz 0x50")
 		a.check_type_size(0,distorm3.OPERAND_IMMEDIATE, 8)
 		a.check_addr_size(32)
+	def test_privileged(self):
+		self.assertFalse(IB32("90").inst.privileged)
+		self.assertTrue(I32("iret").inst.privileged)
 
 def _hexlify(data):
 	s = ""
@@ -1769,6 +1774,117 @@ class TestFeatures(unittest.TestCase):
 		self.assertEqual(a[2].testedFlags, 0)
 		self.assertEqual(a[2].undefinedFlags, 0)
 
+class TestAPI(unittest.TestCase):
+	def direct_decompose(self, code, codeOffset, dt, features, maxInstructions):
+		codeLen         = len(code)
+		code_buf        = ctypes.create_string_buffer(code)
+		p_code          = ctypes.byref(code_buf)
+		result          = (distorm3._DInst * maxInstructions)()
+		p_result        = ctypes.byref(result)
+		usedInstructionsCount = ctypes.c_uint(0)
+		codeInfo = distorm3._CodeInfo(distorm3._OffsetType(codeOffset), distorm3._OffsetType(0), distorm3._OffsetType(0), ctypes.cast(p_code, ctypes.c_char_p), codeLen, dt, features)
+		status = distorm3.internal_decompose(ctypes.byref(codeInfo), ctypes.byref(result), maxInstructions, ctypes.byref(usedInstructionsCount))
+		return (status, usedInstructionsCount.value, result)
+	def test_out_buf(self):
+		s, count, results = self.direct_decompose(b"\x90\x90", 0, distorm3.Decode32Bits, 0, 0)
+		self.assertEqual(s, distorm3.DECRES_INPUTERR)
+		s, count, results = self.direct_decompose(b"\x90\x90", 0, distorm3.Decode32Bits, 0, 1)
+		self.assertEqual(s, distorm3.DECRES_MEMORYERR)
+		self.assertEqual(count, 1)
+		s, count, results = self.direct_decompose(b"\x90\x90", 0, distorm3.Decode32Bits, 0, 2)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 2)
+	def test_0_len(self):
+		s, count, results = self.direct_decompose(b"", 0, distorm3.Decode32Bits, 0, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		s, count, results = self.direct_decompose(b"", 0x1234, distorm3.Decode64Bits, 0, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+	def test_bad_features(self):
+		s, count, results = self.direct_decompose(b"\x90", 0, distorm3.Decode32Bits, distorm3.DF_MAXIMUM_ADDR16 | distorm3.DF_MAXIMUM_ADDR32, 1)
+		self.assertEqual(s, distorm3.DECRES_INPUTERR)
+	def test_bad_decoding_type(self):
+		s, count, results = self.direct_decompose(b"\x90", 0, -1, 0, 1)
+		self.assertEqual(s, distorm3.DECRES_INPUTERR)
+		s, count, results = self.direct_decompose(b"\x90", 0, 3, 0, 1)
+		self.assertEqual(s, distorm3.DECRES_INPUTERR)
+	def test_single_out_buf(self):
+		s, count, results = self.direct_decompose(b"\x66\x90", 0, distorm3.Decode32Bits, 0, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 1)
+		self.assertEqual(Mnemonics.get(results[0].opcode, ""), "NOP")
+		s, count, results = self.direct_decompose(b"\x66\x67", 0, distorm3.Decode32Bits, 0, 1)
+		self.assertEqual(s, distorm3.DECRES_MEMORYERR)
+		self.assertEqual(count, 1)
+		self.assertEqual(results[0].imm.byte, 0x66)
+		s, count, results = self.direct_decompose(b"\x66\x67", 0, distorm3.Decode32Bits, 0, 2)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 2)
+		self.assertEqual(results[0].imm.byte, 0x66)
+		self.assertEqual(results[1].imm.byte, 0x67)
+		s, count, results = self.direct_decompose(b"\x66\x67", 0, distorm3.Decode32Bits, 0, 1)
+		self.assertEqual(s, distorm3.DECRES_MEMORYERR)
+		self.assertEqual(count, 1)
+	def test_drop_skip(self):
+		s, count, results = self.direct_decompose(b"\x05\x00\x01", 0, distorm3.Decode32Bits, 0, 1) # Skips 05, then returns add [ecx], al
+		self.assertEqual(s, distorm3.DECRES_MEMORYERR)
+		self.assertEqual(count, 1)
+		s, count, results = self.direct_decompose(b"\x05\x00\x01", 0, distorm3.Decode32Bits, 0, 2)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 2)
+		s, count, results = self.direct_decompose(b"\xc4\x01", 0, distorm3.Decode32Bits, 0, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 1)
+		self.assertEqual(Mnemonics.get(results[0].opcode, ""), "LES")
+		s, count, results = self.direct_decompose(b"\xc5\xc5", 0, distorm3.Decode32Bits, 0, 2)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 2)
+		self.assertEqual(results[0].imm.byte, 0xc5)
+		self.assertEqual(results[1].imm.byte, 0xc5)
+		s, count, results = self.direct_decompose(b"\xc5\xc5\xc5", 0, distorm3.Decode32Bits, 0, 3)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 3)
+		self.assertEqual(results[0].imm.byte, 0xc5)
+		self.assertEqual(results[1].imm.byte, 0xc5)
+		self.assertEqual(results[2].imm.byte, 0xc5)
+	def test_fc(self):
+		s, count, results = self.direct_decompose(b"\x90", 0, distorm3.Decode32Bits, distorm3.DF_RETURN_FC_ONLY, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 0)
+		s, count, results = self.direct_decompose(b"\x90\x75\x00", 0, distorm3.Decode32Bits, distorm3.DF_RETURN_FC_ONLY, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 1)
+	def test_single_step(self):
+		s, count, results = self.direct_decompose(b"\x33\xff\xc0", 0, distorm3.Decode32Bits, distorm3.DF_SINGLE_BYTE_STEP, 1)
+		self.assertEqual(s, distorm3.DECRES_MEMORYERR)
+		self.assertEqual(count, 1)
+		self.assertEqual(Mnemonics.get(results[0].opcode, ""), "XOR")
+		s, count, results = self.direct_decompose(b"\x33\xff\xc0", 0, distorm3.Decode32Bits, distorm3.DF_SINGLE_BYTE_STEP, 2)
+		self.assertEqual(s, distorm3.DECRES_MEMORYERR)
+		self.assertEqual(count, 2)
+		self.assertEqual(Mnemonics.get(results[0].opcode, ""), "XOR")
+		self.assertEqual(Mnemonics.get(results[1].opcode, ""), "INC")
+		s, count, results = self.direct_decompose(b"\x33\xff\xc0", 0, distorm3.Decode32Bits, distorm3.DF_SINGLE_BYTE_STEP, 3)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 3)
+		self.assertEqual(Mnemonics.get(results[0].opcode, ""), "XOR")
+		self.assertEqual(Mnemonics.get(results[1].opcode, ""), "INC")
+		self.assertEqual(results[2].imm.byte, 0xc0)
+	def test_fc_and_single_step(self):
+		s, count, results = self.direct_decompose(b"\x33\xc3", 0, distorm3.Decode32Bits, distorm3.DF_SINGLE_BYTE_STEP | distorm3.DF_RETURN_FC_ONLY, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 1)
+		self.assertEqual(Mnemonics.get(results[0].opcode, ""), "RET")
+	def test_fc_dropped(self):
+		s, count, results = self.direct_decompose(b"\x33\xc3", 0, distorm3.Decode64Bits, distorm3.DF_RETURN_FC_ONLY, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 0)
+		s, count, results = self.direct_decompose(b"\x66\x67\x90\xc3", 0, distorm3.Decode64Bits, distorm3.DF_RETURN_FC_ONLY, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 1)
+		s, count, results = self.direct_decompose(b"\x66\x67", 0, distorm3.Decode64Bits, distorm3.DF_RETURN_FC_ONLY, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 0)
+
 def GetNewSuite(className):
 	suite = unittest.TestSuite()
 	suite.addTest(unittest.makeSuite(className))
@@ -1792,6 +1908,7 @@ if __name__ == "__main__":
 	suite.addTest(GetNewSuite(TestPrefixes))
 	suite.addTest(GetNewSuite(TestInvalid))
 	suite.addTest(GetNewSuite(TestFeatures))
+	suite.addTest(GetNewSuite(TestAPI))
 	result = unittest.TextTestRunner(verbosity=1).run(suite)
 	if result.wasSuccessful():
 		exit(0)

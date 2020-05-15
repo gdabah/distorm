@@ -551,6 +551,7 @@ class Instruction (object):
         self.flags = []
         self.rawFlags = di.flags
         self.meta = 0
+        self.privileged = False
         self.instructionClass = _getISC(0)
         self.flowControl = _getFC(0)
         self.address = di.addr
@@ -586,8 +587,10 @@ class Instruction (object):
         # decode the meta-flags
         metas = di.meta
         self.meta = di.meta
+        self.privileged = (metas & 0x8000) == 0x8000
         self.instructionClass = _getISC(metas)
         self.flowControl = _getFC(metas)
+
         # copy eflags
         self.modifiedFlags = di.modifiedFlagsMask
         self.undefinedFlags = di.undefinedFlagsMask
