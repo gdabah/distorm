@@ -1789,4 +1789,8 @@ if __name__ == "__main__":
 	suite.addTest(GetNewSuite(TestPrefixes))
 	suite.addTest(GetNewSuite(TestInvalid))
 	suite.addTest(GetNewSuite(TestFeatures))
-	unittest.TextTestRunner(verbosity=1).run(suite)
+	result = unittest.TextTestRunner(verbosity=1).run(suite)
+	if result.wasSuccessful():
+		exit(0)
+	else:
+		exit(1)
