@@ -243,6 +243,7 @@ class TestMode16(unittest.TestCase):
 		I16("mov edi, dr7").check_reg(1, Regs.DR7, 32)
 	def test_sreg(self):
 		I16("mov ax, ds").check_reg(1, Regs.DS, 16)
+		I16("mov ax, cs").check_reg(1, Regs.CS, 16)
 	def test_seg(self):
 		I16("push fs").check_reg(0, Regs.FS, 16)
 		I16("db 0x66\n push es").check_reg(0, Regs.ES, 16)
@@ -473,6 +474,7 @@ class TestMode32(unittest.TestCase):
 		I32("mov edi, dr7").check_reg(1, Regs.DR7, 32)
 	def test_sreg(self):
 		I32("mov ax, ds").check_reg(1, Regs.DS, 16)
+		I32("mov ax, cs").check_reg(1, Regs.CS, 16)
 	def test_seg(self):
 		I32("push ss").check_reg(0, Regs.SS, 16)
 		I32("db 0x66\n push ds").check_reg(0, Regs.DS, 16)
@@ -769,6 +771,7 @@ class TestMode64(unittest.TestCase):
 		I64("mov rdi, dr7").check_reg(1, Regs.DR7, 64)
 	def test_sreg(self):
 		I64("mov ax, fs").check_reg(1, Regs.FS, 16)
+		I64("mov ax, cs").check_reg(1, Regs.CS, 16)
 	def test_seg(self):
 		I64("push gs").check_reg(0, Regs.GS, 16)
 	def test_acc8(self):
