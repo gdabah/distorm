@@ -583,7 +583,7 @@ def CreateTables(db):
 
 	:!:NOTE:!: You MUST iterate a table with GenBlock wrapper, otherwise you might NOT get all instructions from the DB!
 		   Refer to x86db.py-class GenBlock for more information. """
-	indexShift = 13 # According to InstNode in instructions.h.
+	typeShift = 13 # According to InstNode in instructions.h.
 	InstInfos = []
 	InstInfosEx = []
 	InstructionsTree = []
@@ -604,13 +604,17 @@ def CreateTables(db):
 				if isExtended:
 					InstInfosEx.append(formattedII)
 					index = len(InstInfosEx) - 1
-					InstructionsTree.append((NodeType.INFOEX << indexShift | index, i.tag))
+					InstructionsTree.append((NodeType.INFOEX << typeShift | index, i.tag))
 				else:
 					InstInfos.append(formattedII)
 					index = len(InstInfos) - 1
-					InstructionsTree.append((NodeType.INFO << indexShift | index, i.tag))
+					nodeType = NodeType.INFO << typeShift
+					# LEA, ARPL and NOP are manually treated in diStorm, so give them a different type.
+					if (i.OL == OpcodeLength.OL_1 and i.pos[0] in [0x90, 0x8d, 0x63]):
+						nodeType = NodeType.INFO_TREAT << typeShift
+					InstructionsTree.append((nodeType | index, i.tag))
 			elif isinstance(i, x86db.InstructionsTable):
-				InstructionsTree.append(((i.type << indexShift) | nextTableIndex, i.tag))
+				InstructionsTree.append(((i.type << typeShift) | nextTableIndex, i.tag))
 				nextTableIndex += i.size # This assumes we walk on the instructions tables in BFS order!
 			else:
 				# False indicates this entry points nothing.

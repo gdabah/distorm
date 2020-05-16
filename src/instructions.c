@@ -372,27 +372,14 @@ _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps, int* isPrefixed)
 
 	/* Walk first byte in InstructionsTree root. */
 	in = InstructionsTree[tmpIndex0];
-	if (in == INT_NOTEXISTS) return NULL;
+	if ((uint32_t)in == INT_NOTEXISTS) return NULL;
 	instType = INST_NODE_TYPE(in);
 
 	/* Single byte instruction (OCST_1BYTE). */
 	if ((instType < INT_INFOS) && (!isWaitIncluded)) {
 		/* Some single byte instructions need extra treatment. */
-		switch (tmpIndex0)
-		{
-			case INST_ARPL_INDEX:
-				/*
-				 * ARPL/MOVSXD share the same opcode, and both have different operands and mnemonics, of course.
-				 * Practically, I couldn't come up with a comfortable way to merge the operands' types of ARPL/MOVSXD.
-				 * And since the DB can't be patched dynamically, because the DB has to be multi-threaded compliant,
-				 * I have no choice but to check for ARPL/MOVSXD right here - "right about now, the funk soul brother, check it out now, the funk soul brother...", fatboy slim
-				 */
-				if (ci->dt == Decode64Bits) {
-					return &II_MOVSXD;
-				} /* else ARPL will be returned because its defined in the DB already. */
-			break;
-
-			case INST_NOP_INDEX: /* Nopnopnop */
+		if (instType == INT_INFO_TREAT) {
+			if (tmpIndex0 == INST_NOP_INDEX) { /* Nopnopnop */
 				/* Check for Pause, since it's prefixed with 0xf3, which is not a real mandatory prefix. */
 				if (ps->decodedPrefixes & INST_PRE_REP) {
 					/* Flag this prefix as used. */
@@ -410,18 +397,31 @@ _InstInfo* inst_lookup(_CodeInfo* ci, _PrefixState* ps, int* isPrefixed)
 				 */
 				if (ps->vrex & PREFIX_EX_W) ps->usedPrefixes |= INST_PRE_REX;
 				if ((ci->dt != Decode64Bits) || (~ps->vrex & PREFIX_EX_B)) return &II_NOP;
-			break;
-
-			case INST_LEA_INDEX:
+			}
+			else if (tmpIndex0 == INST_LEA_INDEX) {
 				/* Ignore segment override prefixes for LEA instruction. */
 				ps->decodedPrefixes &= ~INST_PRE_SEGOVRD_MASK;
 				/* Update unused mask for ignoring segment prefix. */
 				prefixes_ignore(ps, PFXIDX_SEG);
-			break;
+			}
+			else if (tmpIndex0 == INST_ARPL_INDEX) {
+					/*
+					 * ARPL/MOVSXD share the same opcode, and both have different operands and mnemonics, of course.
+					 * Practically, I couldn't come up with a comfortable way to merge the operands' types of ARPL/MOVSXD.
+					 * And since the DB can't be patched dynamically, because the DB has to be multi-threaded compliant,
+					 * I have no choice but to check for ARPL/MOVSXD right here - "right about now, the funk soul brother, check it out now, the funk soul brother...", fatboy slim
+					 */
+					if (ci->dt == Decode64Bits) {
+						return &II_MOVSXD;
+					} /* else ARPL will be returned because its defined in the DB already. */
+			}
 		}
-
-		/* Return the 1 byte instruction we found. */
-		return instType == INT_INFO ? &InstInfos[INST_NODE_INDEX(in)] : (_InstInfo*)&InstInfosEx[INST_NODE_INDEX(in)];
+		/*
+		 * Return the 1 byte instruction we found.
+		 * We can have three node types here: infoex, info_treat and info.
+		 * The latter two are really the same basic structure.
+		 */
+		return instType == INT_INFOEX ? (_InstInfo*)&InstInfosEx[INST_NODE_INDEX(in)] : &InstInfos[INST_NODE_INDEX(in)];
 	}
 
 	/* Read second byte, still doesn't mean all of its bits are used (I.E: ModRM). */

@@ -459,6 +459,7 @@ typedef enum {
 	INT_NOTEXISTS = 0, /* Not exists. */
 	INT_INFO = 1, /* It's an instruction info. */
 	INT_INFOEX,
+	INT_INFO_TREAT, /* Extra intervention is required by inst_lookup. */
 	INT_LIST_GROUP,
 	INT_LIST_FULL,
 	INT_LIST_DIVIDED,

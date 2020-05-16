@@ -231,11 +231,12 @@ class NodeType:
 	(NONE,        # 0
 	INFO,         # 1
 	INFOEX,       # 2
-	LIST_GROUP,   # 3
-	LIST_FULL,    # 4
-	LIST_DIVIDED, # 5
-	LIST_PREFIXED # 6
-	) = range(0, 7)
+	INFO_TREAT,   # 3
+	LIST_GROUP,   # 4
+	LIST_FULL,    # 5
+	LIST_DIVIDED, # 6
+	LIST_PREFIXED # 7
+	) = range(0, 8)
 
 class CPUFlags:
 	""" Specifies all the flags that the x86/x64 CPU supports, in a special compact order. """

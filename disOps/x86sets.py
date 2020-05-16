@@ -470,7 +470,7 @@ class Instructions:
 		# XSAVEOPT is declared below (see SFENCE).
 
 	def init_Exported(self):
-		""" Exported instruction are special instruction that create a collision in the DB.
+		""" Exported instruction are special instructions that create a collision in the DB.
 		Therefore they are exported directly so diStorm can use them manually in the
 		insts.c instruction look-up code.
 		Note that their opcodes are totally ignored here.
