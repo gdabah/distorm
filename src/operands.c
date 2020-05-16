@@ -1000,13 +1000,14 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 		case OT_ACC16:
 			operands_set_tsi(di, op, O_REG, 16, R_AX);
 		break;
-		case OT_ACC_FULL_NOT64: /* No REX.W support for IN/OUT. */
-			// vrex &= ~PREFIX_EX_W;
+		case OT_ACC_FULL_NOT64:
+			/* No REX.W support for IN/OUT. */
+			/* FALL THROUGH */
 		case OT_ACC_FULL:
 			if (effOpSz == Decode16Bits) {
 				ps->usedPrefixes |= INST_PRE_OP_SIZE;
 				operands_set_tsi(di, op, O_REG, 16, R_AX);
-			} else if (effOpSz == Decode32Bits) {
+			} else if ((effOpSz == Decode32Bits) || (type == OT_ACC_FULL_NOT64)) {
 				ps->usedPrefixes |= INST_PRE_OP_SIZE;
 				operands_set_tsi(di, op, O_REG, 32, R_EAX);
 			} else { /* Decode64Bits */

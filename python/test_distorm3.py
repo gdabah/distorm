@@ -782,6 +782,7 @@ class TestMode64(unittest.TestCase):
 		I64("add rax, 0x100").check_reg(0, Regs.RAX, 64)
 	def test_acc_full_not64(self):
 		I64("out 0x64, eax").check_reg(1, Regs.EAX, 32)
+		I64("db 0x48\nout 0x64, eax").check_reg(1, Regs.EAX, 32)
 	def test_mem16_full(self):
 		I64("call far [rbp]").check_simple_deref(0, Regs.RBP, 32)
 		I64("db 0x48\n call far [rbp]").check_simple_deref(0, Regs.RBP, 64)
