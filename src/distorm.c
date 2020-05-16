@@ -136,14 +136,6 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 	_DLLEXPORT_ void distorm_format32(const _CodeInfo* ci, const _DInst* di, _DecodedInst* result)
 #endif
 {
-#if 0
-	unsigned int size = di->size;
-	_OffsetType offset = di->addr;
-	result->offset = offset;
-	result->size = size;
-	return;
-#endif
-
 	unsigned char* str;
 	int64_t tmpDisp64;
 	uint64_t addrMask = (uint64_t)-1;
