@@ -57,7 +57,7 @@ static void distorm_format_size(unsigned char** str, const _DInst* di, int opNum
 	 *
 	 * If given operand number is higher than 2, then output the size anyways.
 	 */
-	isSizingRequired = ((opNum >= 2) || ((di->ops[0].type != O_REG) && (di->ops[1].type != O_REG)));
+	isSizingRequired = ((opNum >= 2) || ((opNum == 0) && (di->ops[0].type != O_REG) && (di->ops[1].type != O_REG)));
 
 	/* Still not sure? Try some special instructions. */
 	if (!isSizingRequired) {
@@ -140,7 +140,7 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 	int64_t tmpDisp64;
 	uint64_t addrMask = (uint64_t)-1;
 	const _WMnemonic* mnemonic;
-	unsigned int suffixSize = 0;
+	int suffixSize = -1;
 
 	/* Set address mask, when default is for 64bits addresses. */
 	if (ci->features & DF_USE_ADDR_MASK) addrMask = ci->addrMask;
@@ -177,10 +177,11 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 		 * and no segment is overridden, so add the suffix letter,
 		 * to indicate size of operation and continue to next instruction.
 		 */
-		if ((SEGMENT_IS_DEFAULT(di->segment)) && (FLAG_GET_ADDRSIZE(di->flags) == ci->dt)) {
+		if ((((di->segment == R_NONE) || SEGMENT_IS_DEFAULT(di->segment))) && (FLAG_GET_ADDRSIZE(di->flags) == ci->dt)) {
 			suffixSize = di->ops[0].size / 8;
 			goto skipOperands;
 		}
+		suffixSize = 0; /* Marks it's a string instruction. */
 	}
 
 	for (unsigned int i = 0; i < di->opsNo; i++) {
@@ -193,15 +194,12 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 			/* If the instruction is 'push', show explicit size (except byte imm). */
 			if ((di->opcode == I_PUSH) && (di->ops[i].size != 8)) distorm_format_size(&str, di, i);
 			/* Special fix for negative sign extended immediates. */
-			if ((di->flags & FLAG_IMM_SIGNED) && (di->ops[i].size == 8)) {
-				if (di->imm.sbyte < 0) {
-					chrcat_WS(str, MINUS_DISP_CHR);
-					tmpDisp64 = -di->imm.sbyte;
-						str_int(&str, tmpDisp64);
-					break;
-				}
+			if ((di->flags & FLAG_IMM_SIGNED) && (di->ops[i].size == 8) && (di->imm.sbyte < 0)) {
+				chrcat_WS(str, MINUS_DISP_CHR);
+				tmpDisp64 = -di->imm.sbyte;
+				str_int(&str, tmpDisp64);
 			}
-			str_int(&str, di->imm.qword);
+			else str_int(&str, di->imm.qword);
 		}
 		else if (type == O_PC) {
 #ifdef SUPPORT_64BIT_OFFSET
@@ -214,8 +212,8 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 		else if (type == O_DISP) {
 			distorm_format_size(&str, di, i);
 			chrcat_WS(str, OPEN_CHR);
-			if ((SEGMENT_GET(di->segment) != R_NONE) && !SEGMENT_IS_DEFAULT(di->segment)) {
-				strcat_WSR(&str, &_REGISTERS[SEGMENT_GET(di->segment)]);
+			if (!SEGMENT_IS_DEFAULT(di->segment)) {
+				strcat_WSR(&str, &_REGISTERS[SEGMENT_GET_UNSAFE(di->segment)]);
 				chrcat_WS(str, SEG_OFF_CHR);
 			}
 			tmpDisp64 = di->disp & addrMask;
@@ -229,28 +227,24 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 			chrcat_WS(str, OPEN_CHR);
 
 			/*
-				* This is where we need to take special care for String instructions.
-				* If we got here, it means we need to explicitly show their operands.
-				* The problem with CMPS and MOVS is that they have two(!) memory operands.
-				* So we have to complete it ourselves, since the structure supplies only the segment that can be overridden.
-				* And make the rest of the String operations explicit.
-				*/
+			 * This is where we need to take special care for String instructions.
+			 * If we got here, it means we need to explicitly show their operands.
+			 * The problem with CMPS and MOVS is that they have two(!) memory operands.
+			 * So we have to complete it ourselves, since the structure supplies only the segment that can be overridden.
+			 * And make the rest of the String operations explicit.
+			 */
 			segment = SEGMENT_GET(di->segment);
 			isDefault = SEGMENT_IS_DEFAULT(di->segment);
-			switch (di->opcode)
-			{
-				case I_MOVS:
-					isDefault = FALSE;
+			if (suffixSize == 0) {
+				if (di->opcode == I_MOVS) {
 					if (i == 0) segment = R_ES;
-				break;
-				case I_CMPS:
+					else if (isDefault) segment = R_DS;
 					isDefault = FALSE;
-					if (i == 1) segment = R_ES;
-				break;
-				case I_INS:
-				case I_LODS:
-				case I_STOS:
-				case I_SCAS: isDefault = FALSE; break;
+				}
+				else if ((di->opcode == I_CMPS) && (i == 1)) {
+					segment = R_ES;
+					isDefault = FALSE;
+				}
 			}
 			if (!isDefault && (segment != R_NONE)) {
 				strcat_WSR(&str, &_REGISTERS[segment]);
@@ -265,8 +259,8 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 		else if (type == O_MEM) {
 			distorm_format_size(&str, di, i);
 			chrcat_WS(str, OPEN_CHR);
-			if ((SEGMENT_GET(di->segment) != R_NONE) && !SEGMENT_IS_DEFAULT(di->segment)) {
-				strcat_WSR(&str, &_REGISTERS[SEGMENT_GET(di->segment)]);
+			if (!SEGMENT_IS_DEFAULT(di->segment)) {
+				strcat_WSR(&str, &_REGISTERS[SEGMENT_GET_UNSAFE(di->segment)]);
 				chrcat_WS(str, SEG_OFF_CHR);
 			}
 			if (di->base != R_NONE) {
@@ -332,7 +326,7 @@ skipOperands:
 		memcpy((int8_t*)str, mnemonic->p, 16);
 		str += mnemonic->length;
 
-		if (suffixSize) {
+		if (suffixSize > 0) {
 			*str++ = suffixTable[suffixSize];
 		}
 		strfinalize_WS(result->mnemonic, str);

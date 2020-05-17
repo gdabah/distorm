@@ -99,10 +99,9 @@ typedef unsigned __int8		uint8_t;
  * Macros to extract segment registers from 'segment':
  */
 #define SEGMENT_DEFAULT 0x80
-#define SEGMENT_SET(di, seg) ((di->segment) |= seg)
 #define SEGMENT_GET(segment) (((segment) == R_NONE) ? R_NONE : ((segment) & 0x7f))
-#define SEGMENT_IS_DEFAULT(segment) (((segment) & SEGMENT_DEFAULT) == SEGMENT_DEFAULT)
-
+#define SEGMENT_GET_UNSAFE(segment) ((segment) & 0x7f)
+#define SEGMENT_IS_DEFAULT(segment) (((int8_t)segment) < -1) /* Quick check it's a negative number that isn't -1, so it's (0x80 | SEGREG). */
 
 /* Decodes modes of the disassembler, 16 bits or 32 bits or 64 bits for AMD64, x86-64. */
 typedef enum { Decode16Bits = 0, Decode32Bits = 1, Decode64Bits = 2 } _DecodeType;

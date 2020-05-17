@@ -127,7 +127,7 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, const uint8_t*
 	}
 	else
 	{
-		effAdrSz = decode_get_effective_addr_size(ci->dt, 0);
+		effAdrSz = ci->dt; /* Default is current decoding type since there's no prefix. */
 		effOpSz = decode_get_effective_op_size(ci->dt, 0, 0, instFlags);
 	}
 
