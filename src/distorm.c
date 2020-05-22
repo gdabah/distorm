@@ -177,7 +177,7 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 		 * and no segment is overridden, so add the suffix letter,
 		 * to indicate size of operation and continue to next instruction.
 		 */
-		if ((((di->segment == R_NONE) || SEGMENT_IS_DEFAULT(di->segment))) && (FLAG_GET_ADDRSIZE(di->flags) == ci->dt)) {
+		if ((SEGMENT_IS_DEFAULT_OR_NONE(di->segment)) && (FLAG_GET_ADDRSIZE(di->flags) == ci->dt)) {
 			suffixSize = di->ops[0].size / 8;
 			goto skipOperands;
 		}
