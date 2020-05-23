@@ -226,24 +226,34 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 			distorm_format_size(&str, di, i);
 			chrcat_WS(str, OPEN_CHR);
 
+			segment = SEGMENT_GET(di->segment);
+			isDefault = SEGMENT_IS_DEFAULT(di->segment);
+
 			/*
 			 * This is where we need to take special care for String instructions.
 			 * If we got here, it means we need to explicitly show their operands.
 			 * The problem with CMPS and MOVS is that they have two(!) memory operands.
-			 * So we have to complete it ourselves, since the structure supplies only the segment that can be overridden.
+			 * So we have to complement(!) them ourselves, since the isntruction structure supplies only the segment that can be overridden.
 			 * And make the rest of the String operations explicit.
+			 * We ignore default ES/DS in 64 bits.
+			 * ["MOVS"], [OPT.REGI_EDI, OPT.REGI_ESI] -- DS can be overridden.
+			 * ["CMPS"], [OPT.REGI_ESI, OPT.REGI_EDI] -- DS can be overriden.
+			 *
+			 * suffixSize == 0 was set above for string opcode already.
 			 */
-			segment = SEGMENT_GET(di->segment);
-			isDefault = SEGMENT_IS_DEFAULT(di->segment);
 			if (suffixSize == 0) {
-				if (di->opcode == I_MOVS) {
-					if (i == 0) segment = R_ES;
-					else if (isDefault) segment = R_DS;
-					isDefault = FALSE;
+				if (((di->opcode == I_MOVS) && (i == 0)) || ((di->opcode == I_CMPS) && (i == 1))) {
+					if (ci->dt != Decode64Bits) {
+						segment = R_ES;
+						isDefault = FALSE;
+					}
+					else isDefault = TRUE;
 				}
-				else if ((di->opcode == I_CMPS) && (i == 1)) {
-					segment = R_ES;
-					isDefault = FALSE;
+				else if (isDefault && ((di->opcode == I_MOVS) || (di->opcode == I_CMPS))) {
+					if (ci->dt != Decode64Bits) {
+						segment = R_DS;
+						isDefault = FALSE;
+					}
 				}
 			}
 			if (!isDefault && (segment != R_NONE)) {
