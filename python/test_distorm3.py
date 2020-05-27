@@ -1525,6 +1525,9 @@ class TestMisc2(unittest.TestCase):
 		insts = IB64(data).insts
 		output = "".join([_hexlify(i.instructionBytes) for i in insts])
 		self.assertTrue(data == output)
+	def test_longest_mnemonic(self):
+		# The longest mnemonic is VAESKEYGENASSIST and check it's null terminated.
+		self.assertEqual(I32("VAESKEYGENASSIST xmm1, xmm2, 7").inst.mnemonic, "VAESKEYGENASSIST")
 
 class TestPrefixes(unittest.TestCase):
 	Derefs16 = ["BX + SI", "BX + DI", "BP + SI", "BP + DI", "SI", "DI", "BP", "BX"]
