@@ -27,7 +27,7 @@ def main():
     'ext_modules'       : [distorm_module],
     # Metadata
     'name'              : 'distorm3',
-    'version'           : '3.4.2',
+    'version'           : '3.5.0',
     'description'       : 'The goal of diStorm3 is to decode x86/AMD64' \
                           ' binary streams and return a structure that' \
                           ' describes each instruction.',
