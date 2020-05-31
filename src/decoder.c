@@ -204,7 +204,7 @@ static _DecodeResult decode_inst(_CodeInfo* ci, _PrefixState* ps, const uint8_t*
 		/* Copy DST_WR flag. */
 		di->flags |= (instFlags & INST_DST_WR) >> (31 - 6); /* Copy bit from INST_DST_WR (bit 31) to FLAG_DST_WR (bit 6). */
 		/* operands_extract may touched it for FPU operands, so add on top. */
-		di->opsNo += opsNo;
+		di->opsNo += (uint8_t)opsNo;
 	}
 
 	if (instFlags & (INST_3DNOW_FETCH |

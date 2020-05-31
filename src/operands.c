@@ -229,11 +229,8 @@ static void operands_extract_sib(_DInst* di,
 
  * Some instructions force the use of RM16 or other specific types, so take it into account.
  */
-static int operands_extract_modrm(_CodeInfo* ci,
-                                  _DInst* di, _OpType type,
-                                  _PrefixState* ps,
-                                  _DecodeType effOpSz, _DecodeType effAdrSz,
-                                  unsigned int mod, unsigned int rm,
+static int operands_extract_modrm(_CodeInfo* ci, _PrefixState* ps, _DInst* di,
+                                  _DecodeType effAdrSz, unsigned int mod, unsigned int rm,
                                   _iflags instFlags, _Operand* op)
 {
 	unsigned char sib = 0, base = 0;
@@ -452,7 +449,7 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 			default: return FALSE;
 		}
 		rm = modrm & 7;
-		ret = operands_extract_modrm(ci, di, type, ps, effOpSz, effAdrSz, mod, rm, instFlags, op);
+		ret = operands_extract_modrm(ci, ps, di, effAdrSz, mod, rm, instFlags, op);
 		op->size = (uint16_t)size;
 		if ((op->type == O_SMEM) || (op->type == O_MEM)) {
 			di->usedRegistersMask |= _REGISTERTORCLASS[op->index];
@@ -558,7 +555,7 @@ int operands_extract(_CodeInfo* ci, _DInst* di, _InstInfo* ii,
 			}
 			/* Fill size of memory dereference for operand. */
 			rm = modrm & 7;
-			ret = operands_extract_modrm(ci, di, type, ps, effOpSz, effAdrSz, mod, rm, instFlags, op);
+			ret = operands_extract_modrm(ci, ps, di, effAdrSz, mod, rm, instFlags, op);
 			op->size = (uint16_t)size;
 			if ((op->type == O_SMEM) || (op->type == O_MEM)) {
 				di->usedRegistersMask |= _REGISTERTORCLASS[op->index];
