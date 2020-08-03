@@ -548,6 +548,12 @@ _DecodeResult decode_internal(_CodeInfo* _ci, int supportOldIntr, _DInst result[
 				pdi->size = 1;
 				pdi->addr = codeOffset & ci.addrMask;
 				pdi = (_DInst*)((char*)pdi + diStructSize);
+
+				/* If an instruction wasn't decoded then stop on undecodeable if set. */
+				if (features & DF_STOP_ON_UNDECODEABLE) {
+					ret = DECRES_SUCCESS;
+					break;
+				}
 			}
 
 			/* Skip a single byte in case of a failure and retry instruction. */

@@ -392,12 +392,15 @@ typedef struct {
 #define DF_STOP_ON_HLT 0x400
 /* The decoder will stop and return to the caller when it encounters a privileged instruction. */
 #define DF_STOP_ON_PRIVILEGED 0x800
+/* The decoder will stop and return to the caller when an instruction couldn't be decoded. */
+#define DF_STOP_ON_UNDECODEABLE 0x1000
 /* The decoder will not synchronize to the next byte after the previosuly decoded instruction, instead it will start decoding at the next byte. */
-#define DF_SINGLE_BYTE_STEP 0x1000
+#define DF_SINGLE_BYTE_STEP 0x2000
 /* The decoder will fill in the eflags fields for the decoded instruction. */
-#define DF_FILL_EFLAGS 0x2000
+#define DF_FILL_EFLAGS 0x4000
 /* The decoder will use the addrMask in CodeInfo structure instead of DF_MAXIMUM_ADDR16/32. */
-#define DF_USE_ADDR_MASK 0x4000
+#define DF_USE_ADDR_MASK 0x8000
+
 /* The decoder will stop and return to the caller when any flow control instruction was decoded. */
 #define DF_STOP_ON_FLOW_CONTROL (DF_STOP_ON_CALL | DF_STOP_ON_RET | DF_STOP_ON_SYS | DF_STOP_ON_UNC_BRANCH | DF_STOP_ON_CND_BRANCH | DF_STOP_ON_INT | DF_STOP_ON_CMOV | DF_STOP_ON_HLT)
 
