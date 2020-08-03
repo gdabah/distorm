@@ -1990,9 +1990,9 @@ class TestFeatures(unittest.TestCase):
 		self.assertEqual(a[2].testedFlags, 0)
 		self.assertEqual(a[2].undefinedFlags, 0)
 	def test_stop_undecodable(self):
-		self.assertEqual(len(IB16("909033c0ffff90").insts), 3)
-		self.assertEqual(len(IB32("909033c090ffff90").insts), 4)
-		self.assertEqual(len(IB64("909033c09090ffff9090").insts), 5)
+		self.assertEqual(len(IB16("909033c0ffff90").insts, distorm3.DF_STOP_ON_UNDECODEABLE), 3)
+		self.assertEqual(len(IB32("909033c090ffff90").insts, distorm3.DF_STOP_ON_UNDECODEABLE), 4)
+		self.assertEqual(len(IB64("909033c09090ffff9090").insts, distorm3.DF_STOP_ON_UNDECODEABLE), 5)
 
 class TestAPI(unittest.TestCase):
 	def direct_decompose(self, code, codeOffset, dt, features, maxInstructions):
