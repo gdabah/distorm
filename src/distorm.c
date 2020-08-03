@@ -141,6 +141,7 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 	uint64_t addrMask = (uint64_t)-1;
 	const _WMnemonic* mnemonic;
 	int suffixSize = -1;
+	unsigned int i;
 
 	/* Set address mask, when default is for 64bits addresses. */
 	if (ci->features & DF_USE_ADDR_MASK) addrMask = ci->addrMask;
@@ -184,7 +185,7 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 		suffixSize = 0; /* Marks it's a string instruction. */
 	}
 
-	for (unsigned int i = 0; i < di->opsNo; i++) {
+	for (i = 0; i < di->opsNo; i++) {
 		unsigned int type = di->ops[i].type;
 		if (i > 0) strcat_WS(str, ", ", 2, 2);
 		if (type == O_REG) {
@@ -354,6 +355,7 @@ skipOperands:
 {
 	_DecodeResult res;
 	_CodeInfo ci;
+	unsigned int i, instsCount;
 
 	*usedInstructionsCount = 0;
 
@@ -390,7 +392,8 @@ skipOperands:
 	else ci.addrMask = (_OffsetType)-1;
 
 	res = decode_internal(&ci, TRUE, (_DInst*)result, maxInstructions, usedInstructionsCount);
-	for (unsigned int i = 0, instsCount = *usedInstructionsCount; i < instsCount; i++) {
+	instsCount = *usedInstructionsCount;
+	for (i = 0; i < instsCount; i++) {
 		/* distorm_format is optimized and can work with same input/output buffer in-place. */
 #ifdef SUPPORT_64BIT_OFFSET
 		distorm_format64(&ci, (_DInst*)&result[i], &result[i]);
