@@ -7,7 +7,10 @@ TARGET	= libdistorm3.dylib
 PYTHON_BUILD_DIR = ../../Python/macosx-x86
 COBJS	= ../../src/mnemonics.o ../../src/textdefs.o ../../src/prefix.o ../../src/operands.o ../../src/insts.o ../../src/instructions.o ../../src/distorm.o ../../src/decoder.o
 CC	= gcc
-CFLAGS	= -arch i386 -arch x86_64 -O2 -Wall -fPIC -DSUPPORT_64BIT_OFFSET -D${DISTORM_MODE}
+CFLAGS	= -arch x86_64 -O2 -Wall -fPIC -DSUPPORT_64BIT_OFFSET -D${DISTORM_MODE}
+ifeq ($(DISTORM_FAT), 1)
+        CFLAGS += -arch i386
+endif
 
 all: clib
 
