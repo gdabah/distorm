@@ -13,7 +13,7 @@ This library is licensed under the BSD license. See the file COPYING.
 #define CONFIG_H
 
 /* diStorm version number. */
-#define __DISTORMV__ 0x030500
+#define __DISTORMV__ 0x030501
 
 #include <string.h> /* memset, memcpy - can be easily self implemented for libc independency. */
 
@@ -57,6 +57,7 @@ This library is licensed under the BSD license. See the file COPYING.
 
 #define _DLLEXPORT_
 #define _FASTCALL_
+/* Keep inline as static (arrrrg) as it would break linux on some flavors otherwise. */
 #define _INLINE_ static
 /* GCC ignores this directive... */
 /*#define _FASTCALL_ __attribute__((__fastcall__))*/
