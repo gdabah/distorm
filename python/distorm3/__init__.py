@@ -570,6 +570,7 @@ class Instruction (object):
             self.isSegmentDefault = False
         self.unusedPrefixesMask = di.unusedPrefixesMask
         self.usedRegistersMask = di.usedRegistersMask
+        self.registers = []
 
         if flags == FLAG_NOT_DECODABLE:
             self.mnemonic = 'DB 0x%02x' % (di.imm.byte)
@@ -583,6 +584,10 @@ class Instruction (object):
         for index, flag in enumerate(FLAGS):
             if (flags & (1 << index)) != 0:
                 self.flags.append(flag)
+
+        for mask, value in RegisterMasks.items():
+            if self.usedRegistersMask & mask:
+                self.registers.append(value)
 
         # read the operands
         for operand in di.ops:
