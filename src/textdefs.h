@@ -47,9 +47,13 @@ void str_hex(_WString* s, const uint8_t* buf, unsigned int len);
 
 #ifdef SUPPORT_64BIT_OFFSET
 #define str_int(s, x) str_int_impl((s), (x))
+#define str_uint(s, x, b) str_uint_impl((s), (x), (b))
 void str_int_impl(unsigned char** s, uint64_t x);
+void str_uint_impl(unsigned char** s, uint64_t x, uint16_t b);
 #else
 #define str_int(s, x) str_int_impl((s), (uint8_t*)&(x))
+# placebo function
+#define str_uint(s, x, b) str_int_impl((s), (uint8_t*)&(x))
 void str_int_impl(unsigned char** s, uint8_t src[8]);
 #endif
 

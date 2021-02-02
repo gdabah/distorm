@@ -81,6 +81,16 @@ void str_int_impl(unsigned char** s, uint64_t x)
 	*s = (unsigned char*)buf;
 }
 
+void str_uint_impl(unsigned char** s, uint64_t x, uint16_t b)
+{
+    uint64_t mask = 0;
+    while (--b) {
+        mask |= 1;
+        mask <<= 1;
+    }
+    str_int_impl(s, x & mask);
+}
+
 #else
 
 void str_int_impl(unsigned char** s, uint8_t src[8])
