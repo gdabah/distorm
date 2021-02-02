@@ -200,7 +200,7 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 				tmpDisp64 = -di->imm.sbyte;
 				str_int(&str, tmpDisp64);
 			}
-			else str_int(&str, di->imm.qword);
+			else str_uint(&str, di->imm.qword, di->ops[i].size);
 		}
 		else if (type == O_PC) {
 #ifdef SUPPORT_64BIT_OFFSET

@@ -81,6 +81,16 @@ void str_int_impl(unsigned char** s, uint64_t x)
 	*s = (unsigned char*)buf;
 }
 
+void str_uint_impl(unsigned char** s, uint64_t x, uint16_t b)
+{
+    uint64_t mask = 0;
+    while (--b) {
+        mask |= 1;
+        mask <<= 1;
+    }
+    str_int_impl(s, x & mask);
+}
+
 #else
 
 void str_int_impl(unsigned char** s, uint8_t src[8])
@@ -109,6 +119,16 @@ void str_int_impl(unsigned char** s, uint8_t src[8])
 	buf[i++] = NIBBLE_TO_CHR;
 
 	*s += (size_t)(i + 2);
+}
+
+void str_uint_impl(unsigned char** s, uint32_t x, uint16_t b)
+{
+    uint32_t mask = 0;
+    while (--b) {
+        mask |= 1;
+        mask <<= 1;
+    }
+    str_int_impl(s, x & mask);
 }
 
 #endif /* SUPPORT_64BIT_OFFSET */
