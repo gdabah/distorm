@@ -9,7 +9,7 @@ CFLAGS	= -Wall -O2 -I. -o
 all:	disasm
 
 disasm:
-	${CC} ${CFLAGS} ${TARGET} main.cpp ../distorm64.a
+	${CC} ${CFLAGS} ${TARGET} main.cpp ../../distorm3.a
 
 clean:
 	/bin/rm -rf *.o ${TARGET} 
