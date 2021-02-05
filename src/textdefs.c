@@ -84,9 +84,9 @@ void str_int_impl(unsigned char** s, uint64_t x)
 void str_uint_impl(unsigned char** s, uint64_t x, uint16_t b)
 {
     uint64_t mask = 0;
-    while (--b) {
-        mask |= 1;
+    while (b--) {
         mask <<= 1;
+        mask |= 1;
     }
     str_int_impl(s, x & mask);
 }
