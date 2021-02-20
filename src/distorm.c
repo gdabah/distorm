@@ -217,7 +217,7 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 		else if (type == O_DISP) {
 			distorm_format_size(&str, di, i);
 			chrcat_WS(str, OPEN_CHR);
-			if (!SEGMENT_IS_DEFAULT(di->segment)) {
+			if (!SEGMENT_IS_DEFAULT_OR_NONE(di->segment)) {
 				strcat_WSR(&str, &_REGISTERS[SEGMENT_GET_UNSAFE(di->segment)]);
 				chrcat_WS(str, SEG_OFF_CHR);
 			}
@@ -274,7 +274,7 @@ static uint8_t suffixTable[10] = { 0, 'B', 'W', 0, 'D', 0, 0, 0, 'Q' };
 		else if (type == O_MEM) {
 			distorm_format_size(&str, di, i);
 			chrcat_WS(str, OPEN_CHR);
-			if (!SEGMENT_IS_DEFAULT(di->segment)) {
+			if (!SEGMENT_IS_DEFAULT_OR_NONE(di->segment)) {
 				strcat_WSR(&str, &_REGISTERS[SEGMENT_GET_UNSAFE(di->segment)]);
 				chrcat_WS(str, SEG_OFF_CHR);
 			}

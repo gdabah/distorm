@@ -1890,6 +1890,10 @@ class TestInvalid(unittest.TestCase):
 	def test_zzz_must_be_last_drop_prefixes(self):
 		# Drop prefixes when the last byte in stream is a prefix.
 		IB32("66")
+	def test_CR4_regression(self):
+		# Regression test to validate CR4 isn't used as invalid default segment (-1 maps to CR4) in 64 bits.
+		self.assertEqual(str(IB64("f20f104c1860").inst), "MOVSD XMM1, [RAX+RBX+0x60]")
+		self.assertEqual(str(IB64("4883241e00").inst), "AND QWORD [RSI+RBX], 0x0")
 	def test_undefined_byte00(self):
 		# This is a regression test for the decomposer wrapper.
 		a = ""
