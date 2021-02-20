@@ -169,6 +169,9 @@ class TestMode16(unittest.TestCase):
 		I16("int 0x55").check_imm(0, 0x55, 8)
 	def test_imm16(self):
 		I16("ret 0x1122").check_imm(0, 0x1122, 16)
+	def test_seimm32(self):
+		I16("mov ax, 0xff80").check_imm(1, 0xff80, 16)
+		self.assertTrue(str(IB16("BA8080").inst).find("0x8080") != -1)
 	def test_imm_full(self):
 		I16("push 0x1234").check_imm(0, 0x1234, 16)
 	def test_imm_aadm(self):
@@ -401,6 +404,9 @@ class TestMode32(unittest.TestCase):
 		I32("int 0x55").check_imm(0, 0x55, 8)
 	def test_imm16(self):
 		I32("ret 0x1122").check_imm(0, 0x1122, 16)
+	def test_seimm32(self):
+		I32("mov eax, 0xff112233").check_imm(1, 0xff112233, 32)
+		self.assertTrue(str(IB32("BA5F6038CE").inst).find("0xce38605f") != -1)
 	def test_imm_full(self):
 		I32("push 0x12345678").check_imm(0, 0x12345678, 32)
 	def test_imm_aadm(self):
@@ -687,6 +693,9 @@ class TestMode64(unittest.TestCase):
 		I64("int 0x55").check_imm(0, 0x55, 8)
 	def test_imm16(self):
 		I64("ret 0x1122").check_imm(0, 0x1122, 16)
+	def test_seimm32(self):
+		I64("mov eax, 0xff112233").check_imm(1, -15654349, 32)
+		self.assertTrue(str(IB64("BA5F6038CE").inst).find("0xce38605f") != -1)
 	def test_imm_full(self):
 		I64("push 0x12345678").check_imm(0, 0x12345678, 32)
 		I64("mov rax, 0x1234567812345678").check_imm(1, 0x1234567812345678, 64)
@@ -1005,10 +1014,10 @@ class TestMode64(unittest.TestCase):
 
 class TestInstTable(unittest.TestCase):
 	""" Check that locate_inst algorithm covers all opcode-length (ol)
-	    for the varying sizes of opcodes.
-	    The bad tests should not find an instruction, so they should fail on purpose,
-	    to see we don't crash the diassembler.
-	    Also test for some end-cases with nop and wait. """
+		for the varying sizes of opcodes.
+		The bad tests should not find an instruction, so they should fail on purpose,
+		to see we don't crash the diassembler.
+		Also test for some end-cases with nop and wait. """
 	def test_c7_opcode(self):
 		IB32("c7f8aaaaaaaa").check_mnemonic("XBEGIN")
 		IB64("c7f8aaaaaaaa").check_mnemonic("XBEGIN")
