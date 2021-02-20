@@ -427,7 +427,7 @@ typedef struct {
 #define FC_HLT 8
 
 /* Return code of the decoding function. */
-typedef enum { DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, DECRES_FILTERED } _DecodeResult;
+typedef enum { DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR } _DecodeResult;
 
 /* Define the following interface functions only for outer projects. */
 #if !(defined(DISTORM_STATIC) || defined(DISTORM_DYNAMIC))
