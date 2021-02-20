@@ -571,6 +571,16 @@ class Instruction (object):
         self.unusedPrefixesMask = di.unusedPrefixesMask
         self.usedRegistersMask = di.usedRegistersMask
 
+        # calculate register masks
+        self.registers = []
+        maskIndex = 1
+        v = self.usedRegistersMask
+        while (v):
+            if (v & maskIndex):
+                self.registers.append(RegisterMasks[maskIndex])
+                v ^= maskIndex
+            maskIndex <<= 1
+
         if flags == FLAG_NOT_DECODABLE:
             self.mnemonic = 'DB 0x%02x' % (di.imm.byte)
             self.flags = ['FLAG_NOT_DECODABLE']
