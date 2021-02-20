@@ -320,10 +320,10 @@ skipOperands:
 		/* In-place considerations: DI is RESULT. Deref fields first. */
 		unsigned int opcode = di->opcode;
 		unsigned int prefix = FLAG_GET_PREFIX(di->flags);
-		mnemonic = (const _WMnemonic*)&_MNEMONICS[opcode];
 		unsigned int size = di->size;
 		_OffsetType offset = di->addr & addrMask;
 		str = (unsigned char*)&result->mnemonic.p;
+		mnemonic = (const _WMnemonic*)&_MNEMONICS[opcode];
 
 		if (prefix) {
 			/* REP prefix for CMPS and SCAS is really a REPZ. */

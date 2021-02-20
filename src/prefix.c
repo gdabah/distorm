@@ -128,6 +128,7 @@ void prefixes_decode(_CodeInfo* ci, _PrefixState* ps)
 	const uint8_t* rexPos = NULL;
 	const uint8_t* start = ci->code;
 	uint8_t byte, vex;
+	unsigned int index;
 	/*
 	 * First thing to do, scan for prefixes, there are six types of prefixes.
 	 * There may be up to six prefixes before a single instruction, not the same type, no special order,
@@ -139,7 +140,7 @@ void prefixes_decode(_CodeInfo* ci, _PrefixState* ps)
 	 * We attach all prefixes to the next instruction, there might be two or more occurrences from the same prefix.
 	 * Also, since VEX can be allowed only once we will test it separately.
 	 */
-	for (unsigned int index = 0;
+	for (index = 0;
 		(ci->codeLen > 0) && (index < INST_MAXIMUM_SIZE);
 		ci->code++, ci->codeLen--, index++) {
 		/*
