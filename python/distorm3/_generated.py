@@ -258,3 +258,29 @@ Registers = ["RAX", "RCX", "RDX", "RBX", "RSP", "RBP", "RSI", "RDI", "R8", "R9",
 "YMM0", "YMM1", "YMM2", "YMM3", "YMM4", "YMM5", "YMM6", "YMM7", "YMM8", "YMM9", "YMM10", "YMM11", "YMM12", "YMM13", "YMM14", "YMM15",
 "CR0", "", "CR2", "CR3", "CR4", "", "", "", "CR8",
 "DR0", "DR1", "DR2", "DR3", "", "", "DR6", "DR7"]
+
+RegisterMasks = {
+1: "RM_AX", # /* AL, AH, AX, EAX, RAX */
+2: "RM_CX", # /* CL, CH, CX, ECX, RCX */
+4: "RM_DX", # /* DL, DH, DX, EDX, RDX */
+8: "RM_BX", # /* BL, BH, BX, EBX, RBX */
+0x10: "RM_SP", # /* SPL, SP, ESP, RSP */
+0x20: "RM_BP", # /* BPL, BP, EBP, RBP */
+0x40: "RM_SI", # /* SIL, SI, ESI, RSI */
+0x80: "RM_DI", # /* DIL, DI, EDI, RDI */
+0x100: "RM_FPU", # /* ST(0) - ST(7) */
+0x200: "RM_MMX", # /* MM0 - MM7 */
+0x400: "RM_SSE", # /* XMM0 - XMM15 */
+0x800: "RM_AVX", # /* YMM0 - YMM15 */
+0x1000: "RM_CR", # /* CR0, CR2, CR3, CR4, CR8 */
+0x2000: "RM_DR", # /* DR0, DR1, DR2, DR3, DR6, DR7 */
+0x4000: "RM_R8", # /* R8B, R8W, R8D, R8 */
+0x8000: "RM_R9", # /* R9B, R9W, R9D, R9 */
+0x10000: "RM_R10", # /* R10B, R10W, R10D, R10 */
+0x20000: "RM_R11", # /* R11B, R11W, R11D, R11 */
+0x40000: "RM_R12", # /* R12B, R12W, R12D, R12 */
+0x80000: "RM_R13", # /* R13B, R13W, R13D, R13 */
+0x100000: "RM_R14", # /* R14B, R14W, R14D, R14 */
+0x200000: "RM_R15", # /* R15B, R15W, R15D, R15 */
+0x400000: "RM_SEG", # /* CS, SS, DS, ES, FS, GS */
+}

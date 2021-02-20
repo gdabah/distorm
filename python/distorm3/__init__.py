@@ -23,12 +23,13 @@ __all__ = [
     'Decode64Bits',
     'Mnemonics',
     'Registers',
+    'RegisterMasks'
 ]
 
 from ctypes import *
 import os
 import sys
-from ._generated import Registers, Mnemonics
+from ._generated import Registers, Mnemonics, RegisterMasks
 
 if sys.version_info[0] >= 3:
     xrange = range
@@ -568,6 +569,7 @@ class Instruction (object):
             self.segment = R_NONE
             self.isSegmentDefault = False
         self.unusedPrefixesMask = di.unusedPrefixesMask
+        self.usedRegistersMask = di.usedRegistersMask
 
         if flags == FLAG_NOT_DECODABLE:
             self.mnemonic = 'DB 0x%02x' % (di.imm.byte)
