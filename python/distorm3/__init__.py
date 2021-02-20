@@ -92,7 +92,7 @@ class _WString (Structure):
 
 class _CodeInfo (Structure):
     _fields_ = [
-        ('codeOffset',	_OffsetType),
+        ('codeOffset',  _OffsetType),
         ('addrMask',    _OffsetType),
         ('nextOffset',  _OffsetType),
         ('code',        c_char_p),
@@ -104,7 +104,7 @@ class _CodeInfo (Structure):
 class _DecodedInst (Structure):
     _fields_ = [
         ('offset',          _OffsetType),
-	    ('size',            c_uint),
+        ('size',            c_uint),
         ('mnemonic',        _WString),
         ('operands',        _WString),
         ('instructionHex',  _WString)
@@ -210,11 +210,11 @@ FLAGS = [
 ]
 
 # CPU flags that instructions modify, test or undefine (are EFLAGS compatible!).
-D_CF = 1	 # Carry #
-D_PF = 4	 # Parity #
-D_AF = 0x10	 # Auxiliary #
-D_ZF = 0x40	 # Zero #
-D_SF = 0x80	 # Sign #
+D_CF = 1     # Carry #
+D_PF = 4     # Parity #
+D_AF = 0x10  # Auxiliary #
+D_ZF = 0x40  # Zero #
+D_SF = 0x80  # Sign #
 D_IF = 0x200 # Interrupt #
 D_DF = 0x400 # Direction #
 D_OF = 0x800 # Overflow #
@@ -435,16 +435,16 @@ FlowControlFlags = [
 
 # TODO: put FlowControlFlags together in one class with _repr_.
 class FlowControl:
-	""" The flow control instruction will be flagged in the lo byte of the 'meta' field in _InstInfo of diStorm.
-	They are used to distinguish between flow control instructions (such as: ret, call, jmp, jz, etc) to normal ones. """
-	(CALL,
-	RET,
-	SYS,
-	UNC_BRANCH,
-	CND_BRANCH,
-	INT,
-	CMOV,
-	HLT) = range(1, 9)
+    """ The flow control instruction will be flagged in the lo byte of the 'meta' field in _InstInfo of diStorm.
+    They are used to distinguish between flow control instructions (such as: ret, call, jmp, jz, etc) to normal ones. """
+    (CALL,
+    RET,
+    SYS,
+    UNC_BRANCH,
+    CND_BRANCH,
+    INT,
+    CMOV,
+    HLT) = range(1, 9)
 
 def _getOpSize(flags):
     return ((flags >> 7) & 3)
