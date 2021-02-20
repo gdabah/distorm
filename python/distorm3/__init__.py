@@ -46,7 +46,7 @@ def _load_distorm():
             pass
 
     dll_ext = ('.dll' if sys.platform == 'win32' else '.so')
-    libnames = ['_distorm3' + dll_ext]
+    libnames = ['_distorm3' + dll_ext, '_distorm3.pyd']
     for dir in sys.path:
         for name in libnames:
             _distorm_file = os.path.join(dir, name)
