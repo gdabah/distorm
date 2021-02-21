@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-. include explode arrays
+source bash/upvars.inc.sh 
+source bash/explode.inc.sh
+source bash/arrays.inc.sh
 
 # sfink@280x linux $ ndisasm.exe -b 64 -o 0x140016124 torture.bin > rn.asm
 # sfink@280x linux $ ./disasm.exe -b64 torture.bin 0x140016124 > rd.asm
@@ -177,7 +179,7 @@ process_asm() {
                             
                             # check what the default ptr size for this value would be
                             default_ptr_size=$( ptrsize $val )
-                            echo "$default_ptr_size $val ${split_oper[0]}" >& 2
+                            # echo "$default_ptr_size $val ${split_oper[0]}" >& 2
 
                             # if the default matches what is obvious, remove it
                             if [[ $default_ptr_size == ${split_oper[0]} ]]; then
@@ -223,7 +225,7 @@ process_asm() {
                     array_find "${ptr_words[1]}" "${ptrna[@]}"
                     ptr_pos=$?
                     if in_array "${reg_words[0]}" ${opsna[$ptr_pos]}; then
-                        echo "have to remove ${ptr_words[1]} from operand 1, due to matched ${reg_words[0]}" >& 2
+                        echo "removing ${ptr_words[1]} from operand 1, due to register of matching size ${reg_words[0]}" >& 2
                         explode " " "${new_opers[1]}"
                         array_copy tmp "${EXPLODED[@]}"
                         # cant shift from EXPLODED because array_shift uses that var
@@ -241,7 +243,7 @@ process_asm() {
                     array_find "${ptr_words[0]}" "${ptrna[@]}"
                     ptr_pos=$?
                     if in_array "${reg_words[1]}" ${opsna[$ptr_pos]}; then
-                        echo "have to remove ${ptr_words[0]} from operand 0, due to matched ${reg_words[1]}" >& 2
+                        echo "removing ${ptr_words[0]} from operand 0, due to register of matching size ${reg_words[1]}" >& 2
                         explode " " "${new_opers[0]}"
                         array_copy tmp "${EXPLODED[@]}"
                         # cant shift from EXPLODED because array_shift uses that var
@@ -266,12 +268,11 @@ process_asm() {
 }
 # process_asm <<< $( ndisasm.exe -b 64 -o 0x140016124 torture.bin )
 # process_asm <<< $( ./disasm.exe -b64 torture.bin 0x140016124 )
-# process_asm <<< $( ndisasm.exe -b 64 -o 0x140016124 torture.bin ) > test-ndisasm.asm
-# process_asm <<< $( ./disasm.exe -b64 torture.bin 0x140016124 ) > test-distorm.asm
+process_asm <<< $( ndisasm.exe -b 64 -o 0x140016124 torture.bin ) > test-ndisasm.asm
+process_asm <<< $( ./disasm.exe -b64 torture.bin 0x140016124 ) > test-distorm.asm
 
 # diff test-ndisasm.asm test-distorm.asm
 
-
-process_asm <<< $( ndisasm.exe -b 64 -o 0x1432b39b0 exception.bin ) > test-ndisasm.asm
-process_asm <<< $( ./disasm.exe -b64 exception.bin 0x1432b39b0 ) > test-distorm.asm
+process_asm <<< $( ndisasm.exe -b 64 -o 0x1432b39b0 exception.bin ) >> test-ndisasm.asm
+process_asm <<< $( ./disasm.exe -b64 exception.bin 0x1432b39b0 ) >> test-distorm.asm
 diff test-ndisasm.asm test-distorm.asm
