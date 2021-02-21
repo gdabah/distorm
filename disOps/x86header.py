@@ -9,60 +9,27 @@ class OperandType:
 	Refer to the diStorm's documentation or diStorm's instructions.h
 	for more explanation about every one of them. """
 	(NONE,
+	# REG only operands:
 	IMM8,
 	IMM16,
 	IMM_FULL,
 	IMM32,
 	SEIMM8,
-	IMM16_1, # NEW
-	IMM8_1, # NEW
-	IMM8_2, # NEW
 	REG8,
 	REG16,
 	REG_FULL,
 	REG32,
 	REG32_64,
-	FREG32_64_RM,
-	RM8,
-	RM16,
-	RM_FULL,
-	RM32_64,
-	RM16_32,
-	FPUM16,
-	FPUM32,
-	FPUM64,
-	FPUM80,
-	R32_M8,
-	R32_M16,
-	R32_64_M8,
-	R32_64_M16,
-	RFULL_M16,
-	CREG,
-	DREG,
-	SREG,
-	SEG,
 	ACC8,
 	ACC16,
 	ACC_FULL,
 	ACC_FULL_NOT64,
-	MEM16_FULL,
-	PTR16_FULL,
-	MEM16_3264,
 	RELCB,
 	RELC_FULL,
-	MEM,
-	MEM_OPT, # NEW
-	MEM32,
-	MEM32_64, # NEW
-	MEM64,
-	MEM128,
-	MEM64_128,
-	MOFFS8,
-	MOFFS_FULL,
-	CONST1,
-	REGCL,
 	IB_RB,
 	IB_R_FULL,
+	MOFFS8,
+	MOFFS_FULL,
 	REGI_ESI,
 	REGI_EDI,
 	REGI_EBXAL,
@@ -72,36 +39,71 @@ class OperandType:
 	FPU_SI,
 	FPU_SSI,
 	FPU_SIS,
-	MM,
-	MM_RM,
-	MM32,
-	MM64,
 	XMM,
 	XMM_RM,
-	XMM16,
-	XMM32,
-	XMM64,
-	XMM128,
 	REGXMM0,
-	# Below new for AVX:
-	RM32,
-	REG32_64_M8,
-	REG32_64_M16,
 	WREG32_64,
-	WRM32_64,
-	WXMM32_64,
 	VXMM,
 	XMM_IMM,
 	YXMM,
 	YXMM_IMM,
 	YMM,
-	YMM256,
 	VYMM,
 	VYXMM,
+	CONST1,
+	REGCL,
+	CREG,
+	DREG,
+	SREG,
+	SEG,
+	IMM16_1,
+	IMM8_1,
+	IMM8_2,
+	PTR16_FULL,
+	FREG32_64_RM,
+	MM,
+	MM_RM,
+	# MEM only operands:
+	MEM,
+	MEM32,
+	MEM32_64,
+	MEM64,
+	MEM64_128,
+	MEM128,
+	MEM16_FULL,
+	MEM16_3264,
+	MEM_OPT,
+	FPUM16,
+	FPUM32,
+	FPUM64,
+	FPUM80,
+	LMEM128_256,
+	# MEM & REG operands ahead:
+	RM8,
+	RM16,
+	RM32,
+	RFULL_M16,
+	RM_FULL,
+	WRM32_64,
+	R32_64_M8,
+	R32_64_M16,
+	RM32_64,
+	RM16_32,
+	R32_M8,
+	R32_M16,
+	REG32_64_M8,
+	REG32_64_M16,
+	MM32,
+	MM64,
+	XMM16,
+	XMM32,
+	XMM64,
+	XMM128,
+	WXMM32_64,
+	YMM256,
 	YXMM64_256,
 	YXMM128_256,
-	LXMM64_128,
-	LMEM128_256) = range(93)
+	LXMM64_128) = range(93)
 
 class OpcodeLength:
 	""" The length of the opcode in bytes.
@@ -132,7 +134,7 @@ class OpcodeLength:
 class InstFlag:
 	""" Instruction Flag contains all bit mask constants for describing an instruction.
 	You can bitwise-or the flags. See diStorm's documentation for more explanation.
-	
+
 	The GEN_BLOCK is a special flag, it is used in the tables generator only;
 	See GenBlock class inside x86db.py. """
 	FLAGS_EX_START_INDEX = 32
@@ -207,7 +209,7 @@ class ISetClass:
 	AES) = range(1, 20)
 
 class FlowControl:
-	""" The flow control instruction will be flagged in the lo nibble of the 'meta' field in _InstInfo of diStorm.
+	""" The flow control instruction will be flagged in the lo byte of the 'meta' field in _InstInfo of diStorm.
 	They are used to distinguish between flow control instructions (such as: ret, call, jmp, jz, etc) to normal ones. """
 	(CALL,
 	RET,
@@ -215,7 +217,8 @@ class FlowControl:
 	UNC_BRANCH,
 	CND_BRANCH,
 	INT,
-	CMOV) = range(1, 8)
+	CMOV,
+	HLT) = range(1, 9)
 
 class NodeType:
 	""" A node can really be an object holder for an instruction-info object or
@@ -228,11 +231,12 @@ class NodeType:
 	(NONE,        # 0
 	INFO,         # 1
 	INFOEX,       # 2
-	LIST_GROUP,   # 3
-	LIST_FULL,    # 4
-	LIST_DIVIDED, # 5
-	LIST_PREFIXED # 6
-	) = range(0, 7)
+	INFO_TREAT,   # 3
+	LIST_GROUP,   # 4
+	LIST_FULL,    # 5
+	LIST_DIVIDED, # 6
+	LIST_PREFIXED # 7
+	) = range(0, 8)
 
 class CPUFlags:
 	""" Specifies all the flags that the x86/x64 CPU supports, in a special compact order. """

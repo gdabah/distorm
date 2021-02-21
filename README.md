@@ -7,6 +7,8 @@ diStorm3 is really a decomposer, which means it takes an instruction and returns
 
 diStorm3 is super lightweight (~45KB), ultra fast and easy to use (a single API)!
 
+For a tested and light hooking library see the https://github.com/gdabah/distormx project.
+
 "We benchmarked five popular open-source disassembly libraries and chose diStorm3, which had the best performance (and furthermore, has complete 64-bit support).", July 2014, Quoting David Williams-King in his Thesis about Binary Shuffling.
 
 diStorm3 is licensed under BSD!

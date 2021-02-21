@@ -1,51 +1,52 @@
 #
-# Gil Dabah 2006, http://ragestorm.net/distorm
+# Gil Dabah 2006
 # Tests for diStorm3
 #
-import os
-import distorm3
-from distorm3 import *
 
-import struct
-import unittest
+import os
 import random
+import struct
+import subprocess
+import sys
+import tempfile
+import unittest
+import ctypes
+
+import distorm3
+from distorm3._generated import Registers, Mnemonics
+
+# We require YASM assembler to work.
+# Set YASM_PATH envar to its full binary path.
+YASM_PATH = os.environ.get("YASM_PATH", "yasm")
 
 REG_NONE = 255
-_REGISTERS = ["RAX", "RCX", "RDX", "RBX", "RSP", "RBP", "RSI", "RDI", "R8", "R9", "R10", "R11", "R12", "R13", "R14", "R15",
-	"EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI", "R8D", "R9D", "R10D", "R11D", "R12D", "R13D", "R14D", "R15D",
-	"AX", "CX", "DX", "BX", "SP", "BP", "SI", "DI", "R8W", "R9W", "R10W", "R11W", "R12W", "R13W", "R14W", "R15W",
-	"AL", "CL", "DL", "BL", "AH", "CH", "DH", "BH", "R8B", "R9B", "R10B", "R11B", "R12B", "R13B", "R14B", "R15B",
-	"SPL", "BPL", "SIL", "DIL",
-	"ES", "CS", "SS", "DS", "FS", "GS",
-	"RIP",
-	"ST0", "ST1", "ST2", "ST3", "ST4", "ST5", "ST6", "ST7",
-	"MM0", "MM1", "MM2", "MM3", "MM4", "MM5", "MM6", "MM7",
-	"XMM0", "XMM1", "XMM2", "XMM3", "XMM4", "XMM5", "XMM6", "XMM7", "XMM8", "XMM9", "XMM10", "XMM11", "XMM12", "XMM13", "XMM14", "XMM15",
-	"YMM0", "YMM1", "YMM2", "YMM3", "YMM4", "YMM5", "YMM6", "YMM7", "YMM8", "YMM9", "YMM10", "YMM11", "YMM12", "YMM13", "YMM14", "YMM15",
-	"CR0", "", "CR2", "CR3", "CR4", "", "", "", "CR8",
-	"DR0", "DR1", "DR2", "DR3", "", "", "DR6", "DR7"]
 
-class Registers(object):
+class _Registers(object):
 	def __init__(self):
-		for i in enumerate(_REGISTERS):
-			if len(i[1]):
-				setattr(self, i[1], i[0])
-Regs = Registers()
+		for index, name in enumerate(distorm3.Registers):
+			if name:
+				setattr(_Registers, name, index)
+
+Regs = _Registers()
 fbin = []
 
 def Assemble(text, mode):
 	lines = text.replace("\n", "\r\n")
-	if mode is None:
-		mode = 32
 	lines = ("bits %d\r\n" % mode) + lines
-	open("1.asm", "wb").write(lines.encode())
-	if mode == 64:
-		mode = "amd64"
-	else:
-		mode = "x86"
-	os.system("c:\\yasm -m%s 1.asm" % mode)
-	s = open("1", "rb").read()
-	#if (not isinstance(s, str)):
+	asm_name = ""
+	with tempfile.NamedTemporaryFile(suffix=".asm", prefix="distorm3-test-", mode="wb+", delete=False) as asm_file:
+		asm_file.write(lines.encode())
+		asm_file.flush() # Doesn't work instantly on windows. :(
+		asm_name = asm_file.name
+		asm_file.close()
+		out_name = asm_name + ".out"
+		cmd = [YASM_PATH, "-m%s" % ("amd64" if mode == 64 else "x86"), asm_name, "-o%s" % out_name]
+		subprocess.check_call(cmd, shell=(sys.platform == "win32"))
+		with open(out_name, "rb") as out_file:
+			s = out_file.read()
+		os.unlink(out_name)
+	if len(asm_name):
+		os.unlink(asm_name)
 	return s
 
 class Test(unittest.TestCase):
@@ -55,14 +56,14 @@ class Test(unittest.TestCase):
 		self.fail("dummy")
 
 class InstBin(Test):
-	def __init__(self, bin, mode):
+	def __init__(self, bin, mode, features, address):
 		Test.__init__(self)
 		try:
 			bin = bin.decode("hex")
 		except:
 			bin = bytes.fromhex(bin)
 		#fbin[mode].write(bin)
-		self.insts = Decompose(0, bin, mode)
+		self.insts = distorm3.Decompose(address, bin, mode, features)
 		self.inst = self.insts[0]
 	def check_valid(self, instsNo = 1):
 		self.assertNotEqual(self.inst.rawFlags, 65535)
@@ -80,7 +81,7 @@ class Inst(Test):
 		bin = Assemble(instText, modeSize)
 		#print map(lambda x: hex(ord(x)), bin)
 		#fbin[mode].write(bin)
-		self.insts = Decompose(0, bin, mode)
+		self.insts = distorm3.Decompose(0, bin, mode, features)
 		self.inst = self.insts[instNo]
 
 	def check_mnemonic(self, mnemonic):
@@ -93,8 +94,8 @@ class Inst(Test):
 
 	def check_reg(self, n, idx, sz):
 		self.assertEqual(self.inst.operands[n].type, distorm3.OPERAND_REGISTER)
-		self.assertEqual(self.inst.operands[n].size, sz)
 		self.assertEqual(self.inst.operands[n].index, idx)
+		self.assertEqual(self.inst.operands[n].size, sz)
 
 	def check_pc(self, val, sz):
 		self.assertEqual(self.inst.operands[0].type, distorm3.OPERAND_IMMEDIATE)
@@ -137,19 +138,22 @@ class Inst(Test):
 		self.assertEqual({0: 16, 1: 32, 2: 64}[(self.inst.rawFlags >> 10) & 3], sz)
 
 def I16(instText, instNo = 0, features = 0):
-	return Inst(instText, Decode16Bits, instNo, features)
+	return Inst(instText, distorm3.Decode16Bits, instNo, features)
+
+def IB16(bin, features = 0, address = 0):
+	return InstBin(bin, distorm3.Decode16Bits, features, address)
 
 def I32(instText, features = 0):
-	return Inst(instText, Decode32Bits, 0, features)
+	return Inst(instText, distorm3.Decode32Bits, 0, features)
 
-def IB32(bin):
-	return InstBin(bin, Decode32Bits)
+def IB32(bin, features = 0, address = 0):
+	return InstBin(bin, distorm3.Decode32Bits, features, address)
 
 def I64(instText, features = 0):
-	return Inst(instText, Decode64Bits, 0, features)
+	return Inst(instText, distorm3.Decode64Bits, 0, features)
 
-def IB64(bin):
-	return InstBin(bin, Decode64Bits)
+def IB64(bin, features = 0, address = 0):
+	return InstBin(bin, distorm3.Decode64Bits, features, address)
 
 def ABS64(x):
 	return x
@@ -160,11 +164,14 @@ class TestMode16(unittest.TestCase):
 	DerefsInfo = [(Regs.BX, Regs.SI), (Regs.BX, Regs.DI), (Regs.BP, Regs.SI), (Regs.BP, Regs.DI),
 				  (Regs.SI,), (Regs.DI,), (Regs.BP,), (Regs.BX,)]
 	def test_none(self):
-		self.failIf(len(I16("cbw").inst.operands) > 0)
+		self.assertFalse(len(I16("cbw").inst.operands) > 0)
 	def test_imm8(self):
 		I16("int 0x55").check_imm(0, 0x55, 8)
 	def test_imm16(self):
 		I16("ret 0x1122").check_imm(0, 0x1122, 16)
+	def test_seimm32(self):
+		I16("mov ax, 0xff80").check_imm(1, 0xff80, 16)
+		self.assertTrue(str(IB16("BA8080").inst).find("0x8080") != -1)
 	def test_imm_full(self):
 		I16("push 0x1234").check_imm(0, 0x1234, 16)
 	def test_imm_aadm(self):
@@ -175,13 +182,14 @@ class TestMode16(unittest.TestCase):
 	def test_seimm(self):
 		I16("push 5").check_imm(0, 0x5, 8)
 		a = I16("push -6")
+		self.assertTrue(str(a.inst).find("-0x6") != -1)
 		self.assertEqual(a.inst.size, 2)
 		a.check_type_size(0, distorm3.OPERAND_IMMEDIATE, 8)
-		self.failIf(ABS64(a.inst.operands[0].value) != -6)
+		self.assertFalse(ABS64(a.inst.operands[0].value) != -6)
 		a = I16("db 0x66\n push -5")
 		self.assertEqual(a.inst.size, 3)
 		a.check_type_size(0, distorm3.OPERAND_IMMEDIATE, 32)
-		self.failIf(ABS64(a.inst.operands[0].value) != -5)
+		self.assertFalse(ABS64(a.inst.operands[0].value) != -5)
 	def test_imm16_1_imm8_2(self):
 		a = I16("enter 0x1234, 0x40")
 		a.check_imm(0, 0x1234, 16)
@@ -240,6 +248,7 @@ class TestMode16(unittest.TestCase):
 		I16("mov edi, dr7").check_reg(1, Regs.DR7, 32)
 	def test_sreg(self):
 		I16("mov ax, ds").check_reg(1, Regs.DS, 16)
+		I16("mov ax, cs").check_reg(1, Regs.CS, 16)
 	def test_seg(self):
 		I16("push fs").check_reg(0, Regs.FS, 16)
 		I16("db 0x66\n push es").check_reg(0, Regs.ES, 16)
@@ -312,8 +321,8 @@ class TestMode16(unittest.TestCase):
 	def test_regi_ebxal(self):
 		a = I16("xlatb")
 		a.check_type_size(0, distorm3.OPERAND_MEMORY, 8)
-		self.failIf(a.inst.operands[0].index != Regs.AL)
-		self.failIf(a.inst.operands[0].base != Regs.BX)
+		self.assertFalse(a.inst.operands[0].index != Regs.AL)
+		self.assertFalse(a.inst.operands[0].base != Regs.BX)
 	def test_regi_eax(self):
 		I16("vmrun [ax]").check_simple_deref(0, Regs.AX, 16)
 	def test_regdx(self):
@@ -355,8 +364,8 @@ class TestMode16(unittest.TestCase):
 	def test_disp_only(self):
 		a = I16("add [0x1234], bx")
 		a.check_type_size(0, distorm3.OPERAND_ABSOLUTE_ADDRESS, 16)
-		self.failIf(a.inst.operands[0].dispSize != 16)
-		self.failIf(a.inst.operands[0].disp != 0x1234)
+		self.assertFalse(a.inst.operands[0].dispSize != 16)
+		self.assertFalse(a.inst.operands[0].disp != 0x1234)
 	def test_modrm(self):
 		texts = ["ADD [%s], AX" % i for i in self.Derefs]
 		for i in enumerate(texts):
@@ -373,8 +382,8 @@ class TestMode16(unittest.TestCase):
 				a.check_deref(0, self.DerefsInfo[i[0]][1], self.DerefsInfo[i[0]][0], 16)
 			else:
 				a.check_simple_deref(0, self.DerefsInfo[i[0]][0], 16)
-			self.failIf(a.inst.operands[0].dispSize != 8)
-			self.failIf(a.inst.operands[0].disp != 0x55)
+			self.assertFalse(a.inst.operands[0].dispSize != 8)
+			self.assertFalse(a.inst.operands[0].disp != 0x55)
 	def test_modrm_disp16(self):
 		texts = ["ADD [%s + 0x3322], AX" % i for i in self.Derefs]
 		for i in enumerate(texts):
@@ -383,18 +392,21 @@ class TestMode16(unittest.TestCase):
 				a.check_deref(0, self.DerefsInfo[i[0]][1], self.DerefsInfo[i[0]][0], 16)
 			else:
 				a.check_simple_deref(0, self.DerefsInfo[i[0]][0], 16)
-			self.failIf(a.inst.operands[0].dispSize != 16)
-			self.failIf(a.inst.operands[0].disp != 0x3322)
+			self.assertFalse(a.inst.operands[0].dispSize != 16)
+			self.assertFalse(a.inst.operands[0].disp != 0x3322)
 
 class TestMode32(unittest.TestCase):
 	Derefs = ["EAX", "ECX", "EDX", "EBX", "EBP", "ESI", "EDI"]
 	DerefsInfo = [Regs.EAX, Regs.ECX, Regs.EDX, Regs.EBX, Regs.EBP, Regs.ESI, Regs.EDI]
 	def test_none(self):
-		self.failIf(len(I32("cdq").inst.operands) > 0)
+		self.assertFalse(len(I32("cdq").inst.operands) > 0)
 	def test_imm8(self):
 		I32("int 0x55").check_imm(0, 0x55, 8)
 	def test_imm16(self):
 		I32("ret 0x1122").check_imm(0, 0x1122, 16)
+	def test_seimm32(self):
+		I32("mov eax, 0xff112233").check_imm(1, 0xff112233, 32)
+		self.assertTrue(str(IB32("BA5F6038CE").inst).find("0xce38605f") != -1)
 	def test_imm_full(self):
 		I32("push 0x12345678").check_imm(0, 0x12345678, 32)
 	def test_imm_aadm(self):
@@ -406,12 +418,13 @@ class TestMode32(unittest.TestCase):
 		I32("push 6").check_imm(0, 0x6, 8)
 		a = I32("push -7")
 		self.assertEqual(a.inst.size, 2)
+		self.assertTrue(str(a.inst).find("-0x7") != -1)
 		a.check_type_size(0, distorm3.OPERAND_IMMEDIATE, 8)
-		self.failIf(ABS64(a.inst.operands[0].value) != -7)
+		self.assertFalse(ABS64(a.inst.operands[0].value) != -7)
 		a = I32("db 0x66\n push -5")
 		self.assertEqual(a.inst.size, 3)
 		a.check_type_size(0, distorm3.OPERAND_IMMEDIATE, 16)
-		self.failIf(ABS64(a.inst.operands[0].value) != -5)
+		self.assertFalse(ABS64(a.inst.operands[0].value) != -5)
 	def test_imm16_1_imm8_2(self):
 		a = I32("enter 0x1234, 0x40")
 		a.check_imm(0, 0x1234, 16)
@@ -469,6 +482,7 @@ class TestMode32(unittest.TestCase):
 		I32("mov edi, dr7").check_reg(1, Regs.DR7, 32)
 	def test_sreg(self):
 		I32("mov ax, ds").check_reg(1, Regs.DS, 16)
+		I32("mov ax, cs").check_reg(1, Regs.CS, 16)
 	def test_seg(self):
 		I32("push ss").check_reg(0, Regs.SS, 16)
 		I32("db 0x66\n push ds").check_reg(0, Regs.DS, 16)
@@ -541,8 +555,8 @@ class TestMode32(unittest.TestCase):
 	def test_regi_ebxal(self):
 		a = I32("xlatb")
 		a.check_type_size(0, distorm3.OPERAND_MEMORY, 8)
-		self.failIf(a.inst.operands[0].index != Regs.AL)
-		self.failIf(a.inst.operands[0].base != Regs.EBX)
+		self.assertFalse(a.inst.operands[0].index != Regs.AL)
+		self.assertFalse(a.inst.operands[0].base != Regs.EBX)
 	def test_regi_eax(self):
 		I32("vmrun [eax]").check_simple_deref(0, Regs.EAX, 32)
 	def test_regdx(self):
@@ -586,8 +600,8 @@ class TestMode32(unittest.TestCase):
 	def test_disp_only(self):
 		a = I32("add [0x12345678], ebx")
 		a.check_type_size(0, distorm3.OPERAND_ABSOLUTE_ADDRESS, 32)
-		self.failIf(a.inst.operands[0].dispSize != 32)
-		self.failIf(a.inst.operands[0].disp != 0x12345678)
+		self.assertFalse(a.inst.operands[0].dispSize != 32)
+		self.assertFalse(a.inst.operands[0].disp != 0x12345678)
 	def test_modrm(self):
 		texts = ["ADD [%s], EDI" % i for i in self.Derefs]
 		for i in enumerate(texts):
@@ -598,28 +612,28 @@ class TestMode32(unittest.TestCase):
 		for i in enumerate(texts):
 			a = I32(i[1])
 			a.check_simple_deref(0, self.DerefsInfo[i[0]], 32)
-			self.failIf(a.inst.operands[0].dispSize != 8)
-			self.failIf(a.inst.operands[0].disp != 0x55)
+			self.assertFalse(a.inst.operands[0].dispSize != 8)
+			self.assertFalse(a.inst.operands[0].disp != 0x55)
 	def test_modrm_disp32(self):
 		texts = ["ADD [%s + 0x33221144], EDX" % i for i in self.Derefs]
 		for i in enumerate(texts):
 			a = I32(i[1])
 			a.check_simple_deref(0, self.DerefsInfo[i[0]], 32)
-			self.failIf(a.inst.operands[0].dispSize != 32)
-			self.failIf(a.inst.operands[0].disp != 0x33221144)
+			self.assertFalse(a.inst.operands[0].dispSize != 32)
+			self.assertFalse(a.inst.operands[0].disp != 0x33221144)
 	def test_base_ebp(self):
 		a = I32("mov [ebp+0x55], eax")
 		a.check_simple_deref(0, Regs.EBP, 32)
-		self.failIf(a.inst.operands[0].dispSize != 8)
-		self.failIf(a.inst.operands[0].disp != 0x55)
+		self.assertFalse(a.inst.operands[0].dispSize != 8)
+		self.assertFalse(a.inst.operands[0].disp != 0x55)
 		a = I32("mov [ebp+0x55+eax], eax")
 		a.check_deref(0, Regs.EAX, Regs.EBP, 32)
-		self.failIf(a.inst.operands[0].dispSize != 8)
-		self.failIf(a.inst.operands[0].disp != 0x55)
+		self.assertFalse(a.inst.operands[0].dispSize != 8)
+		self.assertFalse(a.inst.operands[0].disp != 0x55)
 		a = I32("mov [ebp+0x55443322], eax")
 		a.check_simple_deref(0, Regs.EBP, 32)
-		self.failIf(a.inst.operands[0].dispSize != 32)
-		self.failIf(a.inst.operands[0].disp != 0x55443322)
+		self.assertFalse(a.inst.operands[0].dispSize != 32)
+		self.assertFalse(a.inst.operands[0].disp != 0x55443322)
 	Bases = ["EAX", "ECX", "EDX", "EBX", "ESP", "ESI", "EDI"]
 	BasesInfo = [Regs.EAX, Regs.ECX, Regs.EDX, Regs.EBX, Regs.ESP, Regs.ESI, Regs.EDI]
 	Indices = ["EAX", "ECX", "EDX", "EBX", "EBP", "ESI", "EDI"]
@@ -632,15 +646,15 @@ class TestMode32(unittest.TestCase):
 		for i in enumerate(self.Bases):
 			a = I32("cmp ebp, [%s+0x12345678]" % (i[1]))
 			a.check_simple_deref(1, self.BasesInfo[i[0]], 32)
-			self.failIf(a.inst.operands[1].dispSize != 32)
-			self.failIf(a.inst.operands[1].disp != 0x12345678)
+			self.assertFalse(a.inst.operands[1].dispSize != 32)
+			self.assertFalse(a.inst.operands[1].disp != 0x12345678)
 	def test_scales(self):
 		for i in enumerate(self.Indices):
 			# A scale of 2 causes the scale to be omitted and changed from reg*2 to reg+reg.
 			for s in [4, 8]:
 				a = I32("and bp, [%s*%d]" % (i[1], s))
 				a.check_deref(1, self.IndicesInfo[i[0]], None, 16)
-				self.failIf(a.inst.operands[1].scale != s)
+				self.assertFalse(a.inst.operands[1].scale != s)
 	def test_sib(self):
 		for i in enumerate(self.Indices):
 			for j in enumerate(self.Bases):
@@ -648,37 +662,40 @@ class TestMode32(unittest.TestCase):
 					a = I32("or bp, [%s*%d + %s]" % (i[1], s, j[1]))
 					a.check_deref(1, self.IndicesInfo[i[0]], self.BasesInfo[j[0]], 16)
 					if s != 1:
-						self.failIf(a.inst.operands[1].scale != s)
+						self.assertFalse(a.inst.operands[1].scale != s)
 	def test_sib_disp8(self):
 		for i in enumerate(self.Indices):
 			for j in enumerate(self.Bases):
 				for s in [1, 2, 4, 8]:
 					a = I32("xor al, [%s*%d + %s + 0x55]" % (i[1], s, j[1]))
 					a.check_deref(1, self.IndicesInfo[i[0]], self.BasesInfo[j[0]], 8)
-					self.failIf(a.inst.operands[1].dispSize != 8)
-					self.failIf(a.inst.operands[1].disp != 0x55)
+					self.assertFalse(a.inst.operands[1].dispSize != 8)
+					self.assertFalse(a.inst.operands[1].disp != 0x55)
 					if s != 1:
-						self.failIf(a.inst.operands[1].scale != s)
+						self.assertFalse(a.inst.operands[1].scale != s)
 	def test_sib_disp32(self):
 		for i in enumerate(self.Indices):
 			for j in enumerate(self.Bases):
 				for s in [1, 2, 4, 8]:
 					a = I32("sub ebp, [%s*%d + %s + 0x55aabbcc]" % (i[1], s, j[1]))
 					a.check_deref(1, self.IndicesInfo[i[0]], self.BasesInfo[j[0]], 32)
-					self.failIf(a.inst.operands[1].dispSize != 32)
-					self.failIf(a.inst.operands[1].disp != 0x55aabbcc)
+					self.assertFalse(a.inst.operands[1].dispSize != 32)
+					self.assertFalse(a.inst.operands[1].disp != 0x55aabbcc)
 					if s != 1:
-						self.failIf(a.inst.operands[1].scale != s)
+						self.assertFalse(a.inst.operands[1].scale != s)
 
 class TestMode64(unittest.TestCase):
 	Derefs = ["RAX", "RCX", "RDX", "RBX", "RBP", "RSI", "RDI"]
 	DerefsInfo = [Regs.RAX, Regs.RCX, Regs.RDX, Regs.RBX, Regs.RBP, Regs.RSI, Regs.RDI]
 	def test_none(self):
-		self.failIf(len(I64("cdq").inst.operands) > 0)
+		self.assertFalse(len(I64("cdq").inst.operands) > 0)
 	def test_imm8(self):
 		I64("int 0x55").check_imm(0, 0x55, 8)
 	def test_imm16(self):
 		I64("ret 0x1122").check_imm(0, 0x1122, 16)
+	def test_seimm32(self):
+		I64("mov eax, 0xff112233").check_imm(1, -15654349, 32)
+		self.assertTrue(str(IB64("BA5F6038CE").inst).find("0xce38605f") != -1)
 	def test_imm_full(self):
 		I64("push 0x12345678").check_imm(0, 0x12345678, 32)
 		I64("mov rax, 0x1234567812345678").check_imm(1, 0x1234567812345678, 64)
@@ -692,8 +709,9 @@ class TestMode64(unittest.TestCase):
 		I64("push 6").check_imm(0, 0x6, 8)
 		a = I64("push -7")
 		self.assertEqual(a.inst.size, 2)
+		self.assertTrue(str(a.inst).find("-0x7") != -1)
 		a.check_type_size(0, distorm3.OPERAND_IMMEDIATE, 8)
-		self.failIf(ABS64(a.inst.operands[0].value) != -7)
+		self.assertFalse(ABS64(a.inst.operands[0].value) != -7)
 	def test_imm16_1_imm8_2(self):
 		a = I64("enter 0x1234, 0x40")
 		a.check_imm(0, 0x1234, 16)
@@ -764,6 +782,7 @@ class TestMode64(unittest.TestCase):
 		I64("mov rdi, dr7").check_reg(1, Regs.DR7, 64)
 	def test_sreg(self):
 		I64("mov ax, fs").check_reg(1, Regs.FS, 16)
+		I64("mov ax, cs").check_reg(1, Regs.CS, 16)
 	def test_seg(self):
 		I64("push gs").check_reg(0, Regs.GS, 16)
 	def test_acc8(self):
@@ -772,6 +791,7 @@ class TestMode64(unittest.TestCase):
 		I64("add rax, 0x100").check_reg(0, Regs.RAX, 64)
 	def test_acc_full_not64(self):
 		I64("out 0x64, eax").check_reg(1, Regs.EAX, 32)
+		I64("db 0x48\nout 0x64, eax").check_reg(1, Regs.EAX, 32)
 	def test_mem16_full(self):
 		I64("call far [rbp]").check_simple_deref(0, Regs.RBP, 32)
 		I64("db 0x48\n call far [rbp]").check_simple_deref(0, Regs.RBP, 64)
@@ -840,8 +860,8 @@ class TestMode64(unittest.TestCase):
 	def test_regi_ebxal(self):
 		a = I64("xlatb")
 		a.check_type_size(0, distorm3.OPERAND_MEMORY, 8)
-		self.failIf(a.inst.operands[0].index != Regs.AL)
-		self.failIf(a.inst.operands[0].base != Regs.RBX)
+		self.assertFalse(a.inst.operands[0].index != Regs.AL)
+		self.assertFalse(a.inst.operands[0].base != Regs.RBX)
 	def test_regi_eax(self):
 		I64("vmrun [rax]").check_simple_deref(0, Regs.RAX, 64)
 	def test_regdx(self):
@@ -887,8 +907,8 @@ class TestMode64(unittest.TestCase):
 	def test_disp_only(self):
 		a = I64("add [0x12345678], rbx")
 		a.check_type_size(0, distorm3.OPERAND_ABSOLUTE_ADDRESS, 64)
-		self.failIf(a.inst.operands[0].dispSize != 32)
-		self.failIf(a.inst.operands[0].disp != 0x12345678)
+		self.assertFalse(a.inst.operands[0].dispSize != 32)
+		self.assertFalse(a.inst.operands[0].disp != 0x12345678)
 	def test_modrm(self):
 		texts = ["ADD [%s], RDI" % i for i in self.Derefs]
 		for i in enumerate(texts):
@@ -899,29 +919,29 @@ class TestMode64(unittest.TestCase):
 		for i in enumerate(texts):
 			a = I64(i[1])
 			a.check_simple_deref(0, self.DerefsInfo[i[0]], 64)
-			self.failIf(a.inst.operands[0].dispSize != 8)
-			self.failIf(a.inst.operands[0].disp != 0x55)
+			self.assertFalse(a.inst.operands[0].dispSize != 8)
+			self.assertFalse(a.inst.operands[0].disp != 0x55)
 	def test_modrm_disp32(self):
 		texts = ["ADD [%s + 0x33221144], RDX" % i for i in self.Derefs]
 		for i in enumerate(texts):
 			a = I64(i[1])
 			a.check_simple_deref(0, self.DerefsInfo[i[0]], 64)
-			self.failIf(a.inst.operands[0].dispSize != 32)
-			self.failIf(a.inst.operands[0].disp != 0x33221144)
+			self.assertFalse(a.inst.operands[0].dispSize != 32)
+			self.assertFalse(a.inst.operands[0].disp != 0x33221144)
 	def test_base_rbp(self):
 		a = I64("mov [rbp+0x55], eax")
 		a.check_simple_deref(0, Regs.RBP, 32)
-		self.failIf(a.inst.operands[0].dispSize != 8)
-		self.failIf(a.inst.operands[0].disp != 0x55)
+		self.assertFalse(a.inst.operands[0].dispSize != 8)
+		self.assertFalse(a.inst.operands[0].disp != 0x55)
 		a = I64("mov [rbp+0x55443322], eax")
 		a.check_simple_deref(0, Regs.RBP, 32)
-		self.failIf(a.inst.operands[0].dispSize != 32)
-		self.failIf(a.inst.operands[0].disp != 0x55443322)
+		self.assertFalse(a.inst.operands[0].dispSize != 32)
+		self.assertFalse(a.inst.operands[0].disp != 0x55443322)
 	def test_base_rip(self):
 		a = I64("mov [rip+0x12345678], rdx")
 		a.check_simple_deref(0, Regs.RIP, 64)
-		self.failIf(a.inst.operands[0].dispSize != 32)
-		self.failIf(a.inst.operands[0].disp != 0x12345678)
+		self.assertFalse(a.inst.operands[0].dispSize != 32)
+		self.assertFalse(a.inst.operands[0].disp != 0x12345678)
 	def test_reg8_rex(self):
 		I64("mov sil, al").check_reg(0, Regs.SIL, 8)
 		I64("inc bpl").check_reg(0, Regs.BPL, 8)
@@ -929,7 +949,7 @@ class TestMode64(unittest.TestCase):
 		I64("mov rax, 0x1234567890abcdef").check_imm(1, 0x1234567890abcdef, 64)
 	def test_reg64(self):
 		I64("movsxd r10, eax").check_reg(0, Regs.R10, 64)
-	def test_rm16_32(self):
+	def test_rm16_32_2(self):
 		#MOVZXD RAX, [RAX]
 		I64("db 0x63\n db 0x00").check_simple_deref(1, Regs.RAX, 32)
 		#MOVZXDW RAX, [RAX]
@@ -952,15 +972,15 @@ class TestMode64(unittest.TestCase):
 		for i in enumerate(self.Bases):
 			a = I64("cmp rbp, [%s+0x12345678]" % (i[1]))
 			a.check_simple_deref(1, self.BasesInfo[i[0]], 64)
-			self.failIf(a.inst.operands[1].dispSize != 32)
-			self.failIf(a.inst.operands[1].disp != 0x12345678)
+			self.assertFalse(a.inst.operands[1].dispSize != 32)
+			self.assertFalse(a.inst.operands[1].disp != 0x12345678)
 	def test_scales(self):
 		for i in enumerate(self.Indices):
 			# A scale of 2 causes the scale to be omitted and changed from reg*2 to reg+reg.
 			for s in [4, 8]:
 				a = I64("and rbp, [%s*%d]" % (i[1], s))
 				a.check_deref(1, self.IndicesInfo[i[0]], None, 64)
-				self.failIf(a.inst.operands[1].scale != s)
+				self.assertFalse(a.inst.operands[1].scale != s)
 	def test_sib(self):
 		for i in enumerate(self.Indices):
 			for j in enumerate(self.Bases):
@@ -968,36 +988,36 @@ class TestMode64(unittest.TestCase):
 					a = I64("or rbp, [%s*%d + %s]" % (i[1], s, j[1]))
 					a.check_deref(1, self.IndicesInfo[i[0]], self.BasesInfo[j[0]], 64)
 					if s != 1:
-						self.failIf(a.inst.operands[1].scale != s)
+						self.assertFalse(a.inst.operands[1].scale != s)
 	def test_sib_disp8(self):
 		for i in enumerate(self.Indices):
 			for j in enumerate(self.Bases):
 				for s in [1, 2, 4, 8]:
 					a = I64("xor al, [%s*%d + %s + 0x55]" % (i[1], s, j[1]))
 					a.check_deref(1, self.IndicesInfo[i[0]], self.BasesInfo[j[0]], 8)
-					self.failIf(a.inst.operands[1].dispSize != 8)
-					self.failIf(a.inst.operands[1].disp != 0x55)
+					self.assertFalse(a.inst.operands[1].dispSize != 8)
+					self.assertFalse(a.inst.operands[1].disp != 0x55)
 					if s != 1:
-						self.failIf(a.inst.operands[1].scale != s)
+						self.assertFalse(a.inst.operands[1].scale != s)
 	def test_sib_disp32(self):
 		for i in enumerate(self.Indices):
 			for j in enumerate(self.Bases):
 				for s in [1, 2, 4, 8]:
 					a = I64("sub rdx, [%s*%d + %s + 0x55aabbcc]" % (i[1], s, j[1]))
 					a.check_deref(1, self.IndicesInfo[i[0]], self.BasesInfo[j[0]], 64)
-					self.failIf(a.inst.operands[1].dispSize != 32)
-					self.failIf(a.inst.operands[1].disp != 0x55aabbcc)
+					self.assertFalse(a.inst.operands[1].dispSize != 32)
+					self.assertFalse(a.inst.operands[1].disp != 0x55aabbcc)
 					if s != 1:
-						self.failIf(a.inst.operands[1].scale != s)
+						self.assertFalse(a.inst.operands[1].scale != s)
 	def test_base32(self):
 		I64("mov eax, [ebx]").check_simple_deref(1, Regs.EBX, 32)
 
 class TestInstTable(unittest.TestCase):
 	""" Check that locate_inst algorithm covers all opcode-length (ol)
-	    for the varying sizes of opcodes.
-	    The bad tests should not find an instruction, so they should fail on purpose,
-	    to see we don't crash the diassembler.
-	    Also test for some end-cases with nop and wait. """
+		for the varying sizes of opcodes.
+		The bad tests should not find an instruction, so they should fail on purpose,
+		to see we don't crash the diassembler.
+		Also test for some end-cases with nop and wait. """
 	def test_c7_opcode(self):
 		IB32("c7f8aaaaaaaa").check_mnemonic("XBEGIN")
 		IB64("c7f8aaaaaaaa").check_mnemonic("XBEGIN")
@@ -1162,7 +1182,7 @@ class TestAVXOperands(unittest.TestCase):
 	def test_xmm_imm(self):
 		I32("vpblendvb xmm1, xmm2, xmm3, xmm4").check_reg(3, Regs.XMM4, 128)
 		# Force XMM15, but high bit is ignored in 32bits.
-		self.failIf(IB32("c4e3694ccbf0").inst.operands[3].index != Regs.XMM7)
+		self.assertFalse(IB32("c4e3694ccbf0").inst.operands[3].index != Regs.XMM7)
 		I64("vpblendvb xmm1, xmm2, xmm3, xmm15").check_reg(3, Regs.XMM15, 128)
 	def test_yxmm(self):
 		I32("vaddsubpd ymm2, ymm4, ymm6").check_reg(0, Regs.YMM2, 256)
@@ -1173,7 +1193,7 @@ class TestAVXOperands(unittest.TestCase):
 		I32("vblendvpd xmm1, xmm2, xmm3, xmm4").check_reg(3, Regs.XMM4, 128)
 		I32("vblendvpd ymm1, ymm2, ymm3, ymm4").check_reg(3, Regs.YMM4, 256)
 		# Force YMM15, but high bit is ignored in 32bits.
-		self.failIf(IB32("c4e36d4bcbf0").inst.operands[3].index != Regs.YMM7)
+		self.assertFalse(IB32("c4e36d4bcbf0").inst.operands[3].index != Regs.YMM7)
 		I64("vblendvpd xmm1, xmm2, xmm3, xmm14").check_reg(3, Regs.XMM14, 128)
 		I64("vblendvpd ymm1, ymm2, ymm3, ymm9").check_reg(3, Regs.YMM9, 256)
 	def test_ymm(self):
@@ -1378,10 +1398,10 @@ class TestMisc(unittest.TestCase):
 		self.assertEqual(a.inst.segment, Regs.GS)
 		self.assertEqual(a.inst.isSegmentDefault, False)
 	def test_branch_hints(self):
-		self.failIf("FLAG_HINT_TAKEN" not in I32("db 0x3e\n jnz 0x50").inst.flags)
-		self.failIf("FLAG_HINT_NOT_TAKEN" not in I32("db 0x2e\n jp 0x55").inst.flags)
-		self.failIf("FLAG_HINT_NOT_TAKEN" not in I32("db 0x2e\n jo 0x55000").inst.flags)
-		self.failIf(I32("db 0x2e\n loop 0x55").inst.rawFlags & 0x1f, 0)
+		self.assertFalse("FLAG_HINT_TAKEN" not in I32("db 0x3e\n jnz 0x50").inst.flags)
+		self.assertFalse("FLAG_HINT_NOT_TAKEN" not in I32("db 0x2e\n jp 0x55").inst.flags)
+		self.assertFalse("FLAG_HINT_NOT_TAKEN" not in I32("db 0x2e\n jo 0x55000").inst.flags)
+		self.assertFalse(I32("db 0x2e\n loop 0x55").inst.rawFlags & 0x1f, 0)
 	def test_mnemonic_by_vexw(self):
 		I32("vmovd xmm1, eax").check_mnemonic("VMOVD")
 		I64("vmovd xmm1, eax").check_reg(1, Regs.EAX, 32)
@@ -1484,6 +1504,39 @@ class TestMisc(unittest.TestCase):
 		a = I64("db 0x67\n loopnz 0x50")
 		a.check_type_size(0,distorm3.OPERAND_IMMEDIATE, 8)
 		a.check_addr_size(32)
+	def test_privileged(self):
+		self.assertFalse(IB32("90").inst.privileged)
+		self.assertTrue(I32("iret").inst.privileged)
+
+def _hexlify(data):
+	s = ""
+	if type(data[0]) == str: # Python 2.x
+		for i in data:
+			s += "%02x" % ord(i)
+	else:
+		for i in data: # Python 3.x
+			s += "%02x" % i
+	return s
+
+class TestMisc2(unittest.TestCase):
+	def test_binary(self):
+		# Generate 128kb of random bytes.
+		# Disasm them, extract the returned hex,
+		# And see that it matches the input.
+		# This checks no bytes are skipped.
+		data = "".join(["%02x" % random.randint(0, 255) for i in range(1 << 17)])
+		insts = IB16(data).insts
+		output = "".join([_hexlify(i.instructionBytes) for i in insts])
+		self.assertTrue(data == output)
+		insts = IB32(data).insts
+		output = "".join([_hexlify(i.instructionBytes) for i in insts])
+		self.assertTrue(data == output)
+		insts = IB64(data).insts
+		output = "".join([_hexlify(i.instructionBytes) for i in insts])
+		self.assertTrue(data == output)
+	def test_longest_mnemonic(self):
+		# The longest mnemonic is VAESKEYGENASSIST and check it's null terminated.
+		self.assertEqual(I32("VAESKEYGENASSIST xmm1, xmm2, 7").inst.mnemonic, "VAESKEYGENASSIST")
 
 class TestPrefixes(unittest.TestCase):
 	Derefs16 = ["BX + SI", "BX + DI", "BP + SI", "BP + DI", "SI", "DI", "BP", "BX"]
@@ -1555,11 +1608,232 @@ class TestPrefixes(unittest.TestCase):
 		self.assertEqual(I64("mov [gs:rip+0x12345678], eax").inst.segment, Regs.GS)
 		self.assertEqual(I64("mov [fs:0x12345678], eax").inst.segment, Regs.FS)
 	def test_lock(self):
-		self.failIf("FLAG_LOCK" not in I32("lock inc dword [eax]").inst.flags)
+		self.assertFalse("FLAG_LOCK" not in I32("lock inc dword [eax]").inst.flags)
 	def test_repnz(self):
-		self.failIf("FLAG_REPNZ" not in I32("repnz scasb").inst.flags)
+		self.assertFalse("FLAG_REPNZ" not in I32("repnz scasb").inst.flags)
 	def test_rep(self):
-		self.failIf("FLAG_REP" not in I32("rep movsb").inst.flags)
+		self.assertFalse("FLAG_REP" not in I32("rep movsb").inst.flags)
+	def test_reps(self):
+		""" Scas and cmps have different repZ prefix. """
+		self.assertTrue(str(I32("rep scasb").inst).find("REPZ") != -1)
+		self.assertTrue(str(I32("rep cmpsd").inst).find("REPZ") != -1)
+		self.assertTrue(str(I32("rep stosb").inst).find("REP") != -1)
+		self.assertTrue(str(I32("rep stosb").inst).find("REPZ") == -1)
+		self.assertTrue(str(I16("repnz scasb").inst).find("REPNZ") != -1)
+		self.assertTrue(str(I32("repnz cmpsd").inst).find("REPNZ") != -1)
+		self.assertTrue(str(I64("repnz stosb").inst).find("REPNZ") != -1)
+	def test_stos(self):
+		""" STOS instruction is treated specially with certain prefixes, check all such cases. """
+		# 16 bits
+		self.assertEqual(str(IB16("aa").inst), "STOSB")
+		self.assertEqual(str(IB16("ab").inst), "STOSW")
+		self.assertEqual(str(IB16("66ab").inst), "STOSD")
+		self.assertEqual(str(IB16("67ab").inst), "STOS [EDI], AX")
+		self.assertEqual(str(IB16("6766ab").inst), "STOS [EDI], EAX")
+		self.assertEqual(str(IB16("2eab").inst), "STOSW") # 1st op cannot be prefixed by segment!
+		self.assertEqual(str(IB16("f3ab").inst), "REP STOSW")
+		self.assertEqual(str(IB16("f2ab").inst), "REPNZ STOSW")
+		# 32 bits
+		self.assertEqual(str(IB32("aa").inst), "STOSB")
+		self.assertEqual(str(IB32("ab").inst), "STOSD")
+		self.assertEqual(str(IB32("66ab").inst), "STOSW")
+		self.assertEqual(str(IB32("67ab").inst), "STOS [DI], EAX")
+		self.assertEqual(str(IB32("6766ab").inst), "STOS [DI], AX")
+		self.assertEqual(str(IB32("2eab").inst), "STOSD") # 1st op cannot be prefixed by segment!
+		self.assertEqual(str(IB32("f3ab").inst), "REP STOSD")
+		self.assertEqual(str(IB32("f2ab").inst), "REPNZ STOSD")
+		# 64 bits
+		self.assertEqual(str(IB64("aa").inst), "STOSB")
+		self.assertEqual(str(IB64("ab").inst), "STOSD")
+		self.assertEqual(str(IB64("48ab").inst), "STOSQ")
+		self.assertEqual(str(IB64("66ab").inst), "STOSW")
+		self.assertEqual(str(IB64("67ab").inst), "STOS [EDI], EAX")
+		self.assertEqual(str(IB64("6766ab").inst), "STOS [EDI], AX")
+		self.assertEqual(str(IB64("2eab").inst), "STOSD") # 1st op cannot be prefixed by segment!
+		self.assertEqual(str(IB64("2e48ab").inst), "STOSQ") # 1st op cannot be prefixed by segment!
+		self.assertEqual(str(IB64("f3ab").inst), "REP STOSD")
+		self.assertEqual(str(IB64("f348ab").inst), "REP STOSQ")
+		self.assertEqual(str(IB64("f2ab").inst), "REPNZ STOSD")
+		self.assertEqual(str(IB64("f248ab").inst), "REPNZ STOSQ")
+	def test_scas(self):
+		""" SCAS instruction is treated specially with certain prefixes, check all such cases. """
+		# 16 bits
+		self.assertEqual(str(IB16("ae").inst), "SCASB")
+		self.assertEqual(str(IB16("af").inst), "SCASW")
+		self.assertEqual(str(IB16("66af").inst), "SCASD")
+		self.assertEqual(str(IB16("67af").inst), "SCAS [EDI], AX")
+		self.assertEqual(str(IB16("6766af").inst), "SCAS [EDI], EAX")
+		self.assertEqual(str(IB16("2eaf").inst), "SCASW") # 1st op cannot be prefixed by segment!
+		self.assertEqual(str(IB16("f3af").inst), "REPZ SCASW")
+		self.assertEqual(str(IB16("f2af").inst), "REPNZ SCASW")
+		# 32 bits
+		self.assertEqual(str(IB32("ae").inst), "SCASB")
+		self.assertEqual(str(IB32("af").inst), "SCASD")
+		self.assertEqual(str(IB32("66af").inst), "SCASW")
+		self.assertEqual(str(IB32("67af").inst), "SCAS [DI], EAX")
+		self.assertEqual(str(IB32("6766af").inst), "SCAS [DI], AX")
+		self.assertEqual(str(IB32("2eaf").inst), "SCASD") # 1st op cannot be prefixed by segment!
+		self.assertEqual(str(IB32("f3af").inst), "REPZ SCASD")
+		self.assertEqual(str(IB32("f2af").inst), "REPNZ SCASD")
+		# 64 bits
+		self.assertEqual(str(IB64("ae").inst), "SCASB")
+		self.assertEqual(str(IB64("af").inst), "SCASD")
+		self.assertEqual(str(IB64("48af").inst), "SCASQ")
+		self.assertEqual(str(IB64("66af").inst), "SCASW")
+		self.assertEqual(str(IB64("67af").inst), "SCAS [EDI], EAX")
+		self.assertEqual(str(IB64("6766af").inst), "SCAS [EDI], AX")
+		self.assertEqual(str(IB64("2eaf").inst), "SCASD") # 1st op cannot be prefixed by segment!
+		self.assertEqual(str(IB64("2e48af").inst), "SCASQ") # 1st op cannot be prefixed by segment!
+		self.assertEqual(str(IB64("f3af").inst), "REPZ SCASD")
+		self.assertEqual(str(IB64("f348af").inst), "REPZ SCASQ")
+		self.assertEqual(str(IB64("f2af").inst), "REPNZ SCASD")
+		self.assertEqual(str(IB64("f248af").inst), "REPNZ SCASQ")
+	def test_lods(self):
+		""" LODS instruction is treated specially with certain prefixes, check all such cases. """
+		# 16 bits
+		self.assertEqual(str(IB16("ac").inst), "LODSB")
+		self.assertEqual(str(IB16("ad").inst), "LODSW")
+		self.assertEqual(str(IB16("66ad").inst), "LODSD")
+		self.assertEqual(str(IB16("67ad").inst), "LODS AX, [ESI]")
+		self.assertEqual(str(IB16("6766ad").inst), "LODS EAX, [ESI]")
+		self.assertEqual(str(IB16("64ad").inst), "LODS AX, [FS:SI]")
+		self.assertEqual(str(IB16("f364ad").inst), "REP LODS AX, [FS:SI]")
+		self.assertEqual(str(IB16("f264ad").inst), "REPNZ LODS AX, [FS:SI]")
+		# 32 bits
+		self.assertEqual(str(IB32("ac").inst), "LODSB")
+		self.assertEqual(str(IB32("66ad").inst), "LODSW")
+		self.assertEqual(str(IB32("ad").inst), "LODSD")
+		self.assertEqual(str(IB32("f3ac").inst), "REP LODSB")
+		self.assertEqual(str(IB32("66f3ad").inst), "REP LODSW")
+		self.assertEqual(str(IB32("f3ad").inst), "REP LODSD")
+		self.assertEqual(str(IB32("65ad").inst), "LODS EAX, [GS:ESI]")
+		self.assertEqual(str(IB32("f365ad").inst), "REP LODS EAX, [GS:ESI]")
+		self.assertEqual(str(IB32("f36567ad").inst), "REP LODS EAX, [GS:SI]")
+		self.assertEqual(str(IB32("f3656766ad").inst), "REP LODS AX, [GS:SI]")
+		self.assertEqual(str(IB32("6667f365ad").inst), "REP LODS AX, [GS:SI]")
+		self.assertEqual(str(IB32("67f3ac").inst), "REP LODS AL, [SI]")
+		self.assertEqual(str(IB32("67f2ac").inst), "REPNZ LODS AL, [SI]")
+		# 64 bits
+		self.assertEqual(str(IB64("ac").inst), "LODSB")
+		self.assertEqual(str(IB64("66ad").inst), "LODSW")
+		self.assertEqual(str(IB64("ad").inst), "LODSD")
+		self.assertEqual(str(IB64("48ad").inst), "LODSQ")
+		self.assertEqual(str(IB64("f3ac").inst), "REP LODSB")
+		self.assertEqual(str(IB64("66f3ad").inst), "REP LODSW")
+		self.assertEqual(str(IB64("f3ad").inst), "REP LODSD")
+		self.assertEqual(str(IB64("65ad").inst), "LODS EAX, [GS:RSI]")
+		self.assertEqual(str(IB64("f365ad").inst), "REP LODS EAX, [GS:RSI]")
+		self.assertEqual(str(IB64("f36567ad").inst), "REP LODS EAX, [GS:ESI]")
+		self.assertEqual(str(IB64("f3656766ad").inst), "REP LODS AX, [GS:ESI]")
+		self.assertEqual(str(IB64("6667f365ad").inst), "REP LODS AX, [GS:ESI]")
+		self.assertEqual(str(IB64("6667f265ad").inst), "REPNZ LODS AX, [GS:ESI]")
+		self.assertEqual(str(IB64("67f3ac").inst), "REP LODS AL, [ESI]")
+	def test_movs(self):
+		""" MOVS instruction is treated specially with certain prefixes, check all such cases. """
+		# 16 bits
+		self.assertEqual(str(IB16("a4").inst), "MOVSB")
+		self.assertEqual(str(IB16("66a5").inst), "MOVSD")
+		self.assertEqual(str(IB16("a5").inst), "MOVSW")
+		self.assertEqual(str(IB16("f3a5").inst), "REP MOVSW")
+		self.assertEqual(str(IB16("66f3a5").inst), "REP MOVSD")
+		self.assertEqual(str(IB16("f366a5").inst), "REP MOVSD")
+		self.assertEqual(str(IB16("f3a5").inst), "REP MOVSW")
+		self.assertEqual(str(IB16("65a5").inst), "MOVS WORD [ES:DI], [GS:SI]")
+		self.assertEqual(str(IB16("f365a5").inst), "REP MOVS WORD [ES:DI], [GS:SI]")
+		self.assertEqual(str(IB16("f36567a5").inst), "REP MOVS WORD [ES:EDI], [GS:ESI]")
+		self.assertEqual(str(IB16("f3656766a5").inst), "REP MOVS DWORD [ES:EDI], [GS:ESI]")
+		self.assertEqual(str(IB16("6667f365a5").inst), "REP MOVS DWORD [ES:EDI], [GS:ESI]")
+		self.assertEqual(str(IB16("6667f3a4").inst), "REP MOVS BYTE [ES:EDI], [DS:ESI]")
+		self.assertEqual(str(IB16("6667f2a4").inst), "REPNZ MOVS BYTE [ES:EDI], [DS:ESI]")
+		# 32 bits
+		self.assertEqual(str(IB32("a4").inst), "MOVSB")
+		self.assertEqual(str(IB32("66a5").inst), "MOVSW")
+		self.assertEqual(str(IB32("a5").inst), "MOVSD")
+		self.assertEqual(str(IB32("f3a5").inst), "REP MOVSD")
+		self.assertEqual(str(IB32("66f3a5").inst), "REP MOVSW")
+		self.assertEqual(str(IB32("f366a5").inst), "REP MOVSW")
+		self.assertEqual(str(IB32("f3a5").inst), "REP MOVSD")
+		self.assertEqual(str(IB32("f2a5").inst), "REPNZ MOVSD")
+		self.assertEqual(str(IB32("65a5").inst), "MOVS DWORD [ES:EDI], [GS:ESI]")
+		self.assertEqual(str(IB32("f365a5").inst), "REP MOVS DWORD [ES:EDI], [GS:ESI]")
+		self.assertEqual(str(IB32("f36567a5").inst), "REP MOVS DWORD [ES:DI], [GS:SI]")
+		self.assertEqual(str(IB32("f3656766a5").inst), "REP MOVS WORD [ES:DI], [GS:SI]")
+		self.assertEqual(str(IB32("6667f365a5").inst), "REP MOVS WORD [ES:DI], [GS:SI]")
+		self.assertEqual(str(IB32("6667f3a4").inst), "REP MOVS BYTE [ES:DI], [DS:SI]")
+		self.assertEqual(str(IB32("6667f2a4").inst), "REPNZ MOVS BYTE [ES:DI], [DS:SI]")
+		# 64 bits
+		self.assertEqual(str(IB64("a4").inst), "MOVSB")
+		self.assertEqual(str(IB64("66a5").inst), "MOVSW")
+		self.assertEqual(str(IB64("a5").inst), "MOVSD")
+		self.assertEqual(str(IB64("48a5").inst), "MOVSQ")
+		self.assertEqual(str(IB64("4fa5").inst), "MOVSQ") # Set all REX bits, still MOVSQ.
+		self.assertEqual(str(IB64("f3a5").inst), "REP MOVSD")
+		self.assertEqual(str(IB64("f348a5").inst), "REP MOVSQ")
+		self.assertEqual(str(IB64("f248a5").inst), "REPNZ MOVSQ")
+		self.assertEqual(str(IB64("66f3a5").inst), "REP MOVSW")
+		self.assertEqual(str(IB64("f366a5").inst), "REP MOVSW")
+		self.assertEqual(str(IB64("f3a5").inst), "REP MOVSD")
+		self.assertEqual(str(IB64("65a5").inst), "MOVS DWORD [RDI], [GS:RSI]")
+		self.assertEqual(str(IB64("6548a5").inst), "MOVS QWORD [RDI], [GS:RSI]")
+		self.assertEqual(str(IB64("f365a5").inst), "REP MOVS DWORD [RDI], [GS:RSI]")
+		self.assertEqual(str(IB64("f367a5").inst), "REP MOVS DWORD [EDI], [ESI]")
+		self.assertEqual(str(IB64("f3656766a5").inst), "REP MOVS WORD [EDI], [GS:ESI]")
+		self.assertEqual(str(IB64("6667f365a5").inst), "REP MOVS WORD [EDI], [GS:ESI]")
+		self.assertEqual(str(IB64("6667f36548a5").inst), "REP MOVS QWORD [EDI], [GS:ESI]")
+		self.assertEqual(str(IB64("6667f3a4").inst), "REP MOVS BYTE [EDI], [ESI]")
+	def test_cmps(self):
+		""" CMPS instruction is treated specially with certain prefixes, check all such cases. """
+		# 16 bits
+		self.assertEqual(str(IB16("a6").inst), "CMPSB")
+		self.assertEqual(str(IB16("66a7").inst), "CMPSD")
+		self.assertEqual(str(IB16("a7").inst), "CMPSW")
+		self.assertEqual(str(IB16("f3a7").inst), "REPZ CMPSW")
+		self.assertEqual(str(IB16("66f3a7").inst), "REPZ CMPSD")
+		self.assertEqual(str(IB16("f366a7").inst), "REPZ CMPSD")
+		self.assertEqual(str(IB16("f3a7").inst), "REPZ CMPSW")
+		self.assertEqual(str(IB16("65a7").inst), "CMPS WORD [GS:SI], [ES:DI]")
+		self.assertEqual(str(IB16("f365a7").inst), "REPZ CMPS WORD [GS:SI], [ES:DI]")
+		self.assertEqual(str(IB16("f36567a7").inst), "REPZ CMPS WORD [GS:ESI], [ES:EDI]")
+		self.assertEqual(str(IB16("f3656766a7").inst), "REPZ CMPS DWORD [GS:ESI], [ES:EDI]")
+		self.assertEqual(str(IB16("6667f365a7").inst), "REPZ CMPS DWORD [GS:ESI], [ES:EDI]")
+		self.assertEqual(str(IB16("6667f3a6").inst), "REPZ CMPS BYTE [DS:ESI], [ES:EDI]")
+		self.assertEqual(str(IB16("6667f2a6").inst), "REPNZ CMPS BYTE [DS:ESI], [ES:EDI]")
+		# 32 bits
+		self.assertEqual(str(IB32("a6").inst), "CMPSB")
+		self.assertEqual(str(IB32("66a7").inst), "CMPSW")
+		self.assertEqual(str(IB32("a7").inst), "CMPSD")
+		self.assertEqual(str(IB32("f3a7").inst), "REPZ CMPSD")
+		self.assertEqual(str(IB32("66f3a7").inst), "REPZ CMPSW")
+		self.assertEqual(str(IB32("f366a7").inst), "REPZ CMPSW")
+		self.assertEqual(str(IB32("f3a7").inst), "REPZ CMPSD")
+		self.assertEqual(str(IB32("f2a7").inst), "REPNZ CMPSD")
+		self.assertEqual(str(IB32("65a7").inst), "CMPS DWORD [GS:ESI], [ES:EDI]")
+		self.assertEqual(str(IB32("f365a7").inst), "REPZ CMPS DWORD [GS:ESI], [ES:EDI]")
+		self.assertEqual(str(IB32("f36567a7").inst), "REPZ CMPS DWORD [GS:SI], [ES:DI]")
+		self.assertEqual(str(IB32("f3656766a7").inst), "REPZ CMPS WORD [GS:SI], [ES:DI]")
+		self.assertEqual(str(IB32("6667f365a7").inst), "REPZ CMPS WORD [GS:SI], [ES:DI]")
+		self.assertEqual(str(IB32("6667f3a6").inst), "REPZ CMPS BYTE [DS:SI], [ES:DI]")
+		self.assertEqual(str(IB32("6667f2a6").inst), "REPNZ CMPS BYTE [DS:SI], [ES:DI]")
+		# 64 bits
+		self.assertEqual(str(IB64("a6").inst), "CMPSB")
+		self.assertEqual(str(IB64("66a7").inst), "CMPSW")
+		self.assertEqual(str(IB64("a7").inst), "CMPSD")
+		self.assertEqual(str(IB64("48a7").inst), "CMPSQ")
+		self.assertEqual(str(IB64("4fa7").inst), "CMPSQ") # Set all REX bits, still CMPSQ.
+		self.assertEqual(str(IB64("f3a7").inst), "REPZ CMPSD")
+		self.assertEqual(str(IB64("f348a7").inst), "REPZ CMPSQ")
+		self.assertEqual(str(IB64("f248a7").inst), "REPNZ CMPSQ")
+		self.assertEqual(str(IB64("66f3a7").inst), "REPZ CMPSW")
+		self.assertEqual(str(IB64("f366a7").inst), "REPZ CMPSW")
+		self.assertEqual(str(IB64("f3a7").inst), "REPZ CMPSD")
+		self.assertEqual(str(IB64("65a7").inst), "CMPS DWORD [GS:RSI], [RDI]")
+		self.assertEqual(str(IB64("6548a7").inst), "CMPS QWORD [GS:RSI], [RDI]")
+		self.assertEqual(str(IB64("f365a7").inst), "REPZ CMPS DWORD [GS:RSI], [RDI]")
+		self.assertEqual(str(IB64("f367a7").inst), "REPZ CMPS DWORD [ESI], [EDI]")
+		self.assertEqual(str(IB64("f3656766a7").inst), "REPZ CMPS WORD [GS:ESI], [EDI]")
+		self.assertEqual(str(IB64("6667f365a7").inst), "REPZ CMPS WORD [GS:ESI], [EDI]")
+		self.assertEqual(str(IB64("6667f36548a7").inst), "REPZ CMPS QWORD [GS:ESI], [EDI]")
+		self.assertEqual(str(IB64("6667f3a6").inst), "REPZ CMPS BYTE [ESI], [EDI]")
 	def test_segment_override(self):
 		self.assertEqual(I32("mov eax, [cs:eax]").inst.segment, Regs.CS)
 		self.assertEqual(I32("mov eax, [ds:eax]").inst.segment, Regs.DS)
@@ -1592,6 +1866,14 @@ class TestPrefixes(unittest.TestCase):
 		self.assertEqual(IB64("6640ffc0").inst.unusedPrefixesMask, 2)
 		self.assertEqual(IB64("48660f10c0").inst.unusedPrefixesMask, 1)
 		self.assertEqual(IB64("664f0f10c0").inst.unusedPrefixesMask, 0)
+	def test_last_segment(self):
+		""" Only last segment is used as a prefix.
+		Check tricky 64 bits too for default overrides. """
+		self.assertEqual(IB32("2e260000").inst.segment, Regs.ES)
+		self.assertEqual(IB32("2e260000").inst.unusedPrefixesMask, 1)
+		self.assertEqual(IB64("2e650000").inst.segment, Regs.GS)
+		self.assertEqual(IB64("652e0000").inst.segment, REG_NONE)
+		self.assertEqual(IB64("652e0000").inst.unusedPrefixesMask, 3)
 
 class TestInvalid(unittest.TestCase):
 	def align(self):
@@ -1608,27 +1890,27 @@ class TestInvalid(unittest.TestCase):
 	def test_zzz_must_be_last_drop_prefixes(self):
 		# Drop prefixes when the last byte in stream is a prefix.
 		IB32("66")
-
-class FlowControl:
-	""" The flow control instruction will be flagged in the lo nibble of the 'meta' field in _InstInfo of diStorm.
-	They are used to distinguish between flow control instructions (such as: ret, call, jmp, jz, etc) to normal ones. """
-	(CALL,
-	RET,
-	SYS,
-	BRANCH,
-	COND_BRANCH,
-	INT) = range(1, 7)
-
-DF_MAXIMUM_ADDR16 = 1
-DF_MAXIMUM_ADDR32 = 2
-DF_RETURN_FC_ONLY = 4
-DF_STOP_ON_CALL = 8
-DF_STOP_ON_RET = 0x10
-DF_STOP_ON_SYS = 0x20
-DF_STOP_ON_BRANCH = 0x40
-DF_STOP_ON_COND_BRANCH = 0x80
-DF_STOP_ON_INT = 0x100
-DF_STOP_ON_FLOW_CONTROL = (DF_STOP_ON_CALL | DF_STOP_ON_RET | DF_STOP_ON_SYS | DF_STOP_ON_BRANCH | DF_STOP_ON_COND_BRANCH | DF_STOP_ON_INT)
+	def test_CR4_regression(self):
+		# Regression test to validate CR4 isn't used as invalid default segment (-1 maps to CR4) in 64 bits.
+		self.assertEqual(str(IB64("f20f104c1860").inst), "MOVSD XMM1, [RAX+RBX+0x60]")
+		self.assertEqual(str(IB64("4883241e00").inst), "AND QWORD [RSI+RBX], 0x0")
+	def test_undefined_byte00(self):
+		# This is a regression test for the decomposer wrapper.
+		a = ""
+		insts = IB32("c300").insts
+		for i in insts:
+			a += str(i)
+		insts = IB32("33c0" *  2000 + "90", 0, 0x4000).insts
+		self.assertEqual(insts[-1].mnemonic, "NOP")
+		self.assertEqual(insts[-1].instructionBytes, b"\x90")
+		self.assertEqual(insts[-1].address, 0x4000 + 2000 * 2)
+		self.assertEqual(insts[1000].mnemonic, "XOR")
+		self.assertEqual(insts[1000].instructionBytes, b"\x33\xc0")
+		self.assertEqual(insts[1000].address, 0x4000 + 1000 * 2)
+	def test_prefix_regression(self):
+		# We had a temporary code with a prefix length bug that wouldn't return an instruction.
+		# So make sure we get an instruction where stream ends with last code byte.
+		self.assertEqual(IB32("66af").insts[0].mnemonic, "SCAS")
 
 class TestFeatures(unittest.TestCase):
 	def test_addr16(self):
@@ -1638,27 +1920,203 @@ class TestFeatures(unittest.TestCase):
 		pass
 	def test_fc(self):
 		pairs = [
-			(["INT 5", "db 0xf1", "INT 3", "INTO", "UD2"], FlowControl.INT),
-			(["CALL 0x50", "CALL FAR [ebx]"], FlowControl.CALL),
-			(["RET", "IRET", "RETF"], FlowControl.RET),
-			(["SYSCALL", "SYSENTER", "SYSRET", "SYSEXIT"], FlowControl.SYS),
-			(["JMP 0x50", "JMP FAR [ebx]"], FlowControl.BRANCH),
+			(["INT 5", "db 0xf1", "INT 3", "INTO", "UD2"], distorm3.FlowControl.INT),
+			(["CALL 0x50", "CALL FAR [ebx]"], distorm3.FlowControl.CALL),
+			(["RET", "IRET", "RETF"], distorm3.FlowControl.RET),
+			(["HLT"], distorm3.FlowControl.HLT),
+			(["SYSCALL", "SYSENTER", "SYSRET", "SYSEXIT"], distorm3.FlowControl.SYS),
+			(["JMP 0x50", "JMP FAR [ebx]"], distorm3.FlowControl.UNC_BRANCH),
 			(["JCXZ 0x50", "JO 0x50", "JNO 0x50", "JB 0x50", "JAE 0x50",
 			"JZ 0x50", "JNZ 0x50", "JBE 0x50", "JA 0x50", "JS 0x50",
 			"JNS 0x50", "JP 0x50", "JNP 0x50", "JL 0x50", "JGE 0x50",
-			"JLE 0x50", "JG 0x50", "LOOP 0x50", "LOOPZ 0x50", "LOOPNZ 0x50"], FlowControl.COND_BRANCH)
+			"JLE 0x50", "JG 0x50", "LOOP 0x50", "LOOPZ 0x50", "LOOPNZ 0x50"], distorm3.FlowControl.CND_BRANCH)
 		]
 		for i in pairs:
 			for j in i[0]:
-				a = I32(j + "\nnop", DF_STOP_ON_FLOW_CONTROL)
+				a = I32(j + "\nnop", distorm3.DF_STOP_ON_FLOW_CONTROL)
 				self.assertEqual(len(a.insts), 1)
-				self.assertEqual(a.inst["meta"] & 7, i[1])
-				a = I32("push eax\nnop\n" + j, DF_RETURN_FC_ONLY)
+				self.assertEqual(a.inst.meta & 0xf, i[1])
+				a = I32("push eax\nnop\n" + j, distorm3.DF_RETURN_FC_ONLY)
 				self.assertEqual(len(a.insts), 1)
-				a = I32("nop\nxor eax, eax\n" + j + "\ninc eax", DF_RETURN_FC_ONLY | DF_STOP_ON_FLOW_CONTROL)
+				a = I32("nop\nxor eax, eax\n" + j + "\ninc eax", distorm3.DF_RETURN_FC_ONLY | distorm3.DF_STOP_ON_FLOW_CONTROL)
 				self.assertEqual(len(a.insts), 1)
 	def test_filter(self):
-		pass
+		a = IB32("33c0907e00" * 5, distorm3.DF_RETURN_FC_ONLY).insts
+		self.assertEqual(len(a), 5)
+		self.assertEqual(a[0].mnemonic[0], "J")
+		self.assertEqual(a[0].address, 3)
+		self.assertEqual(a[1].address, 8)
+		self.assertEqual(a[2].address, 13)
+		self.assertEqual(a[3].address, 18)
+		self.assertEqual(a[4].address, 23)
+	def test_stop_on_privileged(self):
+		a = I32("nop\niret\nret", distorm3.DF_STOP_ON_PRIVILEGED)
+		self.assertEqual(len(a.insts), 2)
+		a = I64("mov eax, ebx\nnop\ncli\nnop", distorm3.DF_STOP_ON_PRIVILEGED)
+		self.assertEqual(len(a.insts), 3)
+	def test_step_byte(self):
+		a = IB32("90b833c3eb48", distorm3.DF_SINGLE_BYTE_STEP).insts
+		self.assertEqual(a[0].address, 0)
+		self.assertEqual(a[0].mnemonic, "NOP")
+		self.assertEqual(a[0].size, 1)
+		self.assertEqual(a[1].address, 1)
+		self.assertEqual(a[1].mnemonic, "MOV")
+		self.assertEqual(a[1].size, 5)
+		self.assertEqual(a[2].address, 2)
+		self.assertEqual(a[2].mnemonic, "XOR")
+		self.assertEqual(a[2].size, 2)
+		self.assertEqual(a[3].address, 3)
+		self.assertEqual(a[3].mnemonic, "RET")
+		self.assertEqual(a[3].size, 1)
+		self.assertEqual(a[4].address, 4)
+		self.assertEqual(a[4].mnemonic, "JMP")
+		self.assertEqual(a[4].size, 2)
+		self.assertEqual(a[5].address, 5)
+		self.assertEqual(a[5].mnemonic, "DEC")
+		self.assertEqual(a[5].size, 1)
+	def test_eflags_on(self):
+		a = IB32("33c04890", distorm3.DF_FILL_EFLAGS).insts
+		# XOR
+		self.assertEqual(a[0].modifiedFlags, distorm3.D_SF | distorm3.D_ZF | distorm3.D_PF)
+		self.assertEqual(a[0].testedFlags, 0)
+		self.assertEqual(a[0].undefinedFlags, distorm3.D_AF)
+		# INC
+		self.assertEqual(a[1].modifiedFlags, distorm3.D_OF | distorm3.D_SF | distorm3.D_ZF | distorm3.D_AF | distorm3.D_PF)
+		self.assertEqual(a[1].testedFlags, 0)
+		self.assertEqual(a[1].undefinedFlags, 0)
+		# NOP
+		self.assertEqual(a[2].modifiedFlags, 0)
+		self.assertEqual(a[2].testedFlags, 0)
+		self.assertEqual(a[2].undefinedFlags, 0)
+	def test_eflags_off(self):
+		a = IB32("33c04890").insts
+		# XOR
+		self.assertEqual(a[0].modifiedFlags, 0)
+		self.assertEqual(a[0].testedFlags, 0)
+		self.assertEqual(a[0].undefinedFlags, 0)
+		# INC
+		self.assertEqual(a[1].modifiedFlags, 0)
+		self.assertEqual(a[1].testedFlags, 0)
+		self.assertEqual(a[1].undefinedFlags, 0)
+		# NOP
+		self.assertEqual(a[2].modifiedFlags, 0)
+		self.assertEqual(a[2].testedFlags, 0)
+		self.assertEqual(a[2].undefinedFlags, 0)
+	def test_stop_undecodable(self):
+		self.assertEqual(len(IB16("909033c0ffff90", distorm3.DF_STOP_ON_UNDECODEABLE).insts), 4)
+		self.assertEqual(len(IB32("909033c090ffff90", distorm3.DF_STOP_ON_UNDECODEABLE).insts), 5)
+		self.assertEqual(len(IB64("909033c09090ffff9090", distorm3.DF_STOP_ON_UNDECODEABLE).insts), 6)
+
+class TestAPI(unittest.TestCase):
+	def direct_decompose(self, code, codeOffset, dt, features, maxInstructions):
+		codeLen         = len(code)
+		code_buf        = ctypes.create_string_buffer(code)
+		p_code          = ctypes.byref(code_buf)
+		result          = (distorm3._DInst * maxInstructions)()
+		p_result        = ctypes.byref(result)
+		usedInstructionsCount = ctypes.c_uint(0)
+		codeInfo = distorm3._CodeInfo(distorm3._OffsetType(codeOffset), distorm3._OffsetType(0), distorm3._OffsetType(0), ctypes.cast(p_code, ctypes.c_char_p), codeLen, dt, features)
+		status = distorm3.internal_decompose(ctypes.byref(codeInfo), ctypes.byref(result), maxInstructions, ctypes.byref(usedInstructionsCount))
+		return (status, usedInstructionsCount.value, result)
+	def test_out_buf(self):
+		s, count, results = self.direct_decompose(b"\x90\x90", 0, distorm3.Decode32Bits, 0, 0)
+		self.assertEqual(s, distorm3.DECRES_INPUTERR)
+		s, count, results = self.direct_decompose(b"\x90\x90", 0, distorm3.Decode32Bits, 0, 1)
+		self.assertEqual(s, distorm3.DECRES_MEMORYERR)
+		self.assertEqual(count, 1)
+		s, count, results = self.direct_decompose(b"\x90\x90", 0, distorm3.Decode32Bits, 0, 2)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 2)
+	def test_0_len(self):
+		s, count, results = self.direct_decompose(b"", 0, distorm3.Decode32Bits, 0, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		s, count, results = self.direct_decompose(b"", 0x1234, distorm3.Decode64Bits, 0, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+	def test_bad_features(self):
+		s, count, results = self.direct_decompose(b"\x90", 0, distorm3.Decode32Bits, distorm3.DF_MAXIMUM_ADDR16 | distorm3.DF_MAXIMUM_ADDR32, 1)
+		self.assertEqual(s, distorm3.DECRES_INPUTERR)
+	def test_bad_decoding_type(self):
+		s, count, results = self.direct_decompose(b"\x90", 0, -1, 0, 1)
+		self.assertEqual(s, distorm3.DECRES_INPUTERR)
+		s, count, results = self.direct_decompose(b"\x90", 0, 3, 0, 1)
+		self.assertEqual(s, distorm3.DECRES_INPUTERR)
+	def test_single_out_buf(self):
+		s, count, results = self.direct_decompose(b"\x66\x90", 0, distorm3.Decode32Bits, 0, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 1)
+		self.assertEqual(Mnemonics.get(results[0].opcode, ""), "NOP")
+		s, count, results = self.direct_decompose(b"\x66\x67", 0, distorm3.Decode32Bits, 0, 1)
+		self.assertEqual(s, distorm3.DECRES_MEMORYERR)
+		self.assertEqual(count, 1)
+		self.assertEqual(results[0].imm.byte, 0x66)
+		s, count, results = self.direct_decompose(b"\x66\x67", 0, distorm3.Decode32Bits, 0, 2)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 2)
+		self.assertEqual(results[0].imm.byte, 0x66)
+		self.assertEqual(results[1].imm.byte, 0x67)
+		s, count, results = self.direct_decompose(b"\x66\x67", 0, distorm3.Decode32Bits, 0, 1)
+		self.assertEqual(s, distorm3.DECRES_MEMORYERR)
+		self.assertEqual(count, 1)
+	def test_drop_skip(self):
+		s, count, results = self.direct_decompose(b"\x05\x00\x01", 0, distorm3.Decode32Bits, 0, 1) # Skips 05, then returns add [ecx], al
+		self.assertEqual(s, distorm3.DECRES_MEMORYERR)
+		self.assertEqual(count, 1)
+		s, count, results = self.direct_decompose(b"\x05\x00\x01", 0, distorm3.Decode32Bits, 0, 2)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 2)
+		s, count, results = self.direct_decompose(b"\xc4\x01", 0, distorm3.Decode32Bits, 0, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 1)
+		self.assertEqual(Mnemonics.get(results[0].opcode, ""), "LES")
+		s, count, results = self.direct_decompose(b"\xc5\xc5", 0, distorm3.Decode32Bits, 0, 2)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 2)
+		self.assertEqual(results[0].imm.byte, 0xc5)
+		self.assertEqual(results[1].imm.byte, 0xc5)
+		s, count, results = self.direct_decompose(b"\xc5\xc5\xc5", 0, distorm3.Decode32Bits, 0, 3)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 3)
+		self.assertEqual(results[0].imm.byte, 0xc5)
+		self.assertEqual(results[1].imm.byte, 0xc5)
+		self.assertEqual(results[2].imm.byte, 0xc5)
+	def test_fc(self):
+		s, count, results = self.direct_decompose(b"\x90", 0, distorm3.Decode32Bits, distorm3.DF_RETURN_FC_ONLY, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 0)
+		s, count, results = self.direct_decompose(b"\x90\x75\x00", 0, distorm3.Decode32Bits, distorm3.DF_RETURN_FC_ONLY, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 1)
+	def test_single_step(self):
+		s, count, results = self.direct_decompose(b"\x33\xff\xc0", 0, distorm3.Decode32Bits, distorm3.DF_SINGLE_BYTE_STEP, 1)
+		self.assertEqual(s, distorm3.DECRES_MEMORYERR)
+		self.assertEqual(count, 1)
+		self.assertEqual(Mnemonics.get(results[0].opcode, ""), "XOR")
+		s, count, results = self.direct_decompose(b"\x33\xff\xc0", 0, distorm3.Decode32Bits, distorm3.DF_SINGLE_BYTE_STEP, 2)
+		self.assertEqual(s, distorm3.DECRES_MEMORYERR)
+		self.assertEqual(count, 2)
+		self.assertEqual(Mnemonics.get(results[0].opcode, ""), "XOR")
+		self.assertEqual(Mnemonics.get(results[1].opcode, ""), "INC")
+		s, count, results = self.direct_decompose(b"\x33\xff\xc0", 0, distorm3.Decode32Bits, distorm3.DF_SINGLE_BYTE_STEP, 3)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 3)
+		self.assertEqual(Mnemonics.get(results[0].opcode, ""), "XOR")
+		self.assertEqual(Mnemonics.get(results[1].opcode, ""), "INC")
+		self.assertEqual(results[2].imm.byte, 0xc0)
+	def test_fc_and_single_step(self):
+		s, count, results = self.direct_decompose(b"\x33\xc3", 0, distorm3.Decode32Bits, distorm3.DF_SINGLE_BYTE_STEP | distorm3.DF_RETURN_FC_ONLY, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 1)
+		self.assertEqual(Mnemonics.get(results[0].opcode, ""), "RET")
+	def test_fc_dropped(self):
+		s, count, results = self.direct_decompose(b"\x33\xc3", 0, distorm3.Decode64Bits, distorm3.DF_RETURN_FC_ONLY, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 0)
+		s, count, results = self.direct_decompose(b"\x66\x67\x90\xc3", 0, distorm3.Decode64Bits, distorm3.DF_RETURN_FC_ONLY, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 1)
+		s, count, results = self.direct_decompose(b"\x66\x67", 0, distorm3.Decode64Bits, distorm3.DF_RETURN_FC_ONLY, 1)
+		self.assertEqual(s, distorm3.DECRES_SUCCESS)
+		self.assertEqual(count, 0)
 
 def GetNewSuite(className):
 	suite = unittest.TestSuite()
@@ -1679,7 +2137,13 @@ if __name__ == "__main__":
 	suite.addTest(GetNewSuite(TestInstTable))
 	suite.addTest(GetNewSuite(TestAVXOperands))
 	suite.addTest(GetNewSuite(TestMisc))
+	suite.addTest(GetNewSuite(TestMisc2))
 	suite.addTest(GetNewSuite(TestPrefixes))
-	#suite.addTest(GetNewSuite(TestInvalid))
-	#suite.addTest(GetNewSuite(TestFeatures))
-	unittest.TextTestRunner(verbosity=1).run(suite)
+	suite.addTest(GetNewSuite(TestInvalid))
+	suite.addTest(GetNewSuite(TestFeatures))
+	suite.addTest(GetNewSuite(TestAPI))
+	result = unittest.TextTestRunner(verbosity=1).run(suite)
+	if result.wasSuccessful():
+		exit(0)
+	else:
+		exit(1)

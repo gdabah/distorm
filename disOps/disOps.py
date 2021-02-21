@@ -1,7 +1,7 @@
 #
 # disOps.py v 1.0.0
 #
-# Copyright (C) 2003-2018 Gil Dabah, http://ragestorm.net/distorm/
+# Copyright (C) 2003-2020 Gil Dabah, http://ragestorm.net/distorm/
 #
 # disOps is a part of the diStorm project, but can be used for anything.
 # The generated output is tightly coupled with diStorm data structures which can be found at instructions.h.
@@ -45,6 +45,7 @@
 import re
 import time
 import functools
+import os
 import x86sets
 import x86db
 import x86generator
@@ -79,7 +80,8 @@ def CreateMnemonicsC(mnemonicsIds):
 		s += "\"\\\\x%02x\" \"%s\\\\0\" " % (len(i[0]), i[0])
 		if len(s) - s.rfind("\n") >= 76:
 			s += "\\\\\n"
-	s = s[:-1] + ";" # Ignore last space.
+	s = s[:-1] # Ignore last space.
+	s += " \\\\\\n\"" + "\\\\x00" * 20 + "\"; /* Sentinel mnemonic. */"
 	# Return enum & mnemonics.
 	return (opsEnum, s)
 
@@ -118,7 +120,7 @@ def CreateMnemonicsJava(mnemonicsIds):
 
 def WriteMnemonicsC(mnemonicsIds):
 	""" Write the enum of opcods and their corresponding mnemonics to the C files. """
-	path = "..\\include\\mnemonics.h"
+	path = os.path.join("..", "include", "mnemonics.h")
 	print("- Try rewriting mnemonics for %s." % path)
 	e, m = CreateMnemonicsC(mnemonicsIds)
 	old = open(path, "r").read()
@@ -129,10 +131,10 @@ def WriteMnemonicsC(mnemonicsIds):
 	open(path, "w").write(new)
 	print("Succeeded")
 
-	path = "..\\src\\mnemonics.c"
+	path = os.path.join("..", "src", "mnemonics.c")
 	print("- Try rewriting mnemonics for %s." % path)
 	old = open(path, "r").read()
-	rePattern = "const unsigned char _MNEMONICS\[\] =.*?;"
+	rePattern = "const unsigned char _MNEMONICS\[\] =.*?\*/"
 	if re.compile(rePattern, reFlags).search(old) == None:
 		raise Exception("Couldn't find matching mnemonics text block for substitution in " + path)
 	new = re.sub(rePattern, m, old, 1, reFlags)
@@ -142,9 +144,9 @@ def WriteMnemonicsC(mnemonicsIds):
 def WriteMnemonicsPython(mnemonicsIds):
 	""" Write the dictionary of opcods to the python module. """
 	#
-	# Fix Python dictionary inside __init__.py.
+	# Fix Python dictionary inside distorm3/_generated.py.
 	#
-	path = "..\\python\\distorm3\\__init__.py"
+	path = os.path.join("..", "python", "distorm3", "_generated.py")
 	print("- Try rewriting mnemonics for %s." % path)
 	d = CreateMnemonicsPython(mnemonicsIds)
 	old = open(path, "r").read()
@@ -160,7 +162,7 @@ def WriteMnemonicsJava(mnemonicsIds):
 	#
 	# Fix Java enum and mnemonics arrays
 	#
-	path = "..\\examples\\java\\distorm\\src\\diStorm3\\OpcodeEnum.java"
+	path = os.path.join("..", "examples", "java", "distorm", "src", "diStorm3", "OpcodeEnum.java")
 	print("- Try rewriting mnemonics for %s." % path)
 	e, m = CreateMnemonicsJava(mnemonicsIds)
 	old = open(path, "r").read()
@@ -171,7 +173,7 @@ def WriteMnemonicsJava(mnemonicsIds):
 	open(path, "w").write(new)
 	print("Succeeded")
 
-	path = "..\\examples\\java\\distorm\\src\\diStorm3\\Opcodes.java"
+	path = os.path.join("..", "examples", "java", "distorm", "src", "diStorm3", "Opcodes.java")
 	print("- Try rewriting mnemonics for %s." % path)
 	old = open(path, "r").read()
 	rePattern = "static \{.*?}"
@@ -183,7 +185,7 @@ def WriteMnemonicsJava(mnemonicsIds):
 
 def WriteInstsC(lists):
 	""" Write the tables of the instructions in the C source code. """
-	path = "..\\src\\insts.c"
+	path = os.path.join("..", "src", "insts.c")
 	print("- Try rewriting instructions for %s." % path)
 	old = open(path, "r").read()
 	pos = old.find("/*\n * GENERATED")

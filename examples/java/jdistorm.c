@@ -290,7 +290,7 @@ JNIEXPORT jobject JNICALL Java_diStorm3_distorm3_Format
 	input.scale = (uint8_t) (*env)->GetIntField(env, jdiObj, g_DecomposedInstIds.ID_Scale);
 	input.opcode = (uint16_t) (*env)->GetIntField(env, jdiObj, g_DecomposedInstIds.ID_Opcode);
 	/* unusedPrefixesMask is unused indeed, lol. */
-	input.meta = (uint8_t) (*env)->GetIntField(env, jdiObj, g_DecomposedInstIds.ID_Meta);
+	input.meta = (uint16_t) (*env)->GetIntField(env, jdiObj, g_DecomposedInstIds.ID_Meta);
 	/* Nor usedRegistersMask. */
 
 	jOperands = (*env)->GetObjectField(env, jdiObj, g_DecomposedInstIds.ID_Operands);

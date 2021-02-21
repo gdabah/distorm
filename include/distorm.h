@@ -1,4 +1,4 @@
-/* diStorm 3.4.0 */
+/* diStorm 3.5.1 */
 
 /*
 distorm.h
@@ -6,7 +6,7 @@ distorm.h
 diStorm3 - Powerful disassembler for X86/AMD64
 http://ragestorm.net/distorm/
 distorm at gmail dot com
-Copyright (C) 2003-2018 Gil Dabah
+Copyright (C) 2003-2020 Gil Dabah
 This library is licensed under the BSD license. See the file COPYING.
 */
 
@@ -67,10 +67,10 @@ typedef unsigned __int8		uint8_t;
 /* ***  Helper Macros  *** */
 
 /* Get the ISC of the instruction, used with the definitions below. */
-#define META_GET_ISC(meta) (((meta) >> 3) & 0x1f)
-#define META_SET_ISC(di, isc) (((di)->meta) |= ((isc) << 3))
+#define META_GET_ISC(meta) (((meta) >> 8) & 0x1f)
+#define META_SET_ISC(di, isc) (((di)->meta) |= ((isc) << 8))
 /* Get the flow control flags of the instruction, see 'features for decompose' below. */
-#define META_GET_FC(meta) ((meta) & 0x7)
+#define META_GET_FC(meta) ((meta) & 0xf)
 
 /* Get the target address of a branching instruction. O_PC operand type. */
 #define INSTRUCTION_GET_TARGET(di) ((_OffsetType)(((di)->addr + (di)->imm.addr + (di)->size)))
@@ -91,7 +91,7 @@ typedef unsigned __int8		uint8_t;
 #define FLAG_GET_OPSIZE(flags) (((flags) >> 8) & 3)
 #define FLAG_GET_ADDRSIZE(flags) (((flags) >> 10) & 3)
 /* To get the LOCK/REPNZ/REP prefixes. */
-#define FLAG_GET_PREFIX(flags) ((flags) & 7)
+#define FLAG_GET_PREFIX(flags) (((unsigned int)((int16_t)flags)) & 7)
 /* Indicates whether the instruction is privileged. */
 #define FLAG_GET_PRIVILEGED(flags) (((flags) & FLAG_PRIVILEGED_INSTRUCTION) != 0)
 
@@ -99,10 +99,10 @@ typedef unsigned __int8		uint8_t;
  * Macros to extract segment registers from 'segment':
  */
 #define SEGMENT_DEFAULT 0x80
-#define SEGMENT_SET(di, seg) ((di->segment) |= seg)
 #define SEGMENT_GET(segment) (((segment) == R_NONE) ? R_NONE : ((segment) & 0x7f))
-#define SEGMENT_IS_DEFAULT(segment) (((segment) & SEGMENT_DEFAULT) == SEGMENT_DEFAULT)
-
+#define SEGMENT_GET_UNSAFE(segment) ((segment) & 0x7f)
+#define SEGMENT_IS_DEFAULT(segment) (((int8_t)segment) < -1) /* Quick check it's a negative number that isn't -1, so it's (0x80 | SEGREG). */
+#define SEGMENT_IS_DEFAULT_OR_NONE(segment) (((uint8_t)(segment)) > 0x80)
 
 /* Decodes modes of the disassembler, 16 bits or 32 bits or 64 bits for AMD64, x86-64. */
 typedef enum { Decode16Bits = 0, Decode32Bits = 1, Decode64Bits = 2 } _DecodeType;
@@ -110,7 +110,8 @@ typedef enum { Decode16Bits = 0, Decode32Bits = 1, Decode64Bits = 2 } _DecodeTyp
 typedef OFFSET_INTEGER _OffsetType;
 
 typedef struct {
-	_OffsetType codeOffset, nextOffset; /* nextOffset is OUT only. */
+	_OffsetType codeOffset, addrMask;
+	_OffsetType nextOffset; /* nextOffset is OUT only. */
 	const uint8_t* code;
 	int codeLen; /* Using signed integer makes it easier to detect an underflow. */
 	_DecodeType dt;
@@ -243,6 +244,8 @@ typedef struct {
 	uint16_t opcode;
 	/* Up to four operands per instruction, ignored if ops[n].type == O_NONE. */
 	_Operand ops[OPERANDS_NO];
+	/* Number of valid ops entries. */
+	uint8_t opsNo;
 	/* Size of the whole instruction in bytes. */
 	uint8_t size;
 	/* Segment information of memory indirection, default segment, or overriden one, can be -1. Use SEGMENT macros. */
@@ -251,8 +254,8 @@ typedef struct {
 	uint8_t base, scale;
 	uint8_t dispSize;
 	/* Meta defines the instruction set class, and the flow control flags. Use META macros. */
-	uint8_t meta;
-	/* The CPU flags that the instruction operates upon. */
+	uint16_t meta;
+	/* The CPU flags that the instruction operates upon, set only with DF_FILL_EFLAGS enabled, otherwise 0. */
 	uint16_t modifiedFlagsMask, testedFlagsMask, undefinedFlagsMask;
 } _DInst;
 
@@ -271,11 +274,11 @@ typedef struct {
  * This structure holds all information the disassembler generates per instruction.
  */
 typedef struct {
+	_OffsetType offset; /* Start offset of the decoded instruction. */
+	unsigned int size; /* Size of decoded instruction in bytes. */
 	_WString mnemonic; /* Mnemonic of decoded instruction, prefixed if required by REP, LOCK etc. */
 	_WString operands; /* Operands of the decoded instruction, up to 3 operands, comma-seperated. */
 	_WString instructionHex; /* Hex dump - little endian, including prefixes. */
-	unsigned int size; /* Size of decoded instruction in bytes. */
-	_OffsetType offset; /* Start offset of the decoded instruction. */
 } _DecodedInst;
 
 #endif /* DISTORM_LIGHT */
@@ -285,7 +288,7 @@ typedef struct {
 #define RM_CX 2     /* CL, CH, CX, ECX, RCX */
 #define RM_DX 4     /* DL, DH, DX, EDX, RDX */
 #define RM_BX 8     /* BL, BH, BX, EBX, RBX */
-#define RM_SP 0x10  /* SPL, SP, ESP, RSP */ 
+#define RM_SP 0x10  /* SPL, SP, ESP, RSP */
 #define RM_BP 0x20  /* BPL, BP, EBP, RBP */
 #define RM_SI 0x40  /* SIL, SI, ESI, RSI */
 #define RM_DI 0x80  /* DIL, DI, EDI, RDI */
@@ -303,6 +306,7 @@ typedef struct {
 #define RM_R13 0x80000 /* R13B, R13W, R13D, R13 */
 #define RM_R14 0x100000 /* R14B, R14W, R14D, R14 */
 #define RM_R15 0x200000 /* R15B, R15W, R15D, R15 */
+#define RM_SEG 0x400000 /* CS, SS, DS, ES, FS, GS */
 
 /* RIP should be checked using the 'flags' field and FLAG_RIP_RELATIVE.
  * Segments should be checked using the segment macros.
@@ -384,8 +388,21 @@ typedef struct {
 #define DF_STOP_ON_INT 0x100
 /* The decoder will stop and return to the caller when any of the 'CMOVxx' instruction was decoded. */
 #define DF_STOP_ON_CMOV 0x200
+/* The decoder will stop and return to the caller when it encounters the HLT instruction. */
+#define DF_STOP_ON_HLT 0x400
+/* The decoder will stop and return to the caller when it encounters a privileged instruction. */
+#define DF_STOP_ON_PRIVILEGED 0x800
+/* The decoder will stop and return to the caller when an instruction couldn't be decoded. */
+#define DF_STOP_ON_UNDECODEABLE 0x1000
+/* The decoder will not synchronize to the next byte after the previosuly decoded instruction, instead it will start decoding at the next byte. */
+#define DF_SINGLE_BYTE_STEP 0x2000
+/* The decoder will fill in the eflags fields for the decoded instruction. */
+#define DF_FILL_EFLAGS 0x4000
+/* The decoder will use the addrMask in CodeInfo structure instead of DF_MAXIMUM_ADDR16/32. */
+#define DF_USE_ADDR_MASK 0x8000
+
 /* The decoder will stop and return to the caller when any flow control instruction was decoded. */
-#define DF_STOP_ON_FLOW_CONTROL (DF_STOP_ON_CALL | DF_STOP_ON_RET | DF_STOP_ON_SYS | DF_STOP_ON_UNC_BRANCH | DF_STOP_ON_CND_BRANCH | DF_STOP_ON_INT | DF_STOP_ON_CMOV)
+#define DF_STOP_ON_FLOW_CONTROL (DF_STOP_ON_CALL | DF_STOP_ON_RET | DF_STOP_ON_SYS | DF_STOP_ON_UNC_BRANCH | DF_STOP_ON_CND_BRANCH | DF_STOP_ON_INT | DF_STOP_ON_CMOV | DF_STOP_ON_HLT)
 
 /* Indicates the instruction is not a flow-control instruction. */
 #define FC_NONE 0
@@ -406,9 +423,11 @@ typedef struct {
 #define FC_INT 6
 /* Indicates the instruction is one of: CMOVxx. */
 #define FC_CMOV 7
+/* Indicates the instruction is HLT. */
+#define FC_HLT 8
 
 /* Return code of the decoding function. */
-typedef enum { DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, DECRES_FILTERED } _DecodeResult;
+typedef enum { DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR } _DecodeResult;
 
 /* Define the following interface functions only for outer projects. */
 #if !(defined(DISTORM_STATIC) || defined(DISTORM_DYNAMIC))
@@ -431,7 +450,7 @@ typedef enum { DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, D
  * Notes:  1)The minimal size of maxInstructions is 15.
  *         2)You will have to synchronize the offset,code and length by yourself if you pass code fragments and not a complete code block!
  */
- 
+
 /* distorm_decompose
  * See more documentation online at the GitHub project's wiki.
  *

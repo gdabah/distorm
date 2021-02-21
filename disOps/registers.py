@@ -36,7 +36,7 @@ for i in REGISTERS:
 				regsText += " "
 				regsEnum += " "
 	old = i
-regsText += "{%d, \"%s\"}\n};\n" % (len(old), old)
+regsText += "{%d, \"%s\"},\n\t{0, \"\"} /* There must be an empty last reg, see strcat_WSR. */\n};\n" % (len(old), old)
 regsEnum += "R_" + old + "\n} _RegisterType;\n"
 	
 print(regsEnum)

@@ -465,12 +465,12 @@ class Instructions:
 		# XRSTOR is declared below (see LFENCE), cause it is shared with LFENCE.
 
 		# New instruction from Intel September 2009:
-		Set("0f, 37", ["GETSEC"], [], IFlag.MODRM_REQUIRED | IFlag._32BITS)
+		Set("0f, 37", ["GETSEC"], [], IFlag._32BITS)
 
 		# XSAVEOPT is declared below (see SFENCE).
 
 	def init_Exported(self):
-		""" Exported instruction are special instruction that create a collision in the DB.
+		""" Exported instruction are special instructions that create a collision in the DB.
 		Therefore they are exported directly so diStorm can use them manually in the
 		insts.c instruction look-up code.
 		Note that their opcodes are totally ignored here.

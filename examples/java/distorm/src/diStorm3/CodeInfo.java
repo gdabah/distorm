@@ -8,6 +8,7 @@ public class CodeInfo {
 		mCode = code;
 		mDecodeType = dt.ordinal();
 		mFeatures = features;
+		mAddrMask = 0;
 	}
 
 	public CodeInfo(long codeOffset, byte[] rawCode, distorm3.DecodeType dt, int features) {
@@ -17,8 +18,10 @@ public class CodeInfo {
 		mCodeOffset = codeOffset;
 		mDecodeType = dt.ordinal();
 		mFeatures = features;
+		mAddrMask = 0;
 	}
 
+	private long mAddrMask;
 	private long mCodeOffset;
 	private long mNextOffset;
 	private ByteBuffer mCode;
