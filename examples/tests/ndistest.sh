@@ -4,8 +4,28 @@ source bash/upvars.inc.sh
 source bash/explode.inc.sh
 source bash/arrays.inc.sh
 
-# sfink@280x linux $ ndisasm.exe -b 64 -o 0x140016124 torture.bin > rn.asm
-# sfink@280x linux $ ./disasm.exe -b64 torture.bin 0x140016124 > rd.asm
+# path of ndisasm -- some examples:
+NDISASM='/bin/ndisasm.exe'
+NDISASM='/cygdrive/c/Program Files/NASM/ndisasm.exe'
+NDISASM='/cygdrive/e/git/vcpkg/downloads/tools/nasm/nasm-2.12.02/ndisasm.exe'
+NDISASM='/usr/bin/ndisasm.exe'
+NDISASM='/cygdrive/e/git/vcpkg/downloads/tools/nasm/nasm-2.14/ndisasm.exe'
+
+# path of distorm's example disasm.exe (should be in this directory)
+DISTORM='./disasm.exe'
+
+test ! -f "$DISTORM" || test ! -f "$DISTORM" && {
+    echo "Distorm: '$DISTORM' not found or not executable"
+    return 1
+}
+
+test ! -f "$NDISASM" || test ! -f "$NDISASM" && {
+    echo "Ndisasm: '$NDISASM' not found or not executable"
+    return 1
+}
+
+# sfink@280x linux $ "$NDISASM" -b 64 -o 0x140016124 torture.bin > rn.asm
+# sfink@280x linux $ "$DISTORM" -b64 torture.bin 0x140016124 > rd.asm
 
 flags=$( echo {{c,p,a,z,s,t,i,d,o,r,vi}f,ac,id,iopl,nt,vip,vm} )
 r8=$(    echo {{{a,c,d,b}{h,l},{s,b}pl,{s,d}il},r{8..15}b}     )
@@ -19,7 +39,6 @@ ptrd=$(  echo {byte,{,d,q,dq,y}word,tbyte}                     ) # distorm ptr s
 ptrn=$(  echo {byte,{,d,q,o,y,z}word}                          ) # ndisasm ptr sizes (guessed)
 condd=$(   echo j{ae,a,be,b,cxz,ecxz,ge,g,le,l,no,np,ns,nz,o,p,rcxz,s,z} ) # distorm conditionals
 condn=$( echo j{nc,a,na,c,ecxz,ecxz,nl,g,ng,l,no,po,ns,nz,o,pe,rcxz,s,z} ) # ndisasm conditionals
-
 
 # combined distorm and ndisasm ptr sizes
 ptr="$ptrd $ptrn"
@@ -64,22 +83,29 @@ log2() {
 }
 ptrsize() {
     hexlen $1; log2 $(( $? - 1 )); n=$?
-    echo "${ptrna[$n]}"
+    # echo "${ptrna[$n]}" >& 2
+    return $n
 }
 
 process_asm() {
     local distorm=0
     local ndisasm=0
     local s_bytes s_mnem s_addr s_len
+    local s_original s_modified
     while read -ra input; do
         if [[ $distorm == 0 && $ndisasm == 0 ]]; then
             if [[ ${input[0]} == diStorm ]]; then
+                echo "***DISTORM***" >& 2
                 distorm=1
             else
+                echo "***NDISASM***" >& 2
                 ndisasm=1
             fi
         fi
-                
+        s_original=${input[*]}        
+        s_original=${s_original%$'\r'}
+        s_original=${s_original%$'\n'}
+        s_original=${s_original%$'\r'}
         array_shift s_addr input
         array_shift s_len input
         if [[ $distorm == 1 ]]; then
@@ -107,6 +133,10 @@ process_asm() {
             s_len=${s_len#(}
             s_len=${s_len#0}
             s_len=${s_len%)}
+            s_mnem=${s_mnem%$'\r'}
+            s_opers=${s_opers%$'\r'}
+            s_mnem=${s_mnem%$'\n'}
+            s_opers=${s_opers%$'\n'}
             s_mnem=${s_mnem%$'\r'}
             s_opers=${s_opers%$'\r'}
 
@@ -178,7 +208,8 @@ process_asm() {
                             val=$(( $val_st ))
                             
                             # check what the default ptr size for this value would be
-                            default_ptr_size=$( ptrsize $val )
+                            ptrsize $val
+                            default_ptr_size=${ptrna[$?]}
                             # echo "$default_ptr_size $val ${split_oper[0]}" >& 2
 
                             # if the default matches what is obvious, remove it
@@ -259,20 +290,22 @@ process_asm() {
                 implode "," "${new_opers[@]}"
 
                 # and output the final line with address and mnemonic
-                printf "%x %s %s\n" "$addr" "$s_mnem" "$IMPLODED"
+                printf -v s_modified "%x %s %s" "$addr" "$s_mnem" "$IMPLODED"
             else
-                printf "%x %s\n" "$addr" "$s_mnem"
+                printf -v s_modified "%x %s" "$addr" "$s_mnem"
             fi
+            printf '%-80s | \e[1m%s\e[0m\n' "$s_original" "$s_modified" >& 2
+            echo "$s_modified"
         fi
     done 
 }
-# process_asm <<< $( ndisasm.exe -b 64 -o 0x140016124 torture.bin )
-# process_asm <<< $( ./disasm.exe -b64 torture.bin 0x140016124 )
-process_asm <<< $( ndisasm.exe -b 64 -o 0x140016124 torture.bin ) > test-ndisasm.asm
-process_asm <<< $( ./disasm.exe -b64 torture.bin 0x140016124 ) > test-distorm.asm
+# process_asm <<< $( "$NDISASM" -b 64 -o 0x140016124 torture.bin )
+# process_asm <<< $( "$DISTORM" -b64 torture.bin 0x140016124 )
+process_asm <<< $( "$NDISASM" -b 64 -o 0x140016124 torture.bin ) > test-ndisasm.asm
+process_asm <<< $( "$DISTORM" -b64 torture.bin 0x140016124 ) > test-distorm.asm
 
 # diff test-ndisasm.asm test-distorm.asm
 
-process_asm <<< $( ndisasm.exe -b 64 -o 0x1432b39b0 exception.bin ) >> test-ndisasm.asm
-process_asm <<< $( ./disasm.exe -b64 exception.bin 0x1432b39b0 ) >> test-distorm.asm
+process_asm <<< $( "$NDISASM" -b 64 -o 0x1432b39b0 exception.bin ) >> test-ndisasm.asm
+process_asm <<< $( "$DISTORM" -b64 exception.bin 0x1432b39b0 ) >> test-distorm.asm
 diff test-ndisasm.asm test-distorm.asm
