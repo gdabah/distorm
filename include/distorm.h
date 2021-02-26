@@ -47,7 +47,11 @@ This library is licensed under the BSD license. See the file COPYING.
 #endif
 
 #ifdef _MSC_VER
-/* Since MSVC isn't shipped with stdint.h, we will have our own: */
+/* MSVC prior to Visual Studio 2010 didn't ship with stdint.h */
+#if _MSC_VER >= 1600
+#include <stdint.h>
+#endif
+#if !defined(_STDINT)
 typedef signed __int64		int64_t;
 typedef unsigned __int64	uint64_t;
 typedef signed __int32		int32_t;
@@ -56,6 +60,7 @@ typedef signed __int16		int16_t;
 typedef unsigned __int16	uint16_t;
 typedef signed __int8		int8_t;
 typedef unsigned __int8		uint8_t;
+#endif
 #endif
 
 /* Support C++ compilers */
