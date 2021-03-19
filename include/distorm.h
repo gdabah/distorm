@@ -1,4 +1,4 @@
-/* diStorm 3.5.1 */
+/* diStorm 3.5.2 */
 
 /*
 distorm.h
@@ -6,7 +6,7 @@ distorm.h
 diStorm3 - Powerful disassembler for X86/AMD64
 http://ragestorm.net/distorm/
 distorm at gmail dot com
-Copyright (C) 2003-2020 Gil Dabah
+Copyright (C) 2003-2021 Gil Dabah
 This library is licensed under the BSD license. See the file COPYING.
 */
 
