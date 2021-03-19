@@ -38,7 +38,7 @@ This library is licensed under the BSD license. See the file COPYING.
 #else
 /* Since MSVC < 2010 isn't shipped with stdint.h,
  * here are those from MSVC 2017, which also match
- * those those in tinycc/libc */
+ * those in tinycc/libc. */
 typedef signed char        int8_t;
 typedef short              int16_t;
 typedef int                int32_t;
