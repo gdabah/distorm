@@ -67,6 +67,7 @@ static void distorm_format_size(unsigned char** str, const _DInst* di, int opNum
 		 * MOVZX, MOVSX, MOVSXD.
 		 * ROL, ROR, RCL, RCR, SHL, SHR, SAL, SAR.
 		 * SHLD, SHRD.
+		 * CVTSI2SS is also an exception.
 		 */
 		switch (di->opcode)
 		{
@@ -85,6 +86,7 @@ static void distorm_format_size(unsigned char** str, const _DInst* di, int opNum
 			case I_SAR:
 			case I_SHLD:
 			case I_SHRD:
+			case I_CVTSI2SS:
 				isSizingRequired = 1;
 			break;
 			default: /* Instruction doesn't require sizing. */ break;
