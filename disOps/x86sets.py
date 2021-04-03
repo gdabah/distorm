@@ -53,6 +53,8 @@ class Instructions:
 		Set("0f, 01 //07", ["INVLPG"], [OPT.MEM], IFlag.MODRM_REQUIRED | IFlag._32BITS)
 		Set("0f, 01 //c8", ["MONITOR"], [], IFlag._32BITS)
 		Set("0f, 01 //c9", ["MWAIT"], [], IFlag._32BITS)
+		Set("0f, 01 //ca", ["CLAC"], [], IFlag._32BITS)
+		Set("0f, 01 //cb", ["STAC"], [], IFlag._32BITS)
 		Set("0f, 01 //f8", ["SWAPGS"], [], IFlag._64BITS_FETCH)
 		Set("0f, 01 //f9", ["RDTSCP"], [], IFlag._64BITS_FETCH)
 		Set("0f, 02", ["LAR"], [OPT.REG_FULL, OPT.RM16], IFlag.MODRM_REQUIRED)

@@ -24,14 +24,14 @@ int main(int argc, char **argv)
 	unsigned int dver = distorm_version();
 	printf("diStorm version: %d.%d.%d\n", (dver >> 16), ((dver) >> 8) & 0xff, dver & 0xff);
 
-	unsigned char rawData[6] = {
-		0xC4, 0xE3, 0x79, 0x14, 0xD0, 0x03
+	unsigned char rawData[] = {
+		0x0f, 0x01, 0xcb
 	};
 
 	_CodeInfo ci = { 0 };
 	ci.codeLen = sizeof(rawData);
 	ci.code = rawData;
-	ci.dt = Decode64Bits;
+	ci.dt = Decode32Bits;
 	ci.features = 0;
 	distorm_decompose(&ci, decodedInstructions, 1000, &decodedInstructionsCount);
 	//distorm_decode(0, rawData, sizeof(rawData), Decode32Bits, &di, 1, &decodedInstructionsCount);
