@@ -1066,7 +1066,7 @@ class TestInstTable(unittest.TestCase):
 		IB32("0f0dff").check_invalid()
 	def test_ol2d_bad(self):
 		IB32("0f0128").check_invalid()
-		IB32("0f01ca").check_invalid()
+		IB32("0f01cc").check_invalid()
 	def test_ol3_bad(self):
 		IB32("0f0fff").check_invalid()
 	def test_index63(self):
