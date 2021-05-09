@@ -5,7 +5,7 @@ diStorm3 C Library Interface
 diStorm3 - Powerful disassembler for X86/AMD64
 http://ragestorm.net/distorm/
 distorm at gmail dot com
-Copyright (C) 2003-2020 Gil Dabah
+Copyright (C) 2003-2021 Gil Dabah
 This library is licensed under the BSD license. See the file COPYING.
 */
 
@@ -67,6 +67,7 @@ static void distorm_format_size(unsigned char** str, const _DInst* di, int opNum
 		 * MOVZX, MOVSX, MOVSXD.
 		 * ROL, ROR, RCL, RCR, SHL, SHR, SAL, SAR.
 		 * SHLD, SHRD.
+		 * CVTSI2SS is also an exception.
 		 */
 		switch (di->opcode)
 		{
@@ -85,6 +86,7 @@ static void distorm_format_size(unsigned char** str, const _DInst* di, int opNum
 			case I_SAR:
 			case I_SHLD:
 			case I_SHRD:
+			case I_CVTSI2SS:
 				isSizingRequired = 1;
 			break;
 			default: /* Instruction doesn't require sizing. */ break;

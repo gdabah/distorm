@@ -1,4 +1,4 @@
-/* diStorm 3.5.1 */
+/* diStorm 3.5.2 */
 
 /*
 distorm.h
@@ -6,7 +6,7 @@ distorm.h
 diStorm3 - Powerful disassembler for X86/AMD64
 http://ragestorm.net/distorm/
 distorm at gmail dot com
-Copyright (C) 2003-2020 Gil Dabah
+Copyright (C) 2003-2021 Gil Dabah
 This library is licensed under the BSD license. See the file COPYING.
 */
 
@@ -33,29 +33,27 @@ This library is licensed under the BSD license. See the file COPYING.
 	#undef SUPPORT_64BIT_OFFSET
 #endif
 
-/* If your compiler doesn't support stdint.h, define your own 64 bits type. */
-#ifdef SUPPORT_64BIT_OFFSET
-	#ifdef _MSC_VER
-		#define OFFSET_INTEGER unsigned __int64
-	#else
-		#include <stdint.h>
-		#define OFFSET_INTEGER uint64_t
-	#endif
+#ifndef _MSC_VER
+#include <stdint.h>
 #else
-	/* 32 bit offsets are used. */
-	#define OFFSET_INTEGER unsigned long
+/* Since MSVC < 2010 isn't shipped with stdint.h,
+ * here are those from MSVC 2017, which also match
+ * those in tinycc/libc. */
+typedef signed char        int8_t;
+typedef short              int16_t;
+typedef int                int32_t;
+typedef long long          int64_t;
+typedef unsigned char      uint8_t;
+typedef unsigned short     uint16_t;
+typedef unsigned int       uint32_t;
+typedef unsigned long long uint64_t;
 #endif
 
-#ifdef _MSC_VER
-/* Since MSVC isn't shipped with stdint.h, we will have our own: */
-typedef signed __int64		int64_t;
-typedef unsigned __int64	uint64_t;
-typedef signed __int32		int32_t;
-typedef unsigned __int32	uint32_t;
-typedef signed __int16		int16_t;
-typedef unsigned __int16	uint16_t;
-typedef signed __int8		int8_t;
-typedef unsigned __int8		uint8_t;
+#ifdef SUPPORT_64BIT_OFFSET
+#define OFFSET_INTEGER uint64_t
+#else
+/* 32 bit offsets are used. */
+#define OFFSET_INTEGER uint32_t
 #endif
 
 /* Support C++ compilers */

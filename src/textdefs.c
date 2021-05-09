@@ -4,7 +4,7 @@ textdefs.c
 diStorm3 - Powerful disassembler for X86/AMD64
 http://ragestorm.net/distorm/
 distorm at gmail dot com
-Copyright (C) 2003-2020 Gil Dabah
+Copyright (C) 2003-2021 Gil Dabah
 This library is licensed under the BSD license. See the file COPYING.
 */
 
@@ -19,7 +19,7 @@ static uint8_t Nibble2ChrTable[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8
 void str_hex(_WString* s, const uint8_t* buf, unsigned int len)
 {
 	/* 256 * 2 : 2 chars per byte value. */
-	static char* TextBTable =
+	static const char* TextBTable =
 		"000102030405060708090a0b0c0d0e0f" \
 		"101112131415161718191a1b1c1d1e1f" \
 		"202122232425262728292a2b2c2d2e2f" \
