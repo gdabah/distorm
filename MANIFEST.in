@@ -1,5 +1,5 @@
 include COPYING setup.cfg setup.py
-include make\win32\cdistorm.vcxproj make\win32\cdistorm.vcxproj.filters make\win32\distorm.sln make\win32\resource.h make\win32\Resource.rc
+include windows\cdistorm.vcxproj windows\cdistorm.vcxproj.filters windows\distorm.sln windows\resource.h windows\Resource.rc
 recursive-include src *.c *.h
 recursive-include include *.h
 recursive-include python *.py
