@@ -27,7 +27,7 @@ const unsigned char _MNEMONICS[] =
 "\x03" "CQO\0" "\x08" "CALL FAR\0" "\x05" "PUSHF\0" "\x04" "POPF\0" \
 "\x04" "SAHF\0" "\x04" "LAHF\0" "\x04" "MOVS\0" "\x04" "CMPS\0" "\x04" "STOS\0" \
 "\x04" "LODS\0" "\x04" "SCAS\0" "\x03" "RET\0" "\x03" "LES\0" "\x03" "LDS\0" \
-"\x05" "ENTER\0" "\x05" "LEAVE\0" "\x04" "RETF\0" "\x05" "INT 3\0" \
+"\x05" "ENTER\0" "\x05" "LEAVE\0" "\x04" "RETF\0" "\x05" "INT3\0" \
 "\x03" "INT\0" "\x04" "INTO\0" "\x04" "IRET\0" "\x03" "AAM\0" "\x03" "AAD\0" \
 "\x04" "SALC\0" "\x04" "XLAT\0" "\x06" "LOOPNZ\0" "\x05" "LOOPZ\0" \
 "\x04" "LOOP\0" "\x04" "JCXZ\0" "\x05" "JECXZ\0" "\x05" "JRCXZ\0" "\x02" "IN\0" \
