@@ -353,7 +353,7 @@ class Instructions:
 		# V 1.1.6 RETF is NOT promoted automatically in 64bits. So with REX it should be RETFQ.
 		Set("ca", ["RETF"], [OPT.IMM16], IFlag.NATIVE | IFlag._64BITS | IFlag.PRE_REX)
 		Set("cb", ["RETF"], [], IFlag.NATIVE | IFlag._64BITS | IFlag.PRE_REX)
-		Set("cc", ["INT 3"], [], IFlag.INST_FLAGS_NONE)
+		Set("cc", ["INT3"], [], IFlag.INST_FLAGS_NONE)
 		Set("cd", ["INT"], [OPT.IMM8], IFlag.INST_FLAGS_NONE)
 		Set("ce", ["INTO"], [], IFlag.INVALID_64BITS)
 		Set("cf", ["IRET"], [], IFlag.NATIVE | IFlag._64BITS | IFlag.PRE_REX)
