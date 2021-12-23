@@ -147,8 +147,8 @@ void prefixes_decode(_CodeInfo* ci, _PrefixState* ps)
 		NOTE: AMD treat lock/rep as two different groups... But I am based on Intel.
 
 			- Lock and Repeat:
-				- 0xF0 — LOCK
-				- 0xF2 — REPNE/REPNZ
+				- 0xF0 - LOCK
+				- 0xF2 - REPNE/REPNZ
 				- 0xF3 - REP/REPE/REPZ
 			- Segment Override:
 				- 0x2E - CS
