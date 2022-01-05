@@ -27,32 +27,32 @@ const unsigned char _MNEMONICS[] =
 "\x03" "CQO\0" "\x08" "CALL FAR\0" "\x05" "PUSHF\0" "\x04" "POPF\0" \
 "\x04" "SAHF\0" "\x04" "LAHF\0" "\x04" "MOVS\0" "\x04" "CMPS\0" "\x04" "STOS\0" \
 "\x04" "LODS\0" "\x04" "SCAS\0" "\x03" "RET\0" "\x03" "LES\0" "\x03" "LDS\0" \
-"\x05" "ENTER\0" "\x05" "LEAVE\0" "\x04" "RETF\0" "\x05" "INT 3\0" \
-"\x03" "INT\0" "\x04" "INTO\0" "\x04" "IRET\0" "\x03" "AAM\0" "\x03" "AAD\0" \
-"\x04" "SALC\0" "\x04" "XLAT\0" "\x06" "LOOPNZ\0" "\x05" "LOOPZ\0" \
-"\x04" "LOOP\0" "\x04" "JCXZ\0" "\x05" "JECXZ\0" "\x05" "JRCXZ\0" "\x02" "IN\0" \
-"\x03" "OUT\0" "\x04" "CALL\0" "\x03" "JMP\0" "\x07" "JMP FAR\0" "\x04" "INT1\0" \
-"\x03" "HLT\0" "\x03" "CMC\0" "\x03" "CLC\0" "\x03" "STC\0" "\x03" "CLI\0" \
-"\x03" "STI\0" "\x03" "CLD\0" "\x03" "STD\0" "\x03" "LAR\0" "\x03" "LSL\0" \
-"\x07" "SYSCALL\0" "\x04" "CLTS\0" "\x06" "SYSRET\0" "\x04" "INVD\0" \
-"\x06" "WBINVD\0" "\x03" "UD2\0" "\x05" "FEMMS\0" "\x03" "NOP\0" "\x05" "WRMSR\0" \
-"\x05" "RDTSC\0" "\x05" "RDMSR\0" "\x05" "RDPMC\0" "\x08" "SYSENTER\0" \
-"\x07" "SYSEXIT\0" "\x06" "GETSEC\0" "\x05" "CMOVO\0" "\x06" "CMOVNO\0" \
-"\x05" "CMOVB\0" "\x06" "CMOVAE\0" "\x05" "CMOVZ\0" "\x06" "CMOVNZ\0" \
-"\x06" "CMOVBE\0" "\x05" "CMOVA\0" "\x05" "CMOVS\0" "\x06" "CMOVNS\0" \
-"\x05" "CMOVP\0" "\x06" "CMOVNP\0" "\x05" "CMOVL\0" "\x06" "CMOVGE\0" \
-"\x06" "CMOVLE\0" "\x05" "CMOVG\0" "\x04" "SETO\0" "\x05" "SETNO\0" \
-"\x04" "SETB\0" "\x05" "SETAE\0" "\x04" "SETZ\0" "\x05" "SETNZ\0" "\x05" "SETBE\0" \
-"\x04" "SETA\0" "\x04" "SETS\0" "\x05" "SETNS\0" "\x04" "SETP\0" "\x05" "SETNP\0" \
-"\x04" "SETL\0" "\x05" "SETGE\0" "\x05" "SETLE\0" "\x04" "SETG\0" "\x05" "CPUID\0" \
-"\x02" "BT\0" "\x04" "SHLD\0" "\x03" "RSM\0" "\x03" "BTS\0" "\x04" "SHRD\0" \
-"\x07" "CMPXCHG\0" "\x03" "LSS\0" "\x03" "BTR\0" "\x03" "LFS\0" "\x03" "LGS\0" \
-"\x05" "MOVZX\0" "\x03" "BTC\0" "\x05" "MOVSX\0" "\x04" "XADD\0" "\x06" "MOVNTI\0" \
-"\x05" "BSWAP\0" "\x03" "ROL\0" "\x03" "ROR\0" "\x03" "RCL\0" "\x03" "RCR\0" \
-"\x03" "SHL\0" "\x03" "SHR\0" "\x03" "SAL\0" "\x03" "SAR\0" "\x06" "XABORT\0" \
-"\x06" "XBEGIN\0" "\x04" "FADD\0" "\x04" "FMUL\0" "\x04" "FCOM\0" "\x05" "FCOMP\0" \
-"\x04" "FSUB\0" "\x05" "FSUBR\0" "\x04" "FDIV\0" "\x05" "FDIVR\0" "\x03" "FLD\0" \
-"\x03" "FST\0" "\x04" "FSTP\0" "\x06" "FLDENV\0" "\x05" "FLDCW\0" "\x04" "FXCH\0" \
+"\x05" "ENTER\0" "\x05" "LEAVE\0" "\x04" "RETF\0" "\x04" "INT3\0" "\x03" "INT\0" \
+"\x04" "INTO\0" "\x04" "IRET\0" "\x03" "AAM\0" "\x03" "AAD\0" "\x04" "SALC\0" \
+"\x04" "XLAT\0" "\x06" "LOOPNZ\0" "\x05" "LOOPZ\0" "\x04" "LOOP\0" \
+"\x04" "JCXZ\0" "\x05" "JECXZ\0" "\x05" "JRCXZ\0" "\x02" "IN\0" "\x03" "OUT\0" \
+"\x04" "CALL\0" "\x03" "JMP\0" "\x07" "JMP FAR\0" "\x04" "INT1\0" "\x03" "HLT\0" \
+"\x03" "CMC\0" "\x03" "CLC\0" "\x03" "STC\0" "\x03" "CLI\0" "\x03" "STI\0" \
+"\x03" "CLD\0" "\x03" "STD\0" "\x03" "LAR\0" "\x03" "LSL\0" "\x07" "SYSCALL\0" \
+"\x04" "CLTS\0" "\x06" "SYSRET\0" "\x04" "INVD\0" "\x06" "WBINVD\0" \
+"\x03" "UD2\0" "\x05" "FEMMS\0" "\x03" "NOP\0" "\x05" "WRMSR\0" "\x05" "RDTSC\0" \
+"\x05" "RDMSR\0" "\x05" "RDPMC\0" "\x08" "SYSENTER\0" "\x07" "SYSEXIT\0" \
+"\x06" "GETSEC\0" "\x05" "CMOVO\0" "\x06" "CMOVNO\0" "\x05" "CMOVB\0" \
+"\x06" "CMOVAE\0" "\x05" "CMOVZ\0" "\x06" "CMOVNZ\0" "\x06" "CMOVBE\0" \
+"\x05" "CMOVA\0" "\x05" "CMOVS\0" "\x06" "CMOVNS\0" "\x05" "CMOVP\0" \
+"\x06" "CMOVNP\0" "\x05" "CMOVL\0" "\x06" "CMOVGE\0" "\x06" "CMOVLE\0" \
+"\x05" "CMOVG\0" "\x04" "SETO\0" "\x05" "SETNO\0" "\x04" "SETB\0" "\x05" "SETAE\0" \
+"\x04" "SETZ\0" "\x05" "SETNZ\0" "\x05" "SETBE\0" "\x04" "SETA\0" "\x04" "SETS\0" \
+"\x05" "SETNS\0" "\x04" "SETP\0" "\x05" "SETNP\0" "\x04" "SETL\0" "\x05" "SETGE\0" \
+"\x05" "SETLE\0" "\x04" "SETG\0" "\x05" "CPUID\0" "\x02" "BT\0" "\x04" "SHLD\0" \
+"\x03" "RSM\0" "\x03" "BTS\0" "\x04" "SHRD\0" "\x07" "CMPXCHG\0" "\x03" "LSS\0" \
+"\x03" "BTR\0" "\x03" "LFS\0" "\x03" "LGS\0" "\x05" "MOVZX\0" "\x03" "BTC\0" \
+"\x05" "MOVSX\0" "\x04" "XADD\0" "\x06" "MOVNTI\0" "\x05" "BSWAP\0" \
+"\x03" "ROL\0" "\x03" "ROR\0" "\x03" "RCL\0" "\x03" "RCR\0" "\x03" "SHL\0" \
+"\x03" "SHR\0" "\x03" "SAL\0" "\x03" "SAR\0" "\x06" "XABORT\0" "\x06" "XBEGIN\0" \
+"\x04" "FADD\0" "\x04" "FMUL\0" "\x04" "FCOM\0" "\x05" "FCOMP\0" "\x04" "FSUB\0" \
+"\x05" "FSUBR\0" "\x04" "FDIV\0" "\x05" "FDIVR\0" "\x03" "FLD\0" "\x03" "FST\0" \
+"\x04" "FSTP\0" "\x06" "FLDENV\0" "\x05" "FLDCW\0" "\x04" "FXCH\0" \
 "\x04" "FNOP\0" "\x04" "FCHS\0" "\x04" "FABS\0" "\x04" "FTST\0" "\x04" "FXAM\0" \
 "\x04" "FLD1\0" "\x06" "FLDL2T\0" "\x06" "FLDL2E\0" "\x05" "FLDPI\0" \
 "\x06" "FLDLG2\0" "\x06" "FLDLN2\0" "\x04" "FLDZ\0" "\x05" "F2XM1\0" \

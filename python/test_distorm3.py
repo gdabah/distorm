@@ -2127,6 +2127,10 @@ def initfiles():
 	for i in ["bin16", "bin32", "bin64"]:
 		fbin.append(open("build\\linux\\"+i, "wb"))
 
+if "pytest" in sys.modules:
+    print("pytest isn't supported; this file uses Python's unittest, run: ./test_distorm3.py")
+    sys.exit(-1)
+
 if __name__ == "__main__":
 	random.seed()
 	#initfiles() # Used to emit the bytes of the tests - useful for code coverage input.
