@@ -11,9 +11,11 @@ jobs:
         os: [ubuntu-18.04, windows-latest, macos-latest]
         python-version: [3.x]
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
     - uses: ilammy/msvc-dev-cmd@v1
@@ -22,10 +24,11 @@ jobs:
         python -m pip install --upgrade pip setuptools wheel
         python setup.py bdist_wheel
         pip install --find-links=dist --no-index distorm3
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       with:
         name: Wheels
         path: dist
+        if-no-files-found: error
     - name: Test importing
       run: python -c 'import distorm3'
     - name: Install yasm (macOS)
@@ -38,5 +41,5 @@ jobs:
       run: copy test-deps\yasm-1.3.0-win64.exe python\yasm.exe
       if: runner.os == 'Windows'
     - name: Run test_distorm3.py
-      working-directory: ./python
+      working-directory: python
       run: python test_distorm3.py
