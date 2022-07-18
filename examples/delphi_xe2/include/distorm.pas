@@ -1,5 +1,5 @@
 ﻿{
-/* diStorm 3.5.2 */
+/* diStorm 3.5.3 */
 
 /*
 distorm.h
@@ -13,7 +13,7 @@ This library is licensed under the BSD license. See the file COPYING.
 
 ================================================================================
 Delphi port: Alexander (Rouse_) Bagel. May 2016.
-Update to 3.5.2b: July 2022
+Update to 3.5.3: July 2022
 WARNINIG: Support Delphi XE2 and higher
 https://github.com/AlexanderBagel/distorm
 ================================================================================
@@ -69,7 +69,7 @@ type
  OFFSET_INTEGER = Uint64;
  {$ELSE}
  //* 32 bit offsets are used. */
- OFFSET_INTEGER = Uint64;
+ OFFSET_INTEGER = Uint32;
  {$ENDIF}
 
  // MACROS declaration lower ----->
@@ -106,6 +106,7 @@ type
 
   _Value = record
     case Integer of
+      // Used by O_IMM
       0: (sbyte: Int8);
       1: (ubyte: UInt8);
       2: (sword: Int16);
@@ -474,7 +475,7 @@ const
 
 type
   // Return code of the decoding function.
-  TDecodeResult = (DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR, DECRES_FILTERED);
+  TDecodeResult = (DECRES_NONE, DECRES_SUCCESS, DECRES_MEMORYERR, DECRES_INPUTERR);
 
 {* distorm_decode
  * Input:
@@ -511,9 +512,9 @@ type
  *
  *}
 
-  function distorm_decompose(
-    ci: PCodeInfo; AResult: PDInst;
-    maxInstructions: UInt; usedInstructionsCount: PUInt): TDecodeResult;
+ function distorm_decompose(
+   ci: PCodeInfo; AResult: PDInst;
+   maxInstructions: UInt; usedInstructionsCount: PUInt): TDecodeResult;
 
   function get_distorm_version: Cardinal;
 
