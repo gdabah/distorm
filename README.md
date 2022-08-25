@@ -22,9 +22,14 @@ RTFM, the wiki has plenty of info.
 You can download and install distorm using the [vcpkg](https://github.com/Microsoft/vcpkg) dependency manager:
 
 git clone https://github.com/Microsoft/vcpkg.git
+
 cd vcpkg
+
 ./bootstrap-vcpkg.sh
+
 ./vcpkg integrate install
+
 vcpkg install distorm
+
 
 The distorm port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.
