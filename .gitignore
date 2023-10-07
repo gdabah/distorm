@@ -1,5 +1,10 @@
 *.egg-info
 *.py[cod]
 *.so
+*.so.*
+*.o
+*.a
+*.exe
+*.txe
 build
 dist
